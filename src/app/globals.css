@@ -19,6 +19,13 @@
   }
 }
 
+/* Tailwind v4 usa currentColor como color de borde por defecto; el sitio está diseñado con bordes grises suaves */
+@layer base {
+  *, ::after, ::before, ::backdrop, ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
