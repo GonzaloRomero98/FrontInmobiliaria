@@ -6,6 +6,9 @@ import EntornoProyecto from "@/components/EntornoProyecto";
 import FichaNormativa from "@/components/FichaNormativa";
 import { getEntorno, getNormativa, getProyectoPorId } from "@/services/proyecto.service";
 import { getModeloCasa } from "@/services/modeloCasa.service";
+import EtapaEntrega from "@/components/EtapaEntrega";
+import { obtenerValorUF } from "@/lib/uf";
+import { formatearUF, precioDesdeUF } from "@/lib/formato";
 import { notFound } from "next/navigation";
 
 export const revalidate = 60;
@@ -43,11 +46,13 @@ export default async function ProyectoDetalle({ params }: { params: Promise<{ id
 
     const tieneUbicacion = proyecto.latitud !== null && proyecto.longitud !== null;
     // Normativa y entorno son opcionales: si fallan, la ficha se muestra sin esas secciones
-    const [modelos, normativa, entorno] = await Promise.all([
+    const [modelos, normativa, entorno, uf] = await Promise.all([
         getModeloCasa(id),
         getNormativa(id).catch(() => null),
         tieneUbicacion ? getEntorno(id).catch(() => null) : Promise.resolve(null),
+        obtenerValorUF(),
     ]);
+    const desde = precioDesdeUF(modelos, uf?.valor ?? null);
 
     return (
         <main className="max-w-6xl mx-auto px-4 py-10 flex flex-col gap-12">
@@ -56,6 +61,8 @@ export default async function ProyectoDetalle({ params }: { params: Promise<{ id
                 <p className="text-gray-500">
                     {proyecto.direccion ? `${proyecto.direccion}, ` : ''}{proyecto.ciudad.nombre}, {proyecto.ciudad.region.nombre}
                 </p>
+                <EtapaEntrega etapa={proyecto.etapa} fechaEntrega={proyecto.fechaEntrega} />
+                {desde !== null && <p className="text-2xl font-bold text-acento">Desde {formatearUF(desde)}</p>}
                 {proyecto.descripcion && <p className="text-gray-700 max-w-3xl">{proyecto.descripcion}</p>}
                 <BotonWhatsApp
                     mensaje={`Hola, me interesa el proyecto ${proyecto.nombre} en ${proyecto.ciudad.nombre}.`}

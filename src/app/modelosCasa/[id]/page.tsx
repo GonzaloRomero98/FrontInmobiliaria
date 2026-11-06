@@ -10,7 +10,9 @@ import { getModeloCasaById } from "@/services/modeloCasa.service";
 import { fechaUF, obtenerValorUF } from "@/lib/uf";
 import { equivalencia, formatearCLP, formatearNumero, formatearPrecio, plural } from "@/lib/formato";
 import { URL_SITIO } from "@/lib/sitio";
-import { ETIQUETA_ESTADO, imagenesModelo } from "@/types/modeloCasa";
+import { ETIQUETA_ESTADO, ETIQUETA_TIPO_VIVIENDA, imagenesModelo } from "@/types/modeloCasa";
+import EtapaEntrega from "@/components/EtapaEntrega";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
@@ -71,19 +73,31 @@ export default async function DetallePropiedadID({params}:{params:Promise<{id:st
                             <Link href={`/proyectos/${modelo.proyecto.id}`} className="underline">{modelo.proyecto.nombre}</Link>
                             , {modelo.proyecto.ciudad.nombre}, {modelo.proyecto.ciudad.region.nombre}
                         </p>
+                        <EtapaEntrega etapa={modelo.proyecto.etapa} fechaEntrega={modelo.proyecto.fechaEntrega} />
                         <p className="text-2xl font-bold mt-3 text-acento">{formatearPrecio(precio, modelo.moneda)}</p>
                         {otraMoneda && (
                             <p className="text-gray-600">
                                 ≈ {otraMoneda} <span className="text-sm">(UF {formatearCLP(uf!.valor)} al {fechaUF(uf!)})</span>
                             </p>
                         )}
-                        {modelo.gastosComunes && <p className="text-sm text-gray-600 mt-1">+ gastos comunes</p>}
+                        {modelo.gastosComunes != null && (
+                            <p className="text-sm text-gray-600 mt-1">Gastos comunes: {formatearCLP(modelo.gastosComunes)} al mes</p>
+                        )}
+                        {(modelo.bono || modelo.subsidios?.length > 0) && (
+                            <div className="flex flex-wrap gap-2 mt-3">
+                                {modelo.bono && <span className="bg-acento/10 text-acento text-sm font-semibold px-3 py-1 rounded-full">{modelo.bono}</span>}
+                                {modelo.subsidios?.map((s) => (
+                                    <span key={s} className="border border-gray-300 text-gray-700 text-sm px-3 py-1 rounded-full">Apto subsidio {s}</span>
+                                ))}
+                            </div>
+                        )}
                         <div className="flex flex-wrap gap-x-6 gap-y-1 mt-4 text-gray-700">
+                            <span>{ETIQUETA_TIPO_VIVIENDA[modelo.tipoVivienda] ?? 'Casa'}</span>
                             <span>{plural(modelo.dormitorios, 'dormitorio', 'dormitorios')}</span>
                             <span>{plural(modelo.banos, 'baño', 'baños')}</span>
                             {modelo.estacionamientos ? <span>{plural(modelo.estacionamientos, 'estacionamiento', 'estacionamientos')}</span> : null}
                             <span>{formatearNumero(modelo.superficieConstruida)} m² construidos</span>
-                            <span>{formatearNumero(modelo.superficieTerreno)} m² de terreno</span>
+                            {modelo.superficieTerreno != null && <span>{formatearNumero(modelo.superficieTerreno)} m² de terreno</span>}
                             {modelo.mascotas && <span>Acepta mascotas</span>}
                         </div>
                         {modelo.caracteristicas.length > 0 && (
@@ -99,6 +113,16 @@ export default async function DetallePropiedadID({params}:{params:Promise<{id:st
                             <p className="mt-6 text-gray-700 leading-relaxed">{modelo.proyecto.descripcion}</p>
                         )}
                     </div>
+
+                    {modelo.planoUrl && (
+                        <section className="flex flex-col gap-2">
+                            <h2 className="text-xl font-bold">Plano de planta</h2>
+                            <a href={modelo.planoUrl} target="_blank" rel="noopener noreferrer" className="relative block w-full aspect-[4/3] border rounded-xl bg-white">
+                                <Image src={modelo.planoUrl} alt={`Plano de planta del modelo ${modelo.nombreModelo}`} fill sizes="(min-width: 1024px) 66vw, 100vw" className="object-contain p-2" />
+                            </a>
+                            <p className="text-xs text-gray-500">Haz clic para ver el plano en tamaño completo.</p>
+                        </section>
+                    )}
 
                     {modelo.tipoOperacion === 'VENTA' && (
                         <SimuladorDividendo precio={precio} moneda={modelo.moneda} valorUF={uf?.valor ?? null} />

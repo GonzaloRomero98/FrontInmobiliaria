@@ -4,6 +4,15 @@ import { Proyecto } from "./proyecto";
 export type Moneda = 'UF'|'CLP'
 export type Operacion = 'VENTA'|'ARRIENDO'
 export type EstadoModelo = 'DISPONIBLE'|'RESERVADO'|'VENDIDO'
+export type TipoVivienda = 'CASA'|'DEPARTAMENTO'
+export type Subsidio = 'DS1'|'DS19'
+
+export const ETIQUETA_TIPO_VIVIENDA: Record<TipoVivienda, string> = {
+    CASA: 'Casa',
+    DEPARTAMENTO: 'Departamento',
+};
+
+export const SUBSIDIOS: Subsidio[] = ['DS1', 'DS19'];
 
 // Foto principal primero y luego la galería en su orden, sin repetir la principal
 export function imagenesModelo(modelo: Pick<ModeloCasa, 'imgPrincipal' | 'fotos'>): string[] {
@@ -30,12 +39,18 @@ export interface ModeloCasa{
     banos:number;
     estacionamientos: number;
     mascotas:boolean;
+    tipoVivienda:TipoVivienda;
     superficieConstruida:number;
-    superficieTerreno:number;
+    // null en departamentos
+    superficieTerreno:number | null;
     precio:number;
     moneda:Moneda;
-    gastosComunes:boolean;
+    // Monto mensual en CLP; null = no aplica
+    gastosComunes:number | null;
     modelo3dUrl:string | null;
+    planoUrl:string | null;
+    subsidios:Subsidio[];
+    bono:string | null;
     imgPrincipal: string;
     estado:EstadoModelo;
     // false = borrador (no se ve en el catálogo)
@@ -54,12 +69,16 @@ export interface ModeloCasaInput{
     banos:number;
     estacionamiento:number;
     mascotas:boolean;
+    tipoVivienda:TipoVivienda;
     superficieConstruida:number;
-    superficieTerreno:number;
+    superficieTerreno:number | null;
     precio:number;
     moneda:Moneda;
-    gastosComunes:boolean;
+    gastosComunes:number | null;
     modelo3dUrl?:string | null;
+    planoUrl?:string | null;
+    subsidios:Subsidio[];
+    bono:string | null;
     imgPrincipal: string;
     caracteristicasID:number[];
     estado?:EstadoModelo;

@@ -12,6 +12,7 @@ import { crearPoryecto } from "@/services/proyecto.service";
 import { obtenerUrlSubida, subirArchivo } from "@/services/s3.service";
 import SubidaImagen from "@/components/SubidaImagen";
 import { SelectorUbicacion } from "@/components/mapas";
+import { ETIQUETA_ETAPA, EtapaProyecto } from "@/types/proyecto";
 
 const esquemaProyecto = z.object({
     nombre: z.string().min(1, 'El nombre es obligatorio').max(150),
@@ -19,6 +20,8 @@ const esquemaProyecto = z.object({
     id_ciudad: z.string().min(1, 'Selecciona una ciudad'),
     descripcion: z.string().optional(),
     direccion: z.string().max(200).optional(),
+    etapa: z.string().optional(),
+    fechaEntrega: z.string().optional(),
     imagenPortada: z.string().optional() // se completa recién tras subir a S3 en el submit
 });
 
@@ -81,6 +84,8 @@ export default function NuevoProyecto() {
                 descripcion: dataForm.descripcion || undefined,
                 imagenPortada: publicUrl,
                 direccion: dataForm.direccion?.trim() || undefined,
+                etapa: (dataForm.etapa || undefined) as EtapaProyecto | undefined,
+                fechaEntrega: dataForm.fechaEntrega || undefined,
                 ...(latitud !== null && longitud !== null && { latitud, longitud }),
             });
 
@@ -138,6 +143,22 @@ export default function NuevoProyecto() {
                         className="w-full border rounded-lg px-3 py-2"
                         rows={3}
                     />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                    <label className="flex flex-col gap-1 text-sm">
+                        Etapa
+                        <select {...register('etapa')} className="w-full border rounded-lg px-3 py-2">
+                            <option value="">Sin informar</option>
+                            {Object.entries(ETIQUETA_ETAPA).map(([valor, etiqueta]) => (
+                                <option key={valor} value={valor}>{etiqueta}</option>
+                            ))}
+                        </select>
+                    </label>
+                    <label className="flex flex-col gap-1 text-sm">
+                        Fecha de entrega (opcional)
+                        <input type="date" {...register('fechaEntrega')} className="w-full border rounded-lg px-3 py-2" />
+                    </label>
                 </div>
 
                 <div className="flex flex-col gap-2">

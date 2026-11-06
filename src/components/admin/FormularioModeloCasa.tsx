@@ -7,7 +7,7 @@ import { actualizarModeloCasa, crearModeloCasa, nombreModeloDisponible } from "@
 import { getProyectos } from "@/services/proyecto.service";
 import { obtenerUrlSubida, subirArchivo } from "@/services/s3.service";
 import { Caracteristica } from "@/types/caracteristicas";
-import { ETIQUETA_ESTADO, ModeloCasa, ModeloCasaInput, Moneda, Operacion } from "@/types/modeloCasa";
+import { ETIQUETA_ESTADO, ETIQUETA_TIPO_VIVIENDA, ModeloCasa, ModeloCasaInput, Moneda, Operacion, SUBSIDIOS } from "@/types/modeloCasa";
 import { Proyecto } from "@/types/proyecto";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { isAxiosError } from "axios";
@@ -26,21 +26,30 @@ const esquemaModeloCasa = z.object({
     estacionamiento: z.string().min(1,'campoObligatorio'),
     mascotas: z.boolean(),
     superficieConstruida: z.string().min(1, 'Campo Obligatorio'),
-    superficieTerreno: z.string().min(1,'Campo Obligatorio'),
+    tipoVivienda: z.enum(['CASA', 'DEPARTAMENTO']),
+    // Obligatoria solo en casas (ver superRefine)
+    superficieTerreno: z.string().optional(),
     precio: z.string().min(1, 'Campo Obligatorio'),
     moneda: z.enum(['UF','CLP']),
-    gastosComunes:z.boolean().optional(),
+    gastosComunes: z.string().regex(/^\d*$/, 'Monto en pesos, sin puntos ni decimales').optional(),
+    subsidios: z.array(z.enum(['DS1', 'DS19'])),
+    bono: z.string().trim().max(150, 'Máximo 150 caracteres').optional(),
+    quitarPlano: z.boolean().optional(),
     imgPrincipal: z.string().optional(),
     quitarModelo3d: z.boolean().optional(),
     estado: z.enum(['DISPONIBLE', 'RESERVADO', 'VENDIDO']),
     publicado: z.boolean(),
+}).superRefine((datos, ctx) => {
+    if (datos.tipoVivienda === 'CASA' && !datos.superficieTerreno) {
+        ctx.addIssue({ code: 'custom', path: ['superficieTerreno'], message: 'Campo obligatorio en una casa' });
+    }
 })
 
 type FormValues = z.infer<typeof esquemaModeloCasa>;
 
 // Valores iniciales del formulario: vacíos al crear, los del modelo al editar
 function valoresIniciales(modelo?: ModeloCasa): Partial<FormValues> {
-    if (!modelo) return {mascotas:false, gastosComunes:false, estado:'DISPONIBLE', publicado:true};
+    if (!modelo) return {mascotas:false, tipoVivienda:'CASA', subsidios:[], estado:'DISPONIBLE', publicado:true};
     return {
         id_proyecto: modelo.proyecto.id,
         nombreModelo: modelo.nombreModelo,
@@ -50,11 +59,15 @@ function valoresIniciales(modelo?: ModeloCasa): Partial<FormValues> {
         estacionamiento: String(modelo.estacionamientos),
         mascotas: modelo.mascotas,
         superficieConstruida: String(modelo.superficieConstruida),
-        superficieTerreno: String(modelo.superficieTerreno),
+        tipoVivienda: modelo.tipoVivienda,
+        superficieTerreno: modelo.superficieTerreno == null ? '' : String(modelo.superficieTerreno),
         precio: String(modelo.precio),
         moneda: modelo.moneda,
-        gastosComunes: modelo.gastosComunes,
+        gastosComunes: modelo.gastosComunes == null ? '' : String(modelo.gastosComunes),
+        subsidios: modelo.subsidios ?? [],
+        bono: modelo.bono ?? '',
         quitarModelo3d: false,
+        quitarPlano: false,
         estado: modelo.estado,
         publicado: modelo.activo,
     };
@@ -72,15 +85,18 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
     //guardado del archivo
     const [archivoImagen, setArchivoImagen] = useState<File | null>(null);
     const [archivoModelo3D, setArchivoModelo3D] = useState<File | null>(null);
+    const [archivoPlano, setArchivoPlano] = useState<File | null>(null);
 
     //Validacion del archivo
 
     const [subiendoImagen, setSubiendoImagen] = useState(false);
     const [subiendoModelo3D, setSubiendoModelo3d]  = useState(false);
+    const [subiendoPlano, setSubiendoPlano] = useState(false);
 
     //Progreso de subida
     const [progresoImagen, setProgresoImagen] = useState(0);
     const [progresoModelo3d, setProgresoModelo3d] = useState(0);
+    const [progresoPlano, setProgresoPlano] = useState(0);
 
     //acciones formulario
     const{register, handleSubmit, watch, setValue, setError:setFormError, formState:{errors,isSubmitting}}=useForm<FormValues>({
@@ -88,6 +104,8 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
         defaultValues: valoresIniciales(modelo)
     });
     const quitarModelo3d = watch('quitarModelo3d');
+    const quitarPlano = watch('quitarPlano');
+    const esCasa = watch('tipoVivienda') === 'CASA';
 
     useEffect(()=>{
         getProyectos().then(setProyectos).catch(()=> setError('no se pudo cargar los proyectos'));
@@ -138,6 +156,16 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                 modelo3dUrl = publicUrlModelo3d;
             }
 
+            // Plano de planta opcional: misma lógica que el modelo 3D
+            let planoUrl: string | null = dataForm.quitarPlano ? null : modelo?.planoUrl ?? null;
+            if(archivoPlano && !dataForm.quitarPlano){
+                setSubiendoPlano(true);
+                const {uploadUrl, publicUrl, contentType} = await obtenerUrlSubida(archivoPlano, 'modelosImagenes');
+                await subirArchivo(archivoPlano, uploadUrl, contentType, setProgresoPlano);
+                setSubiendoPlano(false);
+                planoUrl = publicUrl;
+            }
+
             const inputFormModelo: ModeloCasaInput = {
                 id_proyecto: dataForm.id_proyecto,
                 nombreModelo: dataForm.nombreModelo,
@@ -147,10 +175,14 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                 estacionamiento: Number(dataForm.estacionamiento),
                 mascotas: dataForm.mascotas,
                 superficieConstruida: Number(dataForm.superficieConstruida),
-                superficieTerreno: Number(dataForm.superficieTerreno),
+                tipoVivienda: dataForm.tipoVivienda,
+                superficieTerreno: dataForm.superficieTerreno ? Number(dataForm.superficieTerreno) : null,
                 precio: Number(dataForm.precio),
                 moneda: dataForm.moneda as Moneda,
-                gastosComunes: dataForm.gastosComunes ?? false,
+                gastosComunes: dataForm.gastosComunes ? Number(dataForm.gastosComunes) : null,
+                planoUrl,
+                subsidios: dataForm.subsidios,
+                bono: dataForm.bono || null,
                 imgPrincipal,
                 caracteristicasID: caracteristicaSeleccionadas,
                 estado: dataForm.estado,
@@ -173,6 +205,7 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                 : modelo ? 'No se pudo guardar el modelo' : 'No se pudo crear el modelo');
             setSubiendoImagen(false);
             setSubiendoModelo3d(false);
+            setSubiendoPlano(false);
         }
     }
 
@@ -204,6 +237,14 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                     </select>
                 </div>
 
+                <div>
+                    <select {...register('tipoVivienda')} aria-label="Tipo de vivienda" className="w-full border rounded-lg px-3 py-2">
+                        {Object.entries(ETIQUETA_TIPO_VIVIENDA).map(([valor, etiqueta]) => (
+                            <option key={valor} value={valor}>{etiqueta}</option>
+                        ))}
+                    </select>
+                </div>
+
                 <div className="grid grid-cols-3 gap-2">
                     <div>
                         <input {...register('dormitorios')} type="number" placeholder="Dormitorios" className="w-full border rounded-lg px-3 py-2" />
@@ -225,7 +266,7 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                         {errors.superficieConstruida && <p className="text-red-500 text-sm mt-1">{errors.superficieConstruida.message}</p>}
                     </div>
                     <div>
-                        <input {...register('superficieTerreno')} type="number" step="0.01" placeholder="Superficie terreno (m²)" className="w-full border rounded-lg px-3 py-2" />
+                        <input {...register('superficieTerreno')} type="number" step="0.01" placeholder={esCasa ? 'Superficie terreno (m²)' : 'Superficie terreno (m², opcional)'} aria-label="Superficie terreno" className="w-full border rounded-lg px-3 py-2" />
                         {errors.superficieTerreno && <p className="text-red-500 text-sm mt-1">{errors.superficieTerreno.message}</p>}
                     </div>
                 </div>
@@ -248,10 +289,28 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                         <input type="checkbox" {...register('mascotas')} />
                         Permite mascotas
                     </label>
-                    <label className="flex items-center gap-2 text-sm">
-                        <input type="checkbox" {...register('gastosComunes')} />
-                        Tiene gastos comunes
-                    </label>
+                </div>
+
+                <div>
+                    <input {...register('gastosComunes')} type="number" min="0" step="1"
+                        placeholder={esCasa ? 'Gastos comunes mensuales en $ (si es condominio)' : 'Gastos comunes mensuales en $ (opcional)'}
+                        aria-label="Gastos comunes" className="w-full border rounded-lg px-3 py-2" />
+                    {errors.gastosComunes && <p className="text-red-500 text-sm mt-1">{errors.gastosComunes.message}</p>}
+                </div>
+
+                <div className="flex flex-col gap-2">
+                    <div className="flex gap-4 text-sm">
+                        <span className="font-medium">Apto para subsidio:</span>
+                        {SUBSIDIOS.map((s) => (
+                            <label key={s} className="flex items-center gap-2">
+                                <input type="checkbox" value={s} {...register('subsidios')} />
+                                {s}
+                            </label>
+                        ))}
+                    </div>
+                    <input {...register('bono')} maxLength={150} placeholder="Bono o promoción (opcional), ej.: Bono pie 10%"
+                        aria-label="Bono" className="w-full border rounded-lg px-3 py-2" />
+                    {errors.bono && <p className="text-red-500 text-sm mt-1">{errors.bono.message}</p>}
                 </div>
 
                 <div>
@@ -293,6 +352,22 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                     <p className="text-xs text-gray-500 mt-1">Sin modelo 3D la ficha muestra la imagen principal.</p>
                 </div>
 
+                <div>
+                    <p className="text-sm font-medium mb-2">Plano de planta (imagen, opcional)</p>
+                    {modelo?.planoUrl && (
+                        <>
+                            {!archivoPlano && !quitarPlano && <img src={modelo.planoUrl} alt="Plano actual" className="w-32 h-24 object-contain rounded-lg border mb-2" />}
+                            <label className="flex items-center gap-2 text-sm mb-2">
+                                <input type="checkbox" {...register('quitarPlano')} />
+                                Quitar el plano actual
+                            </label>
+                        </>
+                    )}
+                    {!quitarPlano && (
+                        <SubidaImagen archivoSeleccionado={setArchivoPlano} progreso={progresoPlano} subiendo={subiendoPlano} />
+                    )}
+                </div>
+
                 <div className="grid grid-cols-2 gap-2 items-center">
                     <select {...register('estado')} aria-label="Estado comercial" className="w-full border rounded-lg px-3 py-2">
                         {Object.entries(ETIQUETA_ESTADO).map(([valor, etiqueta]) => (
@@ -310,10 +385,10 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
 
                 <button
                     type="submit"
-                    disabled={isSubmitting || subiendoImagen || subiendoModelo3D}
+                    disabled={isSubmitting || subiendoImagen || subiendoModelo3D || subiendoPlano}
                     className="bg-marca text-white rounded-lg py-3 font-medium disabled:opacity-50"
                 >
-                    {subiendoImagen ? 'Subiendo imagen...' : subiendoModelo3D ? 'Subiendo modelo 3D...' : isSubmitting ? 'Guardando...' : modelo ? 'Guardar cambios' : 'Crear modelo de casa'}
+                    {subiendoImagen ? 'Subiendo imagen...' : subiendoModelo3D ? 'Subiendo modelo 3D...' : subiendoPlano ? 'Subiendo plano...' : isSubmitting ? 'Guardando...' : modelo ? 'Guardar cambios' : 'Crear modelo de casa'}
                 </button>
             </form>
     )

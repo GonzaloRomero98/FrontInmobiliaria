@@ -52,7 +52,7 @@ export default function TablaComparacion({ modelos }: { modelos: ModeloCasa[] })
         { etiqueta: 'Baños', valor: (m) => m.banos, mejor: 'mayor' },
         { etiqueta: 'Estacionamientos', valor: (m) => m.estacionamientos, mejor: 'mayor' },
         { etiqueta: 'Superficie construida', valor: (m) => m.superficieConstruida, mostrar: (m) => `${formatearNumero(m.superficieConstruida)} m²`, mejor: 'mayor' },
-        { etiqueta: 'Superficie terreno', valor: (m) => m.superficieTerreno, mostrar: (m) => `${formatearNumero(m.superficieTerreno)} m²`, mejor: 'mayor' },
+        { etiqueta: 'Superficie terreno', valor: (m) => m.superficieTerreno, mostrar: (m) => m.superficieTerreno == null ? '—' : `${formatearNumero(m.superficieTerreno)} m²`, mejor: 'mayor' },
         { etiqueta: 'Mascotas', valor: (m) => m.mascotas ? 'Sí' : 'No' },
     ];
 

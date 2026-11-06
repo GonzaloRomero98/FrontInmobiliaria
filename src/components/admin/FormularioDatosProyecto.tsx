@@ -4,11 +4,13 @@ import { useState } from "react";
 import SubidaImagen from "@/components/SubidaImagen";
 import { actualizarProyecto } from "@/services/proyecto.service";
 import { obtenerUrlSubida, subirArchivo } from "@/services/s3.service";
-import { Proyecto } from "@/types/proyecto";
+import { ETIQUETA_ETAPA, EtapaProyecto, Proyecto } from "@/types/proyecto";
 
 export default function FormularioDatosProyecto({ proyecto, onGuardado }: { proyecto: Proyecto; onGuardado: (p: Proyecto) => void }) {
     const [nombre, setNombre] = useState(proyecto.nombre);
     const [descripcion, setDescripcion] = useState(proyecto.descripcion ?? '');
+    const [etapa, setEtapa] = useState<string>(proyecto.etapa ?? '');
+    const [fechaEntrega, setFechaEntrega] = useState(proyecto.fechaEntrega ?? '');
     const [portada, setPortada] = useState<File | null>(null);
     const [progreso, setProgreso] = useState(0);
     const [guardando, setGuardando] = useState(false);
@@ -31,6 +33,9 @@ export default function FormularioDatosProyecto({ proyecto, onGuardado }: { proy
             const actualizado = await actualizarProyecto(proyecto.id, {
                 nombre: nombre.trim(),
                 descripcion: descripcion.trim(),
+                // Vacío = sin informar: null borra lo guardado
+                etapa: (etapa || null) as EtapaProyecto | null,
+                fechaEntrega: fechaEntrega || null,
                 ...(imagenPortada && { imagenPortada }),
             });
             onGuardado({ ...proyecto, ...actualizado });
@@ -55,6 +60,22 @@ export default function FormularioDatosProyecto({ proyecto, onGuardado }: { proy
                 Descripción
                 <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} rows={4} className="border rounded-lg px-3 py-2" />
             </label>
+
+            <div className="grid grid-cols-2 gap-2">
+                <label className="flex flex-col gap-1 text-sm">
+                    Etapa
+                    <select value={etapa} onChange={(e) => setEtapa(e.target.value)} className="w-full border rounded-lg px-3 py-2">
+                        <option value="">Sin informar</option>
+                        {Object.entries(ETIQUETA_ETAPA).map(([valor, etiqueta]) => (
+                            <option key={valor} value={valor}>{etiqueta}</option>
+                        ))}
+                    </select>
+                </label>
+                <label className="flex flex-col gap-1 text-sm">
+                    Fecha de entrega (opcional)
+                    <input type="date" value={fechaEntrega} onChange={(e) => setFechaEntrega(e.target.value)} className="w-full border rounded-lg px-3 py-2" />
+                </label>
+            </div>
 
             <div className="flex flex-col gap-2 text-sm">
                 Imagen de portada (elige una solo si quieres reemplazarla)
