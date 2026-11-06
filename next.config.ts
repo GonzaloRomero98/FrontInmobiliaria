@@ -26,6 +26,8 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'www.adobe.com',
       },
+      // Bucket actual (AWS_S3_BUCKET / AWS_REGION del backend); si cambia el bucket hay que cambiar esta línea
+      { protocol: 'https', hostname: 'inmobiliaria-media-s3.s3.us-east-2.amazonaws.com', pathname: '/**' },
     ]
   }
 };
