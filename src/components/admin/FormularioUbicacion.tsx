@@ -121,7 +121,7 @@ export default function FormularioUbicacion({ proyecto, onGuardado }: { proyecto
             </div>
 
             <button type="button" onClick={guardar} disabled={guardando}
-                className="bg-black text-white rounded-lg py-2.5 font-medium disabled:opacity-50">
+                className="bg-marca text-white rounded-lg py-2.5 font-medium disabled:opacity-50">
                 {guardando ? 'Guardando...' : 'Guardar ubicación'}
             </button>
 

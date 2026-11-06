@@ -81,7 +81,7 @@ export default function TablaComparacion({ modelos }: { modelos: ModeloCasa[] })
                             <img src={m.imgPrincipal} alt={m.nombreModelo} className="w-full h-[260px] object-cover rounded-xl bg-gray-100" />
                         )}
                         <Link href={`/modelosCasa/${m.id}`} className="font-semibold text-lg hover:underline">{m.nombreModelo}</Link>
-                        <button type="button" onClick={() => quitar(m.id)} className="text-sm text-gray-500 hover:text-black self-start">
+                        <button type="button" onClick={() => quitar(m.id)} className="text-sm text-gray-500 hover:text-marca self-start">
                             Quitar de la comparación
                         </button>
                     </div>

@@ -54,7 +54,7 @@ export default function Cuenta() {
                 <p className="text-xs text-gray-500">Mínimo 10 caracteres, con mayúscula, minúscula y número.</p>
                 {error && <p className="text-red-500 text-sm" role="alert">{error}</p>}
                 {listo && <p className="text-green-700 text-sm" role="status">Contraseña actualizada</p>}
-                <button type="submit" disabled={guardando} className="bg-black text-white rounded-lg py-3 font-medium disabled:opacity-50">
+                <button type="submit" disabled={guardando} className="bg-marca text-white rounded-lg py-3 font-medium disabled:opacity-50">
                     {guardando ? 'Guardando...' : 'Guardar'}
                 </button>
             </form>

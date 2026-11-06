@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { cache } from "react";
 import FormularioContacto from "@/components/FormularioContacto";
 import QrAr from "@/components/QrAr";
-import Visor3D from "@/components/Visor3D";
+import GaleriaModelo from "@/components/GaleriaModelo";
 import BotonWhatsApp from "@/components/BotonWhatsApp";
 import BotonComparar from "@/components/BotonComparar";
 import SimuladorDividendo from "@/components/SimuladorDividendo";
@@ -10,9 +10,8 @@ import { getModeloCasaById } from "@/services/modeloCasa.service";
 import { fechaUF, obtenerValorUF } from "@/lib/uf";
 import { equivalencia, formatearCLP, formatearNumero, formatearPrecio, plural } from "@/lib/formato";
 import { URL_SITIO } from "@/lib/sitio";
-import { ETIQUETA_ESTADO } from "@/types/modeloCasa";
+import { ETIQUETA_ESTADO, imagenesModelo } from "@/types/modeloCasa";
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 
 export const revalidate = 60;
@@ -57,29 +56,13 @@ export default async function DetallePropiedadID({params}:{params:Promise<{id:st
         <main className="max-w-6xl mx-auto px-4 py-10">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 flex flex-col gap-6">
-                    {modelo.modelo3dUrl ? (
-                        <Visor3D modeloUrl={modelo.modelo3dUrl} titulo={modelo.nombreModelo}></Visor3D>
-                    ) : modelo.imgPrincipal && (
-                        <div className="relative w-full h-[500px] rounded-xl overflow-hidden bg-gray-100">
-                            <Image src={modelo.imgPrincipal} alt={modelo.nombreModelo} fill priority className="object-cover" />
-                        </div>
-                    )}
-
-                    {modelo.fotos.length > 0 && (
-                        <div className="flex gap-2 overflow-x-auto">
-                            {modelo.fotos.map((foto) => (
-                                <div key={foto.id} className="relative w-32 h-24 shrink-0 rounded-lg overflow-hidden">
-                                    <Image src={foto.urlImagen} alt={modelo.nombreModelo} fill className="object-cover" />
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                    <GaleriaModelo titulo={modelo.nombreModelo} modelo3dUrl={modelo.modelo3dUrl} imagenes={imagenesModelo(modelo)} />
 
                     <div>
                         <h1 className="text-3xl font-bold">
                             {modelo.nombreModelo}
                             {modelo.estado && modelo.estado !== 'DISPONIBLE' && (
-                                <span className={`ml-3 align-middle text-sm font-semibold text-white px-2 py-1 rounded ${modelo.estado === 'VENDIDO' ? 'bg-red-600' : 'bg-amber-600'}`}>
+                                <span className={`ml-3 align-middle text-sm font-semibold text-white px-2 py-1 rounded ${modelo.estado === 'VENDIDO' ? 'bg-gray-500' : 'bg-amber-700'}`}>
                                     {ETIQUETA_ESTADO[modelo.estado]}
                                 </span>
                             )}
@@ -88,7 +71,7 @@ export default async function DetallePropiedadID({params}:{params:Promise<{id:st
                             <Link href={`/proyectos/${modelo.proyecto.id}`} className="underline">{modelo.proyecto.nombre}</Link>
                             , {modelo.proyecto.ciudad.nombre}, {modelo.proyecto.ciudad.region.nombre}
                         </p>
-                        <p className="text-2xl font-bold mt-3">{formatearPrecio(precio, modelo.moneda)}</p>
+                        <p className="text-2xl font-bold mt-3 text-acento">{formatearPrecio(precio, modelo.moneda)}</p>
                         {otraMoneda && (
                             <p className="text-gray-600">
                                 ≈ {otraMoneda} <span className="text-sm">(UF {formatearCLP(uf!.valor)} al {fechaUF(uf!)})</span>

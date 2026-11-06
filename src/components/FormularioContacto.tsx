@@ -137,7 +137,7 @@ export default function FormularioContacto({ idModeloCasa }: FormularioContactoP
             <button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-black text-white rounded-lg py-3 font-medium disabled:opacity-50"
+                className="bg-marca text-white rounded-lg py-3 font-medium disabled:opacity-50"
             >
                 {isSubmitting ? 'Enviado' : 'Enviar formulario'}
             </button>

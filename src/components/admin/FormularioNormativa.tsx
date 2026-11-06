@@ -175,7 +175,7 @@ export default function FormularioNormativa({ idProyecto, normativa }: { idProye
 
             {mensaje && <p className={`text-sm ${mensaje.tipo === 'ok' ? 'text-green-700' : 'text-red-600'}`}>{mensaje.texto}</p>}
 
-            <button type="submit" disabled={isSubmitting} className="bg-black text-white rounded-lg py-2.5 font-medium disabled:opacity-50">
+            <button type="submit" disabled={isSubmitting} className="bg-marca text-white rounded-lg py-2.5 font-medium disabled:opacity-50">
                 {isSubmitting ? 'Guardando...' : 'Guardar normativa'}
             </button>
         </form>

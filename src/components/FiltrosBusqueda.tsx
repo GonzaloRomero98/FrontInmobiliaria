@@ -133,7 +133,7 @@ export default function FiltrosBusqueda({ iniciales }: { iniciales: Filtros }) {
             </label>
 
             <div className="col-span-2 flex gap-2 self-end">
-                <button type="submit" className="flex-1 bg-black text-white rounded-lg py-2.5 font-medium">Buscar</button>
+                <button type="submit" className="flex-1 bg-marca text-white rounded-lg py-2.5 font-medium">Buscar</button>
                 <button type="button" onClick={() => { setFiltros({}); router.push('/buscar'); }} className="px-4 border rounded-lg bg-white">
                     Limpiar
                 </button>

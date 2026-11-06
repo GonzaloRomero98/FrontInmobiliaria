@@ -13,6 +13,6 @@ export default function BotonDesconectar(){
     }
 
     return(
-        <button onClick={cerrarSesion} className="text-sm text-gray-500 hover:text-black"> Cerrar Sesion</button>
+        <button onClick={cerrarSesion} className="text-sm text-gray-500 hover:text-marca"> Cerrar Sesion</button>
     );
 }

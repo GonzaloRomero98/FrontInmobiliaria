@@ -20,7 +20,7 @@ export default function ComparadorSinSeleccion() {
                 Elige hasta {MAXIMO_COMPARAR} modelos con el botón <strong>+ Comparar</strong> y míralos lado a lado,
                 con su recorrido 3D.
             </p>
-            <Link href="/buscar" className="bg-black text-white rounded-lg px-5 py-2.5 font-medium">Buscar propiedades</Link>
+            <Link href="/buscar" className="bg-marca text-white rounded-lg px-5 py-2.5 font-medium">Buscar propiedades</Link>
         </div>
     );
 }

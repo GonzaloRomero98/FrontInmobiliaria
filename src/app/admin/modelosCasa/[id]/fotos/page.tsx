@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import SubidaGaleria from "@/components/SubidaGaleria";
-import { agregarFotoModelo, eliminarFotoModelo, getModeloAdminById } from "@/services/modeloCasa.service";
+import { agregarFotoModelo, eliminarFotoModelo, getModeloAdminById, ordenarFotosModelo } from "@/services/modeloCasa.service";
 import { obtenerUrlSubida, subirArchivo } from "@/services/s3.service";
 import { ModeloCasa } from "@/types/modeloCasa";
 
@@ -51,6 +51,22 @@ export default function FotosModeloCasa(){
         }
     }
 
+    // Se mueve en pantalla al instante y se guarda; si falla, se vuelve al orden anterior
+    async function mover(i:number, delta:-1 | 1){
+        if(!modelo) return;
+        const anterior = modelo.fotos;
+        const fotos = [...anterior];
+        [fotos[i], fotos[i + delta]] = [fotos[i + delta], fotos[i]];
+        setError(null);
+        setModelo({...modelo, fotos});
+        try{
+            await ordenarFotosModelo(id, fotos.map((f) => f.id));
+        }catch{
+            setModelo((m) => m && {...m, fotos: anterior});
+            setError('No se pudo guardar el nuevo orden');
+        }
+    }
+
     if (!modelo) return <main className="max-w-3xl mx-auto px-4 py-10">{error ?? 'Cargando...'}</main>;
 
     return(
@@ -63,16 +79,28 @@ export default function FotosModeloCasa(){
             {modelo.fotos.length === 0 ? (
                 <p className="text-gray-500">Este modelo aún no tiene fotos en la galería.</p>
             ) : (
+                <>
+                <p className="text-sm text-gray-500">
+                    Este es el orden del carrusel de la ficha pública. La foto principal del modelo siempre va primero, antes de estas.
+                </p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {modelo.fotos.map((foto) => (
+                    {modelo.fotos.map((foto, i) => (
                         <div key={foto.id} className="flex flex-col gap-1">
-                            <img src={foto.urlImagen} alt={`Foto ${foto.orden + 1} de ${modelo.nombreModelo}`} className="w-full h-32 object-cover rounded-lg border" />
-                            <button type="button" onClick={() => eliminar(foto.id)} className="text-sm text-red-600 hover:underline self-start">
-                                Eliminar
-                            </button>
+                            <img src={foto.urlImagen} alt={`Foto ${i + 1} de ${modelo.nombreModelo}`} className="w-full h-32 object-cover rounded-lg border" />
+                            <div className="flex items-center gap-1">
+                                <button type="button" onClick={() => mover(i, -1)} disabled={i === 0} aria-label={`Mover foto ${i + 1} hacia atrás`}
+                                    className="text-sm border rounded px-2 py-0.5 hover:bg-gray-50 disabled:opacity-30">←</button>
+                                <button type="button" onClick={() => mover(i, 1)} disabled={i === modelo.fotos.length - 1} aria-label={`Mover foto ${i + 1} hacia adelante`}
+                                    className="text-sm border rounded px-2 py-0.5 hover:bg-gray-50 disabled:opacity-30">→</button>
+                                <span className="text-xs text-gray-500 mx-1">{i + 1}</span>
+                                <button type="button" onClick={() => eliminar(foto.id)} className="text-sm text-red-600 hover:underline ml-auto">
+                                    Eliminar
+                                </button>
+                            </div>
                         </div>
                     ))}
                 </div>
+                </>
             )}
 
             <section className="p-4 border rounded-xl flex flex-col gap-3">
@@ -83,7 +111,7 @@ export default function FotosModeloCasa(){
                     type="button"
                     onClick={subirFotos}
                     disabled={archivos.length === 0 || subiendo !== null}
-                    className="bg-black text-white rounded-lg py-2 px-4 font-medium disabled:opacity-50 self-start"
+                    className="bg-marca text-white rounded-lg py-2 px-4 font-medium disabled:opacity-50 self-start"
                 >
                     {subiendo ?? `Subir ${archivos.length || ''} foto${archivos.length === 1 ? '' : 's'}`}
                 </button>

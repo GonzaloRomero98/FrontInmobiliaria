@@ -5,6 +5,11 @@ export type Moneda = 'UF'|'CLP'
 export type Operacion = 'VENTA'|'ARRIENDO'
 export type EstadoModelo = 'DISPONIBLE'|'RESERVADO'|'VENDIDO'
 
+// Foto principal primero y luego la galería en su orden, sin repetir la principal
+export function imagenesModelo(modelo: Pick<ModeloCasa, 'imgPrincipal' | 'fotos'>): string[] {
+    return [...new Set([modelo.imgPrincipal, ...(modelo.fotos ?? []).map((f) => f.urlImagen)].filter(Boolean))];
+}
+
 export const ETIQUETA_ESTADO: Record<EstadoModelo, string> = {
     DISPONIBLE: 'Disponible',
     RESERVADO: 'Reservado',

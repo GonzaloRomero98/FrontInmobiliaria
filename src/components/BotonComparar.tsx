@@ -14,8 +14,8 @@ export default function BotonComparar({ idModelo, variante = 'flotante' }: Boton
     const texto = seleccionado ? 'En comparación' : 'Comparar';
 
     const estilos = variante === 'flotante'
-        ? `absolute top-3 right-3 z-10 text-xs px-2.5 py-1.5 rounded-full shadow ${seleccionado ? 'bg-black text-white' : 'bg-white/95 text-gray-900'}`
-        : `w-full rounded-lg py-3 font-medium border ${seleccionado ? 'bg-black text-white border-black' : 'bg-white hover:bg-gray-50'}`;
+        ? `absolute top-3 right-3 z-10 text-xs px-2.5 py-1.5 rounded-full shadow ${seleccionado ? 'bg-marca text-white' : 'bg-white/95 text-gray-900'}`
+        : `w-full rounded-lg py-3 font-medium border ${seleccionado ? 'bg-marca text-white border-marca' : 'bg-white hover:bg-gray-50'}`;
 
     return (
         <button

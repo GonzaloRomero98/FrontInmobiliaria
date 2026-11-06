@@ -3,8 +3,8 @@ import { NOMBRE_SITIO } from "@/lib/sitio";
 
 export default function PieDePagina() {
     return (
-        <footer className="border-t mt-16">
-            <div className="max-w-6xl mx-auto px-4 py-8 flex flex-col sm:flex-row gap-4 justify-between text-sm text-gray-500">
+        <footer className="bg-marca mt-16">
+            <div className="max-w-6xl mx-auto px-4 py-8 flex flex-col sm:flex-row gap-4 justify-between text-sm text-gray-300">
                 <p>© {new Date().getFullYear()} {NOMBRE_SITIO}. Precios y valores referenciales.</p>
                 <div className="flex gap-4">
                     <Link href="/privacidad" className="hover:underline">Política de privacidad</Link>

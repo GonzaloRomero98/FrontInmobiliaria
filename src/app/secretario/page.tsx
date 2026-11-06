@@ -84,7 +84,7 @@ export default function SecretarioDashboard() {
                     <h1 className="text-2xl font-bold">Solicitudes de contacto</h1>
                 </div>
                 <div className="flex items-center gap-4">
-                    <Link href="/cuenta" className="text-sm text-gray-500 hover:text-black">Mi contraseña</Link>
+                    <Link href="/cuenta" className="text-sm text-gray-500 hover:text-marca">Mi contraseña</Link>
                     <BotonDesconectar></BotonDesconectar>
                 </div>
             </div>
@@ -98,7 +98,7 @@ export default function SecretarioDashboard() {
                         role="tab"
                         aria-selected={filtro === valor}
                         onClick={() => setFiltro(valor)}
-                        className={`text-sm px-3 py-1.5 rounded-full border ${filtro === valor ? 'bg-black text-white border-black' : 'hover:bg-gray-50'}`}
+                        className={`text-sm px-3 py-1.5 rounded-full border ${filtro === valor ? 'bg-marca text-white border-marca' : 'hover:bg-gray-50'}`}
                     >
                         {etiqueta}{valor === 'pendientes' && ` (${pendientes})`}
                     </button>
@@ -168,7 +168,7 @@ export default function SecretarioDashboard() {
                                         {!soli.contactado && (
                                             <button
                                                 onClick={() => handleMarcarContactado(soli.id)}
-                                                className="text-sm bg-black text-white px-3 py-1 rounded-lg whitespace-nowrap"
+                                                className="text-sm bg-marca text-white px-3 py-1 rounded-lg whitespace-nowrap"
                                             >
                                                 Marcar contactado
                                             </button>

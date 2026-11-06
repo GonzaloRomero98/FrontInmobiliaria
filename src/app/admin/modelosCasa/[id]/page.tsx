@@ -24,7 +24,7 @@ export default function EditarModeloCasa(){
             <Link href="/admin/modelosCasa" className="text-sm text-gray-500 hover:underline">← Modelos de casa</Link>
             <div className="flex items-baseline justify-between gap-2 mb-6">
                 <h1 className="text-2xl font-bold">Editar {modelo.nombreModelo}</h1>
-                <Link href={`/admin/modelosCasa/${modelo.id}/fotos`} className="text-sm underline">Fotos</Link>
+                <Link href={`/admin/modelosCasa/${modelo.id}/fotos`} className="text-sm text-acento underline">Fotos</Link>
             </div>
             <FormularioModeloCasa modelo={modelo} />
         </main>

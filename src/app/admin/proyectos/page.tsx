@@ -50,9 +50,10 @@ export default function ListadoProyectos() {
 
     return (
         <main className="max-w-3xl mx-auto px-4 py-10">
+            <Link href="/admin" className="text-sm text-gray-500 hover:underline">← Panel</Link>
             <div className="flex items-center justify-between mb-6">
                 <h1 className="text-2xl font-bold">Proyectos</h1>
-                <Link href="/admin/proyectos/nuevo" className="text-sm underline">Crear proyecto</Link>
+                <Link href="/admin/proyectos/nuevo" className="text-sm text-acento underline">Crear proyecto</Link>
             </div>
             {error && <p className="text-red-500">{error}</p>}
             {filas.length === 0 && !error ? (

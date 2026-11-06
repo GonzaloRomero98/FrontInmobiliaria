@@ -69,7 +69,7 @@ export default function Login(){
                     </div>
 
                     {error && <p className="text-red-500 text-sm">{error}</p>}
-                    <button type="submit" disabled={isSubmitting} className="bg-black text-white rounded-lg py-3 font-medium disabled:opacity-50">{isSubmitting ? 'Entrando' : 'Iniciar sesion'}</button>
+                    <button type="submit" disabled={isSubmitting} className="bg-marca text-white rounded-lg py-3 font-medium disabled:opacity-50">{isSubmitting ? 'Entrando' : 'Iniciar sesion'}</button>
                 </form>
             </main>
         )

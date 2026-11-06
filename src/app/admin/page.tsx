@@ -30,7 +30,7 @@ export default function AdminDashboard(){
         <div className="flex justify-between items-center mb-8">
             <h1 className="text-2xl font-bold">Panel de administracion</h1>
             <div className="flex items-center gap-4">
-                <Link href="/cuenta" className="text-sm text-gray-500 hover:text-black">Mi contraseña</Link>
+                <Link href="/cuenta" className="text-sm text-gray-500 hover:text-marca">Mi contraseña</Link>
                 <BotonDesconectar></BotonDesconectar>
             </div>
         </div>

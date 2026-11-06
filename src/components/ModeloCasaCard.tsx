@@ -1,10 +1,12 @@
-import { ETIQUETA_ESTADO, ModeloCasa } from "@/types/modeloCasa";
+import { ETIQUETA_ESTADO, imagenesModelo, ModeloCasa } from "@/types/modeloCasa";
 import Image from "next/image";
+import { Images } from "lucide-react";
 import Link from "next/link";
 import BotonComparar from "./BotonComparar";
 import { formatearNumero, formatearPrecio, plural } from "@/lib/formato";
 
 export default function ModeloCasaCard({modelo}:{modelo:ModeloCasa}){
+    const cantidadFotos = imagenesModelo(modelo).length;
     return(
         <div className="relative rounded-xl overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow">
             <BotonComparar idModelo={modelo.id} />
@@ -14,8 +16,13 @@ export default function ModeloCasaCard({modelo}:{modelo:ModeloCasa}){
 
                     <span className="absolute top-3 left-3 bg-black/70 text-white text-xs px-2 py-1 rounded">{modelo.tipoOperacion}</span>
                     {modelo.estado && modelo.estado !== 'DISPONIBLE' && (
-                        <span className={`absolute bottom-3 left-3 text-white text-xs font-semibold px-2 py-1 rounded ${modelo.estado === 'VENDIDO' ? 'bg-red-600' : 'bg-amber-600'}`}>
+                        <span className={`absolute bottom-3 left-3 text-white text-xs font-semibold px-2 py-1 rounded ${modelo.estado === 'VENDIDO' ? 'bg-gray-500' : 'bg-amber-700'}`}>
                             {ETIQUETA_ESTADO[modelo.estado]}
+                        </span>
+                    )}
+                    {cantidadFotos > 1 && (
+                        <span className="absolute bottom-3 right-3 flex items-center gap-1 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                            <Images className="w-3.5 h-3.5" aria-hidden /> {cantidadFotos} fotos
                         </span>
                     )}
                 </div>
@@ -23,7 +30,7 @@ export default function ModeloCasaCard({modelo}:{modelo:ModeloCasa}){
                 <div className="p-4">
                     <h2 className="font-semibold text-lg truncate">{modelo.nombreModelo}</h2>
                     <p className="text-gray-500 text-sm">{modelo.proyecto.nombre} · {modelo.proyecto.ciudad.nombre}</p>
-                    <p className="text-xl font-bold mt-2">{formatearPrecio(modelo.precio, modelo.moneda)}</p>
+                    <p className="text-xl font-bold mt-2 text-acento">{formatearPrecio(modelo.precio, modelo.moneda)}</p>
                     <div className="flex gap-3 text-sm text-gray-600 mt-1">
                         <span>{modelo.dormitorios} dorm.</span>
                         <span>{plural(modelo.banos, 'baño', 'baños')}</span>

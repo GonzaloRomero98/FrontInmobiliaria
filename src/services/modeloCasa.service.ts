@@ -54,6 +54,11 @@ export async function  eliminarFotoModelo(idModelo:string,foto_id:string ):Promi
     await api.delete(`/modeloCasa/${idModelo}/fotos/${foto_id}`);
 }
 
+// ids = todas las fotos del modelo en el nuevo orden
+export async function ordenarFotosModelo(idModelo:string, ids:string[]):Promise<void> {
+    await api.put(`/modeloCasa/${idModelo}/fotos/orden`, {ids});
+}
+
 export async function actualizarModeloCasa(id:string, cambios:Partial<ModeloCasaInput>):Promise<ModeloCasa>{
     const {data} = await api.patch(`/modeloCasa/${id}`, cambios);
     return data;

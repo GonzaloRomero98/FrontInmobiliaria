@@ -15,7 +15,7 @@ export default function BarraComparador() {
 
     return (
         <div className="fixed bottom-4 inset-x-0 z-50 px-4 pointer-events-none">
-            <div className="pointer-events-auto max-w-md mx-auto flex items-center justify-between gap-3 bg-black text-white rounded-full pl-5 pr-2 py-2 shadow-xl">
+            <div className="pointer-events-auto max-w-md mx-auto flex items-center justify-between gap-3 bg-marca text-white rounded-full pl-5 pr-2 py-2 shadow-xl">
                 <span className="text-sm">
                     {ids.length} de {MAXIMO_COMPARAR} modelos para comparar
                 </span>
@@ -25,7 +25,7 @@ export default function BarraComparador() {
                     </button>
                     <Link
                         href={`/comparar?ids=${ids.join(',')}`}
-                        className={`text-sm font-medium rounded-full px-4 py-1.5 ${ids.length < 2 ? 'bg-gray-600 pointer-events-none' : 'bg-white text-black'}`}
+                        className={`text-sm font-medium rounded-full px-4 py-1.5 ${ids.length < 2 ? 'bg-gray-600 pointer-events-none' : 'bg-white text-marca'}`}
                         aria-disabled={ids.length < 2}
                     >
                         Comparar

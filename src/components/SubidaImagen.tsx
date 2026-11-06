@@ -67,7 +67,7 @@ export default function SubidaImagen({ archivoSeleccionado, progreso = 0, subien
             {errorLocal && <p className="text-red-500 text-sm">{errorLocal}</p>}
             {subiendo && (
                 <div className="w-full bg-gray-100 rounded-full h-2">
-                    <div className="bg-black h-2 rounded-full transition-all" style={{ width: `${progreso}%` }} />
+                    <div className="bg-marca h-2 rounded-full transition-all" style={{ width: `${progreso}%` }} />
                 </div>
             )}
         </div>

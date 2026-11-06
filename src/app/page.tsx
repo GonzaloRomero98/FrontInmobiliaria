@@ -23,9 +23,9 @@ export default async function Home() {
                     plan regulador de cada proyecto, en un solo lugar.
                 </p>
                 <div className="flex flex-wrap gap-3">
-                    <Link href="/buscar?tipoOperacion=VENTA" className="bg-black text-white rounded-lg px-5 py-3 font-medium">Comprar</Link>
+                    <Link href="/buscar?tipoOperacion=VENTA" className="bg-marca text-white rounded-lg px-5 py-3 font-medium">Comprar</Link>
                     <Link href="/buscar?tipoOperacion=ARRIENDO" className="border rounded-lg px-5 py-3 font-medium">Arrendar</Link>
-                    <Link href="/buscar" className="px-5 py-3 font-medium underline">Ver todas las propiedades</Link>
+                    <Link href="/buscar" className="px-5 py-3 font-medium text-acento underline">Ver todas las propiedades</Link>
                 </div>
             </section>
 

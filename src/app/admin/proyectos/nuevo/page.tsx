@@ -2,6 +2,7 @@
 
 import { Ciudad, Region } from "@/types/ubicacion";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -94,6 +95,7 @@ export default function NuevoProyecto() {
 
     return (
         <main className="max-w-lg mx-auto px-4 py-10">
+            <Link href="/admin/proyectos" className="text-sm text-gray-500 hover:underline">← Proyectos</Link>
             <h1 className="text-2xl font-bold mb-6">Crear proyecto</h1>
             <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
                 <div>
@@ -165,7 +167,7 @@ export default function NuevoProyecto() {
                 <button
                     type="submit"
                     disabled={isSubmitting || subiendoImagen}
-                    className="bg-black text-white rounded-lg py-3 font-medium disabled:opacity-50"
+                    className="bg-marca text-white rounded-lg py-3 font-medium disabled:opacity-50"
                 >
                     {subiendoImagen ? 'Subiendo imagen...' : isSubmitting ? 'Creando...' : 'Crear proyecto'}
                 </button>

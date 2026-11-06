@@ -311,7 +311,7 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                 <button
                     type="submit"
                     disabled={isSubmitting || subiendoImagen || subiendoModelo3D}
-                    className="bg-black text-white rounded-lg py-3 font-medium disabled:opacity-50"
+                    className="bg-marca text-white rounded-lg py-3 font-medium disabled:opacity-50"
                 >
                     {subiendoImagen ? 'Subiendo imagen...' : subiendoModelo3D ? 'Subiendo modelo 3D...' : isSubmitting ? 'Guardando...' : modelo ? 'Guardar cambios' : 'Crear modelo de casa'}
                 </button>

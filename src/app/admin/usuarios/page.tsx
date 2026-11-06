@@ -89,7 +89,7 @@ export default function Usuarios() {
                     <option value="ADMIN">Administrador</option>
                 </select>
                 <p className="text-xs text-gray-500 sm:col-span-2">Mínimo 10 caracteres, con mayúscula, minúscula y número.</p>
-                <button type="submit" disabled={creando} className="sm:col-span-2 bg-black text-white rounded-lg py-2 font-medium disabled:opacity-50">
+                <button type="submit" disabled={creando} className="sm:col-span-2 bg-marca text-white rounded-lg py-2 font-medium disabled:opacity-50">
                     {creando ? 'Creando...' : 'Crear cuenta'}
                 </button>
             </form>
@@ -125,7 +125,7 @@ export default function Usuarios() {
                             <form onSubmit={(e) => restablecer(e, usuario)} className="flex gap-2 mt-3">
                                 <input required type="password" autoComplete="new-password" value={contrasenaNueva} onChange={(e) => setContrasenaNueva(e.target.value)}
                                     placeholder="Contraseña nueva" aria-label={`Contraseña nueva para ${usuario.correo}`} className="flex-1 border rounded-lg px-3 py-1.5 text-sm" />
-                                <button type="submit" className="text-sm bg-black text-white rounded-lg px-3 py-1.5">Guardar</button>
+                                <button type="submit" className="text-sm bg-marca text-white rounded-lg px-3 py-1.5">Guardar</button>
                             </form>
                         )}
                     </div>

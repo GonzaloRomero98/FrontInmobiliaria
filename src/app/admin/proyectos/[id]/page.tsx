@@ -35,7 +35,7 @@ export default function EditarProyecto() {
                     <h1 className="text-2xl font-bold">{proyecto.nombre}</h1>
                     <p className="text-gray-500">{proyecto.ciudad.nombre}, {proyecto.ciudad.region.nombre}</p>
                 </div>
-                <Link href={`/proyectos/${proyecto.id}`} className="text-sm underline" target="_blank">Ver ficha pública</Link>
+                <Link href={`/proyectos/${proyecto.id}`} className="text-sm text-acento underline" target="_blank">Ver ficha pública</Link>
             </div>
 
             <FormularioDatosProyecto proyecto={proyecto} onGuardado={setProyecto} />

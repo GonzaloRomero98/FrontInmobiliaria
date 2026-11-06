@@ -50,7 +50,7 @@ export default function Caracteristicas(){
                     aria-label="Nombre de la caracteristica"
                     className="flex-1 border rounded-lg px-3 py-2"
                 />
-                <button type="submit" disabled={guardando || !nombre.trim()} className="bg-black text-white rounded-lg px-4 font-medium disabled:opacity-50">
+                <button type="submit" disabled={guardando || !nombre.trim()} className="bg-marca text-white rounded-lg px-4 font-medium disabled:opacity-50">
                     {guardando ? 'Agregando...' : 'Agregar'}
                 </button>
             </form>

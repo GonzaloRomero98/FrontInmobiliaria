@@ -56,7 +56,7 @@ export default function SubidaModelo3d({archivoSeleccionado, progreso = 0, subie
             {error && <p className="text-red-500 text-sm">{error}</p>}
             {subiendo &&(
                 <div className="w-full bg-gray-100 rounded-full h-2">
-                    <div className="bg-black h-2 rounded-full transition-all" style={{width:`${progreso}%`}}></div>
+                    <div className="bg-marca h-2 rounded-full transition-all" style={{width:`${progreso}%`}}></div>
                 </div>
             )}
         </div>
