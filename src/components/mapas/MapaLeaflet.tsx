@@ -7,11 +7,27 @@ import { useEffect, useMemo } from 'react';
 import { Circle, CircleMarker, MapContainer, Marker, Popup, TileLayer, Tooltip, useMap, useMapEvents } from 'react-leaflet';
 import { CATEGORIAS_ENTORNO, LugarCercano } from '@/types/entorno';
 import { formatearDistancia } from '@/lib/formato';
+import { htmlSimbolo, TipoPunto } from './simbolos';
 
 export interface PuntoProyecto {
     id: string;
     nombre: string;
     comuna: string;
+    latitud: number;
+    longitud: number;
+    // Qué vende el proyecto (null = sin modelos publicados), p. ej. "2 modelos de casa" y "Desde 2.000 UF"
+    tipo?: Exclude<TipoPunto, 'SALA'> | null;
+    resumen?: string;
+    desde?: string | null;
+}
+
+export interface PuntoSala {
+    idProyecto: string;
+    proyecto: string;
+    direccion: string;
+    horario: string | null;
+    telefono: string | null;
+    comoLlegar: string;
     latitud: number;
     longitud: number;
 }
@@ -29,6 +45,18 @@ const pin = L.divIcon({
     popupAnchor: [0, -22],
 });
 
+const iconos = new Map<string, L.DivIcon>();
+function icono(tipo: TipoPunto | null): L.DivIcon {
+    const clave = tipo ?? 'NINGUNO';
+    if (!iconos.has(clave)) {
+        iconos.set(clave, L.divIcon({
+            className: '', html: htmlSimbolo(tipo),
+            iconSize: [26, 26], iconAnchor: tipo === 'SALA' ? [13, 13] : [13, 26], popupAnchor: [0, tipo === 'SALA' ? -13 : -26],
+        }));
+    }
+    return iconos.get(clave)!;
+}
+
 function AjustarVista({ puntos }: { puntos: [number, number][] }) {
     const mapa = useMap();
     useEffect(() => {
@@ -40,17 +68,29 @@ function AjustarVista({ puntos }: { puntos: [number, number][] }) {
 
 const estiloMapa = (altura: number) => ({ height: altura, width: '100%', borderRadius: 12, zIndex: 0 });
 
-export function MapaProyectosLeaflet({ proyectos, altura = 420 }: { proyectos: PuntoProyecto[]; altura?: number }) {
-    const puntos = useMemo(() => proyectos.map((p) => [p.latitud, p.longitud] as [number, number]), [proyectos]);
+export function MapaProyectosLeaflet({ proyectos, salas = [], altura = 420 }: { proyectos: PuntoProyecto[]; salas?: PuntoSala[]; altura?: number }) {
+    const puntos = useMemo(() => [...proyectos, ...salas].map((p) => [p.latitud, p.longitud] as [number, number]), [proyectos, salas]);
     return (
         <MapContainer center={CENTRO_CHILE} zoom={5} scrollWheelZoom={false} style={estiloMapa(altura)}>
             <TileLayer attribution={ATRIBUCION} url={TESELAS} />
             <AjustarVista puntos={puntos} />
             {proyectos.map((p) => (
-                <Marker key={p.id} position={[p.latitud, p.longitud]} icon={pin}>
+                <Marker key={p.id} position={[p.latitud, p.longitud]} icon={icono(p.tipo ?? null)}>
                     <Popup>
                         <strong>{p.nombre}</strong><br />{p.comuna}<br />
+                        {p.resumen && <>{p.resumen}<br /></>}
+                        {p.desde && <><strong>{p.desde}</strong><br /></>}
                         <Link href={`/proyectos/${p.id}`}>Ver proyecto</Link>
+                    </Popup>
+                </Marker>
+            ))}
+            {salas.map((s) => (
+                <Marker key={`sala-${s.idProyecto}`} position={[s.latitud, s.longitud]} icon={icono('SALA')}>
+                    <Popup>
+                        <strong>Sala de ventas</strong> · {s.proyecto}<br />{s.direccion}<br />
+                        {s.horario && <>{s.horario}<br /></>}
+                        {s.telefono && <><a href={`tel:${s.telefono.replace(/\s/g, '')}`}>{s.telefono}</a><br /></>}
+                        <a href={s.comoLlegar} target="_blank" rel="noopener noreferrer">Cómo llegar</a>
                     </Popup>
                 </Marker>
             ))}

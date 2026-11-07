@@ -1,6 +1,9 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
+// Cookies de sesión (sin expires): se borran al cerrar el navegador; el JWT vence a las 8 h
+export const OPCIONES_COOKIE_SESION = {secure: true, sameSite: 'strict'} as const;
+
 export const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL,
 });

@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import FormularioUbicacion from "@/components/admin/FormularioUbicacion";
 import FormularioDatosProyecto from "@/components/admin/FormularioDatosProyecto";
 import FormularioNormativa from "@/components/admin/FormularioNormativa";
+import FormularioSalaVentas from "@/components/admin/FormularioSalaVentas";
 import { getNormativa, getProyectoPorId } from "@/services/proyecto.service";
 import { Proyecto } from "@/types/proyecto";
 import { Normativa } from "@/types/normativa";
@@ -40,6 +41,7 @@ export default function EditarProyecto() {
 
             <FormularioDatosProyecto proyecto={proyecto} onGuardado={setProyecto} />
             <FormularioUbicacion proyecto={proyecto} onGuardado={setProyecto} />
+            <FormularioSalaVentas proyecto={proyecto} onGuardado={setProyecto} />
             <FormularioNormativa idProyecto={proyecto.id} normativa={normativa} />
         </main>
     );

@@ -7,6 +7,7 @@ import FichaNormativa from "@/components/FichaNormativa";
 import { getEntorno, getNormativa, getProyectoPorId } from "@/services/proyecto.service";
 import { getModeloCasa } from "@/services/modeloCasa.service";
 import EtapaEntrega from "@/components/EtapaEntrega";
+import SalaVentas from "@/components/SalaVentas";
 import { obtenerValorUF } from "@/lib/uf";
 import { formatearUF, precioDesdeUF } from "@/lib/formato";
 import { notFound } from "next/navigation";
@@ -68,6 +69,7 @@ export default async function ProyectoDetalle({ params }: { params: Promise<{ id
                     mensaje={`Hola, me interesa el proyecto ${proyecto.nombre} en ${proyecto.ciudad.nombre}.`}
                     className="self-start"
                 />
+                <SalaVentas proyecto={proyecto} className="self-start max-w-sm" />
             </section>
 
             <section className="flex flex-col gap-4">

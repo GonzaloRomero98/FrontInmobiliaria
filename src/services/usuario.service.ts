@@ -1,4 +1,5 @@
-import { api } from "@/lib/api";
+import { api, OPCIONES_COOKIE_SESION } from "@/lib/api";
+import Cookies from "js-cookie";
 
 export type Rol = 'ADMIN'|'SECRETARIO';
 
@@ -8,7 +9,23 @@ export interface Usuario{
     nombre:string;
     activo:boolean;
     creadoEn:string;
+    fotoUrl:string | null;
     rol:{id:number; nombre:Rol};
+}
+
+// Lo emite "Mi perfil" al guardar, para que el menú del encabezado muestre el nombre y la foto nuevos
+export const EVENTO_PERFIL_ACTUALIZADO = 'perfil-actualizado';
+
+export async function getMiPerfil():Promise<Usuario>{
+    const {data} = await api.get('/usuarios/me');
+    return data;
+}
+
+// fotoUrl null quita la foto
+export async function actualizarMiPerfil(cambios:{nombre?:string; fotoUrl?:string | null}):Promise<Usuario>{
+    const {data} = await api.patch('/usuarios/me', cambios);
+    window.dispatchEvent(new Event(EVENTO_PERFIL_ACTUALIZADO));
+    return data;
 }
 
 export async function getUsuarios():Promise<Usuario[]>{
@@ -27,6 +44,9 @@ export async function actualizarUsuario(id:string, cambios:{activo?:boolean; con
     return data;
 }
 
+// El cambio invalida todos los tokens anteriores (también los de otros dispositivos):
+// se guarda el token nuevo que devuelve la API para que esta sesión siga abierta
 export async function cambiarMiContrasena(actual:string, nueva:string):Promise<void>{
-    await api.patch('/usuarios/me/contrasena', {actual, nueva});
+    const {data} = await api.patch<{access_token:string}>('/usuarios/me/contrasena', {actual, nueva});
+    Cookies.set('auth_token', data.access_token, OPCIONES_COOKIE_SESION);
 }

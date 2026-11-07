@@ -1,23 +1,24 @@
 'use client'
 
-import BotonDesconectar from "@/components/BotonDesconectar";
-import { numeroWhatsApp } from "@/lib/formato";
+import { formatearFechaHora, numeroWhatsApp } from "@/lib/formato";
 import { descargarSolicitudesCsv, getSolicitudes, marcarContactado, Solicitud } from "@/services/solicitud.service";
 import Cookies from "js-cookie";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-type Filtro = 'pendientes' | 'contactados' | 'todas';
+type Filtro = 'pendientes' | 'contactados' | 'visita' | 'todas';
 
 const FILTROS: { valor: Filtro; etiqueta: string }[] = [
     { valor: 'pendientes', etiqueta: 'Pendientes' },
     { valor: 'contactados', etiqueta: 'Contactados' },
+    { valor: 'visita', etiqueta: 'Con visita' },
     { valor: 'todas', etiqueta: 'Todas' },
 ];
 
 function mensajeWhatsApp(soli: Solicitud): string {
     const modelo = soli.modeloCasa ? ` por el modelo ${soli.modeloCasa.nombreModelo} del proyecto ${soli.modeloCasa.proyecto.nombre}` : '';
-    return `Hola ${soli.nombre}, te escribimos por tu consulta${modelo}.`;
+    const visita = soli.visitaPreferida ? ` Pediste visitar la sala de ventas el ${formatearFechaHora(soli.visitaPreferida)}.` : '';
+    return `Hola ${soli.nombre}, te escribimos por tu consulta${modelo}.${visita}`;
 }
 
 export default function SecretarioDashboard() {
@@ -74,19 +75,14 @@ export default function SecretarioDashboard() {
 
     const pendientes = solicitudes.filter((s) => !s.contactado).length;
     const visibles = solicitudes.filter((s) =>
-        filtro === 'todas' || (filtro === 'pendientes' ? !s.contactado : s.contactado));
+        filtro === 'todas' || (filtro === 'visita' ? !!s.visitaPreferida : filtro === 'pendientes' ? !s.contactado : s.contactado));
 
     return (
         <main className="max-w-6xl mx-auto px-4 py-10">
-            <div className="flex justify-between items-center mb-6">
-                <div>
-                    {esAdmin && <Link href="/admin" className="text-sm text-gray-500 hover:underline">← Panel</Link>}
-                    <h1 className="text-2xl font-bold">Solicitudes de contacto</h1>
-                </div>
-                <div className="flex items-center gap-4">
-                    <Link href="/cuenta" className="text-sm text-gray-500 hover:text-marca">Mi contraseña</Link>
-                    <BotonDesconectar></BotonDesconectar>
-                </div>
+            {/* Perfil y cierre de sesión están en el menú del usuario del encabezado */}
+            <div className="mb-6">
+                {esAdmin && <Link href="/admin" className="text-sm text-gray-500 hover:underline">← Panel</Link>}
+                <h1 className="text-2xl font-bold">Solicitudes de contacto</h1>
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
@@ -131,6 +127,7 @@ export default function SecretarioDashboard() {
                                 <th className="py-2 pr-4">Contacto</th>
                                 <th className="py-2 pr-4">Modelo</th>
                                 <th className="py-2 pr-4">Mensaje</th>
+                                <th className="py-2 pr-4">Visita</th>
                                 <th className="py-2 pr-4">Estado</th>
                                 <th className="py-2 pr-4">Acción</th>
                             </tr>
@@ -157,6 +154,7 @@ export default function SecretarioDashboard() {
                                         {soli.modeloCasa ? `${soli.modeloCasa.proyecto.nombre} — ${soli.modeloCasa.nombreModelo}` : '-'}
                                     </td>
                                     <td className="py-3 pr-4 max-w-xs">{soli.mensaje ?? '-'}</td>
+                                    <td className="py-3 pr-4 whitespace-nowrap">{soli.visitaPreferida ? formatearFechaHora(soli.visitaPreferida) : '-'}</td>
                                     <td className="py-3 pr-4 font-medium">
                                         {soli.contactado ? (
                                             <span className="text-green-600 font-medium">Contactado</span>
@@ -165,14 +163,20 @@ export default function SecretarioDashboard() {
                                         )}
                                     </td>
                                     <td className="py-3 pr-4">
-                                        {!soli.contactado && (
-                                            <button
-                                                onClick={() => handleMarcarContactado(soli.id)}
-                                                className="text-sm bg-marca text-white px-3 py-1 rounded-lg whitespace-nowrap"
-                                            >
-                                                Marcar contactado
-                                            </button>
-                                        )}
+                                        <div className="flex flex-col items-start gap-2">
+                                            {!soli.contactado && (
+                                                <button
+                                                    onClick={() => handleMarcarContactado(soli.id)}
+                                                    className="text-sm bg-marca text-white px-3 py-1 rounded-lg whitespace-nowrap"
+                                                >
+                                                    Marcar contactado
+                                                </button>
+                                            )}
+                                            <Link href={`/secretario/cotizacion/${soli.id}`} target="_blank"
+                                                className="text-sm border px-3 py-1 rounded-lg whitespace-nowrap hover:bg-gray-50">
+                                                Generar cotización
+                                            </Link>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

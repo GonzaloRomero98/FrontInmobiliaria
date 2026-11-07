@@ -1,12 +1,14 @@
 'use client'
 
 import { login } from "@/services/auth.service";
+import { OPCIONES_COOKIE_SESION } from "@/lib/api";
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod"
 import Cookies from "js-cookie";
+import { isAxiosError } from "axios";
 
 const esquemaLogin = z.object({
     correo:z.string().email('Los datos no son validos'),
@@ -31,8 +33,8 @@ export default function Login(){
             try{
                 const respuesta = await login(data);
 
-                Cookies.set('auth_token', respuesta.access_token,{expires: 1});
-                Cookies.set('rol_usuario', respuesta.usuario.rol,{expires:1});
+                Cookies.set('auth_token', respuesta.access_token, OPCIONES_COOKIE_SESION);
+                Cookies.set('rol_usuario', respuesta.usuario.rol, OPCIONES_COOKIE_SESION);
                 
                 if(respuesta.usuario.rol === 'ADMIN'){
                     router.push('/admin');
@@ -41,7 +43,9 @@ export default function Login(){
                 }
             }catch(error){
                 console.error('Error de login:', error);
-                setError('Datos incorrectos')
+                setError(isAxiosError(error) && error.response?.status === 429
+                    ? 'Demasiados intentos fallidos. Espera unos minutos e intenta de nuevo.'
+                    : 'Datos incorrectos')
             }
         }
 

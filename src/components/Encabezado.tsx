@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { NOMBRE_SITIO } from "@/lib/sitio";
+import MenuUsuario from "@/components/MenuUsuario";
 
 export default function Encabezado() {
     return (
@@ -12,7 +13,7 @@ export default function Encabezado() {
                 <div className="flex items-center gap-4 sm:gap-6 text-sm font-medium">
                     <Link href="/buscar" className="hover:underline">Buscar</Link>
                     <Link href="/comparar" className="hover:underline">Comparar</Link>
-                    <Link href="/login" className="text-gray-500 hover:underline">Ingresar</Link>
+                    <MenuUsuario />
                 </div>
             </nav>
         </header>

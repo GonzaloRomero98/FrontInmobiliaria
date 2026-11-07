@@ -25,6 +25,12 @@ export interface Proyecto{
     etapa: EtapaProyecto | null;
     // 'YYYY-MM-DD'
     fechaEntrega: string | null;
+    // Sala de ventas (opcional)
+    salaDireccion: string | null;
+    salaHorario: string | null;
+    salaTelefono: string | null;
+    salaLatitud: number | null;
+    salaLongitud: number | null;
     activo:boolean;
     creadoEn:string;
     ciudad:Ciudad;
@@ -40,6 +46,17 @@ export interface CrearPoyectoInput{
     longitud?: number;
     etapa?: EtapaProyecto | null;
     fechaEntrega?: string | null;
+    salaDireccion?: string | null;
+    salaHorario?: string | null;
+    salaTelefono?: string | null;
+    salaLatitud?: number | null;
+    salaLongitud?: number | null;
+}
+
+// Enlace "Cómo llegar" de Google Maps (solo URL, sin API ni clave): usa las coordenadas si las hay
+export function urlComoLlegar(p: Pick<Proyecto, 'salaDireccion' | 'salaLatitud' | 'salaLongitud'>): string {
+    const destino = p.salaLatitud !== null && p.salaLongitud !== null ? `${p.salaLatitud},${p.salaLongitud}` : p.salaDireccion ?? '';
+    return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destino)}`;
 }
 
 export type ActualizarProyectoInput = Partial<CrearPoyectoInput>;

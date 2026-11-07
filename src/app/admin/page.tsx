@@ -1,6 +1,5 @@
 'use client'
 
-import BotonDesconectar from "@/components/BotonDesconectar"
 import { getMetricas, Metricas } from "@/services/metricas.service";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -27,13 +26,8 @@ export default function AdminDashboard(){
 
     return(
     <main className="max-w-5xl mx-auto px-4 py-10">
-        <div className="flex justify-between items-center mb-8">
-            <h1 className="text-2xl font-bold">Panel de administracion</h1>
-            <div className="flex items-center gap-4">
-                <Link href="/cuenta" className="text-sm text-gray-500 hover:text-marca">Mi contraseña</Link>
-                <BotonDesconectar></BotonDesconectar>
-            </div>
-        </div>
+        {/* Perfil y cierre de sesión están en el menú del usuario del encabezado */}
+        <h1 className="text-2xl font-bold mb-8">Panel de administracion</h1>
 
         {error && <p className="text-red-500 text-sm mb-6">No se pudieron cargar las métricas</p>}
         {metricas && (

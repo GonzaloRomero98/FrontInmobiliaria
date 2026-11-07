@@ -14,6 +14,8 @@ const esquemFormulario = z.object({
     correo: z.string().email('Ingresa un correo válido'),
     celular: z.string().min(1, 'El celular es obligatorio'),
     mensaje: z.string().optional().default(''),
+    // datetime-local: "2026-11-10T15:30" en la hora del navegador
+    visita: z.string().optional(),
     aceptaPrivacidad: z.boolean().refine((v) => v, 'Debes aceptar la política de privacidad'),
 });
 
@@ -21,9 +23,11 @@ type FormValues = z.input<typeof esquemFormulario>;
 
 interface FormularioContactoProps {
     idModeloCasa: string;
+    // Solo si el proyecto tiene sala de ventas se ofrece pedir una visita
+    conVisita?: boolean;
 }
 
-export default function FormularioContacto({ idModeloCasa }: FormularioContactoProps) {
+export default function FormularioContacto({ idModeloCasa, conVisita = false }: FormularioContactoProps) {
     const [enviado, setEnviado] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -41,17 +45,24 @@ export default function FormularioContacto({ idModeloCasa }: FormularioContactoP
         setError(null);
 
         try {
+            const { visita, ...datos } = dataForm;
             await crearSolicitud({
-                ...dataForm,
+                ...datos,
                 mensaje: dataForm.mensaje ?? '',
                 id_modelo_casa:idModeloCasa,
+                ...(conVisita && visita && { visitaPreferida: new Date(visita).toISOString() }),
             });
             setEnviado(true);
             reset();
         } catch (e) {
-            setError(isAxiosError(e) && e.response?.status === 429
+            const status = isAxiosError(e) ? e.response?.status : undefined;
+            const detalle = isAxiosError(e) ? e.response?.data?.message : undefined;
+            setError(status === 429
                 ? 'Enviaste demasiadas solicitudes seguidas. Espera un minuto e inténtalo de nuevo.'
-                : 'No se pudo realizar el envio de la solicitud, reintente');
+                // El backend explica por qué rechaza la visita (fecha pasada o muy lejana)
+                : status === 400 && typeof detalle === 'string'
+                    ? detalle
+                    : 'No se pudo realizar el envio de la solicitud, reintente');
         }
     }
 
@@ -118,6 +129,14 @@ export default function FormularioContacto({ idModeloCasa }: FormularioContactoP
                     className="w-full border rounded-lg px-3 py-2"
                 />
             </div>
+
+            {conVisita && (
+                <label className="flex flex-col gap-1 text-sm">
+                    ¿Quieres visitar la sala de ventas? Fecha y hora preferida (opcional)
+                    <input type="datetime-local" {...register('visita')} className="w-full border rounded-lg px-3 py-2" />
+                    <span className="text-xs text-gray-500">Te confirmaremos la visita por teléfono o WhatsApp.</span>
+                </label>
+            )}
 
             <div>
                 <label className="flex items-start gap-2 text-sm">

@@ -39,6 +39,11 @@ export function precioDesdeUF(modelos: Pick<ModeloCasa, 'tipoOperacion' | 'estad
     return precios.length ? Math.min(...precios) : null;
 }
 
+// Fecha y hora de Chile en formato 24 h, p. ej. "10-11-2026, 15:30"
+export function formatearFechaHora(iso: string): string {
+    return new Date(iso).toLocaleString('es-CL', { timeZone: 'America/Santiago', dateStyle: 'medium', timeStyle: 'short', hourCycle: 'h23' });
+}
+
 export function plural(cantidad: number, singular: string, plural: string): string {
     return `${cantidad} ${cantidad === 1 ? singular : plural}`;
 }

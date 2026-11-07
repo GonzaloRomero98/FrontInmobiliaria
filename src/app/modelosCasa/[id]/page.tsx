@@ -12,6 +12,7 @@ import { equivalencia, formatearCLP, formatearNumero, formatearPrecio, plural } 
 import { URL_SITIO } from "@/lib/sitio";
 import { ETIQUETA_ESTADO, ETIQUETA_TIPO_VIVIENDA, imagenesModelo } from "@/types/modeloCasa";
 import EtapaEntrega from "@/components/EtapaEntrega";
+import SalaVentas from "@/components/SalaVentas";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -134,8 +135,9 @@ export default async function DetallePropiedadID({params}:{params:Promise<{id:st
                     <BotonComparar idModelo={modelo.id} variante="completo" />
                     {modelo.modelo3dUrl && <QrAr urlPropiedad={urlActual}></QrAr>}
                     <div className="p-4 border rounded-xl">
-                        <FormularioContacto idModeloCasa={modelo.id}></FormularioContacto>
+                        <FormularioContacto idModeloCasa={modelo.id} conVisita={!!modelo.proyecto.salaDireccion}></FormularioContacto>
                     </div>
+                    <SalaVentas proyecto={modelo.proyecto} />
                 </div>
             </div>
         </main>

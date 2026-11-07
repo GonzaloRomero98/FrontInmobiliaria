@@ -5,5 +5,7 @@ export interface CrearSolicitudInput{
     celular:string;
     mensaje?:string;
     id_modelo_casa:string;
+    // ISO 8601 (UTC)
+    visitaPreferida?:string;
     aceptaPrivacidad:boolean;
 }

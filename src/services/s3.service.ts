@@ -21,7 +21,7 @@ function tipoDeArchivo(archivo: File): string {
 
 export async function obtenerUrlSubida(
     archivo: File,
-    carpeta: 'proyectos' | 'modelosImagenes' | 'modelos3D',
+    carpeta: 'proyectos' | 'modelosImagenes' | 'modelos3D' | 'perfiles',
 ): Promise<PresignedUrlResponse> {
     const { data } = await api.post('/s3/presigned-url', {
         archivo: archivo.name,

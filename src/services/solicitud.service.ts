@@ -10,6 +10,7 @@ export interface Solicitud{
     celular: string;
     mensaje: string | null;
     contactado: boolean;
+    visitaPreferida: string | null;
     creadoEn: string;
     modeloCasa: ModeloCasa;
 }
@@ -21,6 +22,11 @@ export async function crearSolicitud(dataForm: CrearSolicitudInput) {
 
 export async function getSolicitudes():Promise<Solicitud[]> {
     const {data} = await api.get('/solicitudes');
+    return data;
+}
+
+export async function getSolicitud(id: string): Promise<Solicitud> {
+    const {data} = await api.get(`/solicitudes/${id}`);
     return data;
 }
 

@@ -22,4 +22,4 @@ export const SelectorUbicacion = dynamic(() => import('./MapaLeaflet').then((m) 
     loading: () => <Cargando altura={320} />,
 });
 
-export type { PuntoProyecto } from './MapaLeaflet';
+export type { PuntoProyecto, PuntoSala } from './MapaLeaflet';

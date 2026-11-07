@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 
-export default function BotonDesconectar(){
+export default function BotonDesconectar({className = "text-sm text-gray-500 hover:text-marca"}:{className?:string}){
     const router = useRouter();
 
     function cerrarSesion(){
@@ -13,6 +13,6 @@ export default function BotonDesconectar(){
     }
 
     return(
-        <button onClick={cerrarSesion} className="text-sm text-gray-500 hover:text-marca"> Cerrar Sesion</button>
+        <button type="button" onClick={cerrarSesion} className={className}>Cerrar sesión</button>
     );
 }
