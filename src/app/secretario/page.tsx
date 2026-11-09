@@ -82,6 +82,8 @@ export default function SecretarioDashboard() {
     const [lote, setLote] = useState('');
     const [errorRut, setErrorRut] = useState<string | null>(null);
     const [guardandoReserva, setGuardandoReserva] = useState(false);
+    // Evita un segundo clic mientras la petición de vender o anular sigue en curso
+    const [cambiandoId, setCambiandoId] = useState<string | null>(null);
 
     function abrirReserva(id: string) {
         setReservandoId(id);
@@ -120,10 +122,13 @@ export default function SecretarioDashboard() {
             ? '¿Marcar esta reserva como vendida? Ya no se podrá anular desde aquí.'
             : '¿Anular esta reserva? La unidad vuelve a quedar disponible.';
         if (!confirm(pregunta)) return;
+        setCambiandoId(reserva.id);
         try {
             reemplazarReserva(idSolicitud, await cambiarEstadoReserva(reserva.id, estado));
         } catch (err) {
             alert(mensajeError(err, 'No se pudo actualizar la reserva'));
+        } finally {
+            setCambiandoId(null);
         }
     }
 
@@ -278,11 +283,13 @@ export default function SecretarioDashboard() {
                                             {reserva?.estado === 'RESERVADA' && (
                                                 <>
                                                     <button type="button" onClick={() => handleCambiarReserva(soli.id, reserva, 'VENDIDA')}
-                                                        className="text-sm border px-3 py-1 rounded-lg whitespace-nowrap hover:bg-gray-50">
+                                                        disabled={cambiandoId === reserva.id}
+                                                        className="text-sm border px-3 py-1 rounded-lg whitespace-nowrap hover:bg-gray-50 disabled:opacity-50">
                                                         Marcar vendida
                                                     </button>
                                                     <button type="button" onClick={() => handleCambiarReserva(soli.id, reserva, 'ANULADA')}
-                                                        className="text-sm text-red-700 border border-red-200 px-3 py-1 rounded-lg whitespace-nowrap hover:bg-red-50">
+                                                        disabled={cambiandoId === reserva.id}
+                                                        className="text-sm text-red-700 border border-red-200 px-3 py-1 rounded-lg whitespace-nowrap hover:bg-red-50 disabled:opacity-50">
                                                         Anular reserva
                                                     </button>
                                                 </>

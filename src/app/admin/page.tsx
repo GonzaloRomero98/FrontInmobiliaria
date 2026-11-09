@@ -43,7 +43,7 @@ export default function AdminDashboard(){
                     <div className="p-4 border rounded-xl">
                         <h2 className="font-semibold mb-2">Inventario</h2>
                         <p className="text-sm text-gray-700">
-                            {plural(metricas.modelos.disponibles, 'casa disponible', 'casas disponibles')} · {plural(metricas.modelos.reservados, 'reservada', 'reservadas')} · {plural(metricas.modelos.vendidos, 'vendida', 'vendidas')} (de {metricas.modelos.unidades})
+                            {plural(metricas.modelos.disponibles, 'casa disponible', 'casas disponibles')} · {plural(metricas.modelos.reservados, 'reservada', 'reservadas')} · {plural(metricas.modelos.vendidos, 'vendida', 'vendidas')}{metricas.modelos.unidades != null && ` (de ${metricas.modelos.unidades})`}
                         </p>
                     </div>
                     <div className="p-4 border rounded-xl">
