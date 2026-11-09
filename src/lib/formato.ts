@@ -48,6 +48,15 @@ export function plural(cantidad: number, singular: string, plural: string): stri
     return `${cantidad} ${cantidad === 1 ? singular : plural}`;
 }
 
+// Misma regla que el backend (CrearSolicitudDto): móvil chileno, guardado como +569XXXXXXXX
+export const CELULAR_VALIDO = /^\+569\d{8}$/;
+export function normalizarCelular(valor: string): string {
+    const digitos = valor.replace(/\D/g, '');
+    if (/^569\d{8}$/.test(digitos)) return '+' + digitos;
+    if (/^9\d{8}$/.test(digitos)) return '+56' + digitos;
+    return valor.trim();
+}
+
 // Número para wa.me: solo dígitos y con código de Chile si el celular viene sin él (9XXXXXXXX)
 export function numeroWhatsApp(celular: string): string {
     const digitos = celular.replace(/\D/g, '');

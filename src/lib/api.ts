@@ -1,5 +1,6 @@
 import axios from "axios";
 import Cookies from "js-cookie";
+import { refrescarCatalogo } from "@/app/acciones";
 
 // Cookies de sesión (sin expires): se borran al cerrar el navegador; el JWT vence a las 8 h
 export const OPCIONES_COOKIE_SESION = {secure: true, sameSite: 'strict'} as const;
@@ -16,6 +17,16 @@ api.interceptors.request.use((config)=>{
     }
 
     return config;
+});
+
+// Un cambio en proyectos, modelos o características invalida el caché de las páginas públicas
+const RUTAS_CATALOGO = /^\/(proyectos|modeloCasa|caracteristicas)\b/;
+api.interceptors.response.use(async (respuesta)=>{
+    const {method, url} = respuesta.config;
+    if(typeof window !== 'undefined' && method !== 'get' && url && RUTAS_CATALOGO.test(url)){
+        await refrescarCatalogo().catch(()=>{});
+    }
+    return respuesta;
 });
 
 // Sesión vencida o usuario desactivado: el backend responde 401 y se vuelve al login.

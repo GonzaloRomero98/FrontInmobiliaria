@@ -7,12 +7,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
+import { CELULAR_VALIDO, normalizarCelular } from "@/lib/formato";
 
 const esquemFormulario = z.object({
     nombre: z.string().min(1, 'El nombre es obligatorio'),
     apellido: z.string().min(1, 'El apellido es obligatorio'),
     correo: z.string().email('Ingresa un correo válido'),
-    celular: z.string().min(1, 'El celular es obligatorio'),
+    celular: z.string().min(1, 'El celular es obligatorio').transform(normalizarCelular)
+        .refine((v) => CELULAR_VALIDO.test(v), 'Ingresa un celular chileno válido, ej: +56 9 1234 5678'),
     mensaje: z.string().optional().default(''),
     // datetime-local: "2026-11-10T15:30" en la hora del navegador
     visita: z.string().optional(),
@@ -114,7 +116,12 @@ export default function FormularioContacto({ idModeloCasa, conVisita = false }: 
             <div>
                 <input
                     {...register('celular')}
-                    placeholder="+56999999999"
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    maxLength={20}
+                    aria-label="Celular (WhatsApp)"
+                    placeholder="+56 9 1234 5678"
                     className="w-full border rounded-lg px-3 py-2"
                 />
                 {errors.celular && (
