@@ -1,7 +1,8 @@
 'use client'
 
 import { actualizarModeloCasa, duplicarModeloCasa, getModelosAdmin } from "@/services/modeloCasa.service";
-import { ETIQUETA_ESTADO, EstadoModelo, ModeloCasa } from "@/types/modeloCasa"
+import { ETIQUETA_ESTADO, ModeloCasa } from "@/types/modeloCasa"
+import { unidadesDisponibles } from "@/lib/formato";
 import { useEffect, useState } from "react"
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -17,7 +18,7 @@ export default function ListadoModelosCasa(){
         getModelosAdmin().then(setModelos).catch(()=> setError('No se pudo cargar los modelos')).finally(()=> setCargando(false));
     },[]);
 
-    async function cambiar(modelo:ModeloCasa, cambios:{estado?:EstadoModelo, activo?:boolean}){
+    async function cambiar(modelo:ModeloCasa, cambios:{activo:boolean}){
         setError(null);
         try{
             await actualizarModeloCasa(modelo.id, cambios);
@@ -82,16 +83,10 @@ export default function ListadoModelosCasa(){
                                 </div>
                             </div>
                             <div className="flex flex-wrap items-center gap-2">
-                                <select
-                                    aria-label={`Estado de ${modelo.nombreModelo}`}
-                                    value={modelo.estado}
-                                    onChange={(e) => cambiar(modelo, {estado: e.target.value as EstadoModelo})}
-                                    className="text-sm border rounded-lg px-2 py-1.5"
-                                >
-                                    {Object.entries(ETIQUETA_ESTADO).map(([valor, etiqueta]) => (
-                                        <option key={valor} value={valor}>{etiqueta}</option>
-                                    ))}
-                                </select>
+                                {/* El estado lo calculan las reservas; aquí solo se muestra */}
+                                <span className="text-sm text-gray-600" title={ETIQUETA_ESTADO[modelo.estado]}>
+                                    {unidadesDisponibles(modelo)} de {modelo.unidades} disponibles
+                                </span>
                                 <Link href={`/admin/modelosCasa/${modelo.id}`} className="text-sm border rounded-lg px-3 py-1.5 hover:bg-gray-50">
                                     Editar
                                 </Link>

@@ -52,7 +52,11 @@ export interface ModeloCasa{
     subsidios:Subsidio[];
     bono:string | null;
     imgPrincipal: string;
+    // Calculado por la API desde las unidades y las reservas
     estado:EstadoModelo;
+    unidades:number;
+    unidadesReservadas:number;
+    unidadesVendidas:number;
     // false = borrador (no se ve en el catálogo)
     activo:boolean;
     creadoEn:string;
@@ -81,7 +85,7 @@ export interface ModeloCasaInput{
     bono:string | null;
     imgPrincipal: string;
     caracteristicasID:number[];
-    estado?:EstadoModelo;
+    unidades?:number;
     activo?:boolean;
 }
 export type OrdenBusqueda = 'precio_asc' | 'precio_desc' | 'superficie_desc' | 'recientes';

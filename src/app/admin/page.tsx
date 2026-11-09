@@ -1,6 +1,7 @@
 'use client'
 
 import { getMetricas, Metricas } from "@/services/metricas.service";
+import { plural } from "@/lib/formato";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -41,7 +42,9 @@ export default function AdminDashboard(){
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                     <div className="p-4 border rounded-xl">
                         <h2 className="font-semibold mb-2">Inventario</h2>
-                        <p className="text-sm text-gray-700">{metricas.modelos.disponibles} disponibles · {metricas.modelos.reservados} reservados · {metricas.modelos.vendidos} vendidos</p>
+                        <p className="text-sm text-gray-700">
+                            {plural(metricas.modelos.disponibles, 'casa disponible', 'casas disponibles')} · {metricas.modelos.reservados} reservadas · {metricas.modelos.vendidos} vendidas (de {metricas.modelos.unidades})
+                        </p>
                     </div>
                     <div className="p-4 border rounded-xl">
                         <h2 className="font-semibold mb-2">Modelos más consultados</h2>

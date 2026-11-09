@@ -7,7 +7,7 @@ import { actualizarModeloCasa, crearModeloCasa, nombreModeloDisponible } from "@
 import { getProyectos } from "@/services/proyecto.service";
 import { obtenerUrlSubida, subirArchivo } from "@/services/s3.service";
 import { Caracteristica } from "@/types/caracteristicas";
-import { ETIQUETA_ESTADO, ETIQUETA_TIPO_VIVIENDA, ModeloCasa, ModeloCasaInput, Moneda, Operacion, SUBSIDIOS } from "@/types/modeloCasa";
+import { ETIQUETA_TIPO_VIVIENDA, ModeloCasa, ModeloCasaInput, Moneda, Operacion, SUBSIDIOS } from "@/types/modeloCasa";
 import { Proyecto } from "@/types/proyecto";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { isAxiosError } from "axios";
@@ -37,7 +37,7 @@ const esquemaModeloCasa = z.object({
     quitarPlano: z.boolean().optional(),
     imgPrincipal: z.string().optional(),
     quitarModelo3d: z.boolean().optional(),
-    estado: z.enum(['DISPONIBLE', 'RESERVADO', 'VENDIDO']),
+    unidades: z.string().regex(/^[1-9]\d{0,3}$/, 'Entre 1 y 9999 unidades'),
     publicado: z.boolean(),
 }).superRefine((datos, ctx) => {
     if (datos.tipoVivienda === 'CASA' && !datos.superficieTerreno) {
@@ -49,7 +49,7 @@ type FormValues = z.infer<typeof esquemaModeloCasa>;
 
 // Valores iniciales del formulario: vacíos al crear, los del modelo al editar
 function valoresIniciales(modelo?: ModeloCasa): Partial<FormValues> {
-    if (!modelo) return {mascotas:false, tipoVivienda:'CASA', subsidios:[], estado:'DISPONIBLE', publicado:true};
+    if (!modelo) return {mascotas:false, tipoVivienda:'CASA', subsidios:[], unidades:'1', publicado:true};
     return {
         id_proyecto: modelo.proyecto.id,
         nombreModelo: modelo.nombreModelo,
@@ -68,7 +68,7 @@ function valoresIniciales(modelo?: ModeloCasa): Partial<FormValues> {
         bono: modelo.bono ?? '',
         quitarModelo3d: false,
         quitarPlano: false,
-        estado: modelo.estado,
+        unidades: String(modelo.unidades),
         publicado: modelo.activo,
     };
 }
@@ -185,7 +185,7 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                 bono: dataForm.bono || null,
                 imgPrincipal,
                 caracteristicasID: caracteristicaSeleccionadas,
-                estado: dataForm.estado,
+                unidades: Number(dataForm.unidades),
                 activo: dataForm.publicado,
             };
             // Al crear sin 3D no se envía el campo; al editar null lo quita
@@ -200,8 +200,12 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                 router.push(creado.activo ? `/modelosCasa/${creado.id}` : '/admin/modelosCasa');
             }
         }catch(e){
-            setError(isAxiosError(e) && e.response?.status === 409
+            const status = isAxiosError(e) ? e.response?.status : undefined;
+            const mensaje = isAxiosError(e) ? e.response?.data?.message : undefined;
+            setError(status === 409
                 ? 'Ya existe un modelo con ese nombre'
+                // 400 de reglas de negocio (p. ej. unidades por debajo de las reservadas o vendidas)
+                : status === 400 && typeof mensaje === 'string' ? mensaje
                 : modelo ? 'No se pudo guardar el modelo' : 'No se pudo crear el modelo');
             setSubiendoImagen(false);
             setSubiendoModelo3d(false);
@@ -369,17 +373,21 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 items-center">
-                    <select {...register('estado')} aria-label="Estado comercial" className="w-full border rounded-lg px-3 py-2">
-                        {Object.entries(ETIQUETA_ESTADO).map(([valor, etiqueta]) => (
-                            <option key={valor} value={valor}>{etiqueta}</option>
-                        ))}
-                    </select>
+                    <label className="text-sm">
+                        Unidades (casas de este modelo)
+                        <input type="number" min={1} max={9999} step={1} {...register('unidades')}
+                            className="w-full border rounded-lg px-3 py-2 mt-1" />
+                        {errors.unidades && <span className="text-red-500 text-xs">{errors.unidades.message}</span>}
+                    </label>
                     <label className="flex items-center gap-2 text-sm">
                         <input type="checkbox" {...register('publicado')} />
                         Publicado en el catálogo
                     </label>
                 </div>
-                <p className="text-xs text-gray-500 -mt-2">Sin publicar queda como borrador: solo se ve en este panel.</p>
+                <p className="text-xs text-gray-500 -mt-2">
+                    El estado (disponible, reservado o vendido) se calcula con las reservas.
+                    Sin publicar queda como borrador: solo se ve en este panel.
+                </p>
 
                 {error && <p className="text-red-500 text-sm">{error}</p>}
 

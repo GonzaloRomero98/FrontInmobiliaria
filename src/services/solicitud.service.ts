@@ -1,6 +1,7 @@
 import { api } from "@/lib/api";
 import { ModeloCasa } from "@/types/modeloCasa";
 import { CrearSolicitudInput } from "@/types/solicitud";
+import { Reserva } from "@/types/reserva";
 
 export interface Solicitud{
     id: string;
@@ -13,6 +14,7 @@ export interface Solicitud{
     visitaPreferida: string | null;
     creadoEn: string;
     modeloCasa: ModeloCasa;
+    reservas: Reserva[];
 }
 
 export async function crearSolicitud(dataForm: CrearSolicitudInput) {
