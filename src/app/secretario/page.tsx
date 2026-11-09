@@ -1,7 +1,10 @@
 'use client'
 
-import { formatearFechaHora, numeroWhatsApp } from "@/lib/formato";
+import { formatearFechaHora, normalizarRut, numeroWhatsApp, rutValido } from "@/lib/formato";
 import { descargarSolicitudesCsv, getSolicitudes, marcarContactado, Solicitud } from "@/services/solicitud.service";
+import { cambiarEstadoReserva, crearReserva } from "@/services/reserva.service";
+import { Reserva } from "@/types/reserva";
+import { isAxiosError } from "axios";
 import Cookies from "js-cookie";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -14,6 +17,17 @@ const FILTROS: { valor: Filtro; etiqueta: string }[] = [
     { valor: 'visita', etiqueta: 'Con visita' },
     { valor: 'todas', etiqueta: 'Todas' },
 ];
+
+const ETIQUETA_RESERVA: Record<'RESERVADA' | 'VENDIDA', string> = { RESERVADA: 'Reservada', VENDIDA: 'Vendida' };
+
+function reservaActiva(soli: Solicitud): Reserva | undefined {
+    return soli.reservas?.find((r) => r.estado !== 'ANULADA');
+}
+
+function mensajeError(err: unknown, porDefecto: string): string {
+    const mensaje = isAxiosError(err) ? err.response?.data?.message : null;
+    return Array.isArray(mensaje) ? mensaje.join('. ') : mensaje ?? porDefecto;
+}
 
 function mensajeWhatsApp(soli: Solicitud): string {
     const modelo = soli.modeloCasa ? ` por el modelo ${soli.modeloCasa.nombreModelo} del proyecto ${soli.modeloCasa.proyecto.nombre}` : '';
@@ -59,6 +73,57 @@ export default function SecretarioDashboard() {
             );
         } catch {
             alert('No se pudo actualizar el estado');
+        }
+    }
+
+    // Formulario de reserva abierto en una sola fila a la vez
+    const [reservandoId, setReservandoId] = useState<string | null>(null);
+    const [rut, setRut] = useState('');
+    const [lote, setLote] = useState('');
+    const [errorRut, setErrorRut] = useState<string | null>(null);
+    const [guardandoReserva, setGuardandoReserva] = useState(false);
+
+    function abrirReserva(id: string) {
+        setReservandoId(id);
+        setRut('');
+        setLote('');
+        setErrorRut(null);
+    }
+
+    function reemplazarReserva(idSolicitud: string, reserva: Reserva) {
+        setSolicitudes((lista) => lista.map((s) => s.id !== idSolicitud ? s : {
+            ...s, reservas: [...(s.reservas ?? []).filter((r) => r.id !== reserva.id), reserva],
+        }));
+    }
+
+    async function handleReservar(e: React.FormEvent, idSolicitud: string) {
+        e.preventDefault();
+        const rutNormalizado = normalizarRut(rut);
+        if (!rutValido(rutNormalizado)) {
+            setErrorRut('RUT inválido, ej: 12.345.678-5');
+            return;
+        }
+        setGuardandoReserva(true);
+        try {
+            const reserva = await crearReserva({ id_solicitud: idSolicitud, rut: rutNormalizado, lote: lote.trim() || undefined });
+            reemplazarReserva(idSolicitud, reserva);
+            setReservandoId(null);
+        } catch (err) {
+            alert(mensajeError(err, 'No se pudo registrar la reserva'));
+        } finally {
+            setGuardandoReserva(false);
+        }
+    }
+
+    async function handleCambiarReserva(idSolicitud: string, reserva: Reserva, estado: 'VENDIDA' | 'ANULADA') {
+        const pregunta = estado === 'VENDIDA'
+            ? '¿Marcar esta reserva como vendida? Ya no se podrá anular desde aquí.'
+            : '¿Anular esta reserva? La unidad vuelve a quedar disponible.';
+        if (!confirm(pregunta)) return;
+        try {
+            reemplazarReserva(idSolicitud, await cambiarEstadoReserva(reserva.id, estado));
+        } catch (err) {
+            alert(mensajeError(err, 'No se pudo actualizar la reserva'));
         }
     }
 
@@ -133,7 +198,9 @@ export default function SecretarioDashboard() {
                             </tr>
                         </thead>
                         <tbody>
-                            {visibles.map((soli) => (
+                            {visibles.map((soli) => {
+                                const reserva = reservaActiva(soli);
+                                return (
                                 <tr key={soli.id} className="border-b text-sm align-top">
                                     <td className="py-3 pr-4 whitespace-nowrap text-gray-500">{new Date(soli.creadoEn).toLocaleDateString('es-CL')}</td>
                                     <td className="py-3 pr-4 font-medium">{soli.nombre} {soli.apellido}</td>
@@ -161,6 +228,11 @@ export default function SecretarioDashboard() {
                                         ) : (
                                             <span className="text-yellow-600 font-medium">Pendiente</span>
                                         )}
+                                        {reserva && (
+                                            <span className={`block mt-1 text-xs font-semibold ${reserva.estado === 'VENDIDA' ? 'text-gray-600' : 'text-amber-700'}`}>
+                                                {ETIQUETA_RESERVA[reserva.estado as 'RESERVADA' | 'VENDIDA']}{reserva.lote && ` · ${reserva.lote}`}
+                                            </span>
+                                        )}
                                     </td>
                                     <td className="py-3 pr-4">
                                         <div className="flex flex-col items-start gap-2">
@@ -176,10 +248,50 @@ export default function SecretarioDashboard() {
                                                 className="text-sm border px-3 py-1 rounded-lg whitespace-nowrap hover:bg-gray-50">
                                                 Generar cotización
                                             </Link>
+                                            {!reserva && reservandoId !== soli.id && (
+                                                <button type="button" onClick={() => abrirReserva(soli.id)}
+                                                    className="text-sm border px-3 py-1 rounded-lg whitespace-nowrap hover:bg-gray-50">
+                                                    Reservar
+                                                </button>
+                                            )}
+                                            {!reserva && reservandoId === soli.id && (
+                                                <form onSubmit={(e) => handleReservar(e, soli.id)} className="flex flex-col gap-1 w-44">
+                                                    <input value={rut} onChange={(e) => { setRut(e.target.value); setErrorRut(null); }}
+                                                        placeholder="RUT 12.345.678-5" aria-label="RUT del comprador" required maxLength={12}
+                                                        className="border rounded-lg px-2 py-1" />
+                                                    {errorRut && <span className="text-red-500 text-xs">{errorRut}</span>}
+                                                    <input value={lote} onChange={(e) => setLote(e.target.value)}
+                                                        placeholder="Lote (opcional)" aria-label="Lote" maxLength={50}
+                                                        className="border rounded-lg px-2 py-1" />
+                                                    <div className="flex gap-1">
+                                                        <button type="submit" disabled={guardandoReserva}
+                                                            className="text-sm bg-marca text-white px-3 py-1 rounded-lg disabled:opacity-50">
+                                                            {guardandoReserva ? 'Guardando...' : 'Guardar'}
+                                                        </button>
+                                                        <button type="button" onClick={() => setReservandoId(null)}
+                                                            className="text-sm border px-3 py-1 rounded-lg hover:bg-gray-50">
+                                                            Cancelar
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            )}
+                                            {reserva?.estado === 'RESERVADA' && (
+                                                <>
+                                                    <button type="button" onClick={() => handleCambiarReserva(soli.id, reserva, 'VENDIDA')}
+                                                        className="text-sm border px-3 py-1 rounded-lg whitespace-nowrap hover:bg-gray-50">
+                                                        Marcar vendida
+                                                    </button>
+                                                    <button type="button" onClick={() => handleCambiarReserva(soli.id, reserva, 'ANULADA')}
+                                                        className="text-sm text-red-700 border border-red-200 px-3 py-1 rounded-lg whitespace-nowrap hover:bg-red-50">
+                                                        Anular reserva
+                                                    </button>
+                                                </>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>
-                            ))}
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>

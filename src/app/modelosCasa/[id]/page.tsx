@@ -8,7 +8,7 @@ import BotonComparar from "@/components/BotonComparar";
 import SimuladorDividendo from "@/components/SimuladorDividendo";
 import { getModeloCasaById } from "@/services/modeloCasa.service";
 import { fechaUF, obtenerValorUF } from "@/lib/uf";
-import { equivalencia, formatearCLP, formatearNumero, formatearPrecio, plural } from "@/lib/formato";
+import { equivalencia, formatearCLP, formatearNumero, formatearPrecio, plural, textoQuedan } from "@/lib/formato";
 import { URL_SITIO } from "@/lib/sitio";
 import { ETIQUETA_ESTADO, ETIQUETA_TIPO_VIVIENDA, imagenesModelo } from "@/types/modeloCasa";
 import EtapaEntrega from "@/components/EtapaEntrega";
@@ -75,6 +75,8 @@ export default async function DetallePropiedadID({params}:{params:Promise<{id:st
                             , {modelo.proyecto.ciudad.nombre}, {modelo.proyecto.ciudad.region.nombre}
                         </p>
                         <EtapaEntrega etapa={modelo.proyecto.etapa} fechaEntrega={modelo.proyecto.fechaEntrega} />
+                        {/* unidades falta si la API aún no tiene la migración de reservas */}
+                        {modelo.estado === 'DISPONIBLE' && modelo.unidades != null && <p className="text-sm text-gray-600 mt-1">{textoQuedan(modelo)}</p>}
                         <p className="text-2xl font-bold mt-3 text-acento">{formatearPrecio(precio, modelo.moneda)}</p>
                         {otraMoneda && (
                             <p className="text-gray-600">

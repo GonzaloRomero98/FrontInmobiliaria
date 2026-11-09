@@ -37,6 +37,10 @@ export default function PoliticaPrivacidad() {
                     Tus datos se eliminan automáticamente {DIAS_RETENCION} días después de enviada la
                     solicitud, o antes si lo pides.
                 </p>
+                <p>
+                    Si realizas una reserva o compra, tus datos se conservan mientras dure la relación
+                    contractual y los plazos legales que correspondan.
+                </p>
             </section>
 
             <section className="flex flex-col gap-2">

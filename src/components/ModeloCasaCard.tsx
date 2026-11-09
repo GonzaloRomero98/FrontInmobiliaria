@@ -3,7 +3,7 @@ import Image from "next/image";
 import { Images } from "lucide-react";
 import Link from "next/link";
 import BotonComparar from "./BotonComparar";
-import { formatearNumero, formatearPrecio, plural } from "@/lib/formato";
+import { formatearNumero, formatearPrecio, plural, textoQuedan } from "@/lib/formato";
 
 export default function ModeloCasaCard({modelo}:{modelo:ModeloCasa}){
     const cantidadFotos = imagenesModelo(modelo).length;
@@ -36,6 +36,7 @@ export default function ModeloCasaCard({modelo}:{modelo:ModeloCasa}){
                         <span>{plural(modelo.banos, 'baño', 'baños')}</span>
                         <span>{formatearNumero(modelo.superficieConstruida)} m²</span>
                     </div>
+                    {modelo.estado === 'DISPONIBLE' && modelo.unidades != null && <p className="text-sm text-gray-600 mt-1">{textoQuedan(modelo)}</p>}
                 </div>
             </Link>
         </div>
