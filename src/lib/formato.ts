@@ -95,3 +95,10 @@ export function numeroWhatsApp(celular: string): string {
     const digitos = celular.replace(/\D/g, '');
     return /^9\d{8}$/.test(digitos) ? `56${digitos}` : digitos;
 }
+
+// Enlace wa.me con un saludo que nombra el modelo consultado y, si la pidió, la visita a la sala de ventas
+export function enlaceWhatsApp(c: { nombre: string; celular: string; modelo?: string | null; proyecto?: string | null; visitaPreferida?: string | null }): string {
+    const modelo = c.modelo ? ` por el modelo ${c.modelo} del proyecto ${c.proyecto}` : '';
+    const visita = c.visitaPreferida ? ` Pediste visitar la sala de ventas el ${formatearFechaHora(c.visitaPreferida)}.` : '';
+    return `https://wa.me/${numeroWhatsApp(c.celular)}?text=${encodeURIComponent(`Hola ${c.nombre}, te escribimos por tu consulta${modelo}.${visita}`)}`;
+}

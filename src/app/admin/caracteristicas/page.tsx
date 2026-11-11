@@ -1,6 +1,5 @@
 'use client'
 
-import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { isAxiosError } from "axios";
 import { crearCaracteristica, getCaracteristicas } from "@/services/caracteristica.service";
@@ -36,7 +35,6 @@ export default function Caracteristicas(){
     return(
         <main className="max-w-lg mx-auto px-4 py-10 flex flex-col gap-6">
             <div>
-                <Link href="/admin" className="text-sm text-gray-500 hover:underline">← Panel</Link>
                 <h1 className="text-2xl font-bold">Caracteristicas</h1>
                 <p className="text-gray-500 text-sm">Comodidades que se pueden marcar en cada modelo de casa.</p>
             </div>

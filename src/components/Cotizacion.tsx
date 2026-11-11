@@ -84,7 +84,7 @@ export default function Cotizacion({ idSolicitud, uf }: { idSolicitud: string; u
 
             <section className="no-imprimir flex flex-col gap-4 p-5 border rounded-xl bg-gray-50" aria-label="Ajustes de la cotización">
                 <div className="flex flex-wrap justify-between items-baseline gap-2">
-                    <Link href="/secretario" className="text-sm text-gray-500 hover:underline">← Solicitudes</Link>
+                    <Link href="/secretario/solicitudes" className="text-sm text-gray-500 hover:underline">← Solicitudes</Link>
                     <p className="text-xs text-gray-500">Este panel no aparece en el PDF.</p>
                 </div>
                 {modelo.estado !== 'DISPONIBLE' && (

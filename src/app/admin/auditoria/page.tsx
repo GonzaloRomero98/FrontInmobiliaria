@@ -1,7 +1,6 @@
 'use client'
 
 import { FiltrosAuditoria, getAuditoria, MODULOS_AUDITORIA, ProblemaCadena, RegistroAuditoria, VerificacionAuditoria, verificarAuditoria } from "@/services/auditoria.service";
-import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 
 const LIMITE = 50;
@@ -105,7 +104,6 @@ export default function Auditoria() {
 
     return (
         <main className="max-w-6xl mx-auto px-4 py-10">
-            <Link href="/admin" className="text-sm text-gray-500 hover:underline">← Panel</Link>
             <h1 className="text-2xl font-bold mb-1">Auditoría</h1>
             <p className="text-sm text-gray-500 mb-6">Cambios de datos, accesos rechazados, inicios de sesión, lecturas de datos personales y exportaciones. Más recientes primero.</p>
 

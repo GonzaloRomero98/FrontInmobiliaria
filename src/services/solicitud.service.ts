@@ -39,6 +39,15 @@ export async function getSolicitudes(pagina:number, limite:number, filtro:Filtro
     return data;
 }
 
+// Se emite al marcar una solicitud como contactada: el menú del panel actualiza su contador
+export const EVENTO_SOLICITUDES_ACTUALIZADAS = 'solicitudes-actualizadas';
+
+// Solo el número de pendientes (no se audita: no trae datos personales)
+export async function getResumenSolicitudes(): Promise<{pendientes:number}> {
+    const {data} = await api.get('/solicitudes/resumen');
+    return data;
+}
+
 export async function getSolicitud(id: string): Promise<Solicitud> {
     const {data} = await api.get(`/solicitudes/${id}`);
     return data;

@@ -4,6 +4,7 @@ import "./globals.css";
 import Encabezado from "@/components/Encabezado";
 import PieDePagina from "@/components/PieDePagina";
 import BarraComparador from "@/components/BarraComparador";
+import SoloSitioPublico from "@/components/SoloSitioPublico";
 import { DESCRIPCION_SITIO, NOMBRE_SITIO, URL_SITIO } from "@/lib/sitio";
 
 const geistSans = Geist({
@@ -43,9 +44,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} ${montserrat.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <Encabezado />
+        <SoloSitioPublico><Encabezado /></SoloSitioPublico>
         <div className="flex-1">{children}</div>
-        <PieDePagina />
+        <SoloSitioPublico><PieDePagina /></SoloSitioPublico>
         <BarraComparador />
       </body>
     </html>

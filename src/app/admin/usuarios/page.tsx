@@ -2,7 +2,6 @@
 
 import { actualizarUsuario, crearUsuario, getUsuarios, Rol, Usuario } from "@/services/usuario.service";
 import { isAxiosError } from "axios";
-import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 
 // Muestra el mensaje de validación del backend (política de contraseña, correo duplicado...)
@@ -72,7 +71,6 @@ export default function Usuarios() {
 
     return (
         <main className="max-w-3xl mx-auto px-4 py-10">
-            <Link href="/admin" className="text-sm text-gray-500 hover:underline">← Panel</Link>
             <h1 className="text-2xl font-bold mb-6">Usuarios</h1>
 
             <form onSubmit={crear} className="border rounded-xl p-4 mb-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
