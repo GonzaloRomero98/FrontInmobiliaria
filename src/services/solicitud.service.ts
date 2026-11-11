@@ -22,8 +22,20 @@ export async function crearSolicitud(dataForm: CrearSolicitudInput) {
     return response;
 }
 
-export async function getSolicitudes():Promise<Solicitud[]> {
-    const {data} = await api.get('/solicitudes');
+export type FiltroSolicitud = 'pendientes' | 'contactados' | 'visita' | 'todas';
+
+export interface PaginaSolicitudes {
+    solicitudes: Solicitud[];
+    // Total que calza con el filtro (para las páginas)
+    total: number;
+    // Total sin contactar, sin importar el filtro (contador de la pestaña)
+    pendientes: number;
+    pagina: number;
+    limite: number;
+}
+
+export async function getSolicitudes(pagina:number, limite:number, filtro:FiltroSolicitud):Promise<PaginaSolicitudes> {
+    const {data} = await api.get('/solicitudes', {params:{pagina, limite, filtro}});
     return data;
 }
 

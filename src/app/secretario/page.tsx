@@ -1,7 +1,7 @@
 'use client'
 
 import { formatearFechaHora, normalizarRut, numeroWhatsApp, rutValido } from "@/lib/formato";
-import { descargarSolicitudesCsv, getSolicitudes, marcarContactado, Solicitud } from "@/services/solicitud.service";
+import { descargarSolicitudesCsv, FiltroSolicitud, getSolicitudes, marcarContactado, Solicitud } from "@/services/solicitud.service";
 import { cambiarEstadoReserva, crearReserva } from "@/services/reserva.service";
 import { Reserva } from "@/types/reserva";
 import { isAxiosError } from "axios";
@@ -9,7 +9,9 @@ import Cookies from "js-cookie";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-type Filtro = 'pendientes' | 'contactados' | 'visita' | 'todas';
+type Filtro = FiltroSolicitud;
+
+const POR_PAGINA = 20;
 
 const FILTROS: { valor: Filtro; etiqueta: string }[] = [
     { valor: 'pendientes', etiqueta: 'Pendientes' },
@@ -42,6 +44,11 @@ export default function SecretarioDashboard() {
     const [filtro, setFiltro] = useState<Filtro>('pendientes');
     const [esAdmin, setEsAdmin] = useState(false);
     const [exportando, setExportando] = useState(false);
+    const [pagina, setPagina] = useState(1);
+    const [total, setTotal] = useState(0);
+    const [pendientes, setPendientes] = useState(0);
+    // Se incrementa para volver a pedir la página actual (p. ej. tras marcar contactado)
+    const [recarga, setRecarga] = useState(0);
 
     useEffect(() => {
         let cancelado = false;
@@ -49,8 +56,16 @@ export default function SecretarioDashboard() {
             setCargando(true);
             setError(null);
             try {
-                const data = await getSolicitudes();
-                if (!cancelado) setSolicitudes(data);
+                const data = await getSolicitudes(pagina, POR_PAGINA, filtro);
+                if (cancelado) return;
+                // La última fila de la última página dejó de calzar con el filtro: se retrocede una página
+                if (data.solicitudes.length === 0 && pagina > 1) {
+                    setPagina(pagina - 1);
+                    return;
+                }
+                setSolicitudes(data.solicitudes);
+                setTotal(data.total);
+                setPendientes(data.pendientes);
             } catch {
                 if (!cancelado) setError('No se pudo cargar la lista de solicitudes');
             } finally {
@@ -63,14 +78,18 @@ export default function SecretarioDashboard() {
         }
         cargar();
         return () => { cancelado = true; };
-    }, []);
+    }, [pagina, filtro, recarga]);
+
+    function cambiarFiltro(valor: Filtro) {
+        setFiltro(valor);
+        setPagina(1);
+    }
 
     async function handleMarcarContactado(id: string) {
         try {
             await marcarContactado(id);
-            setSolicitudes((soli) =>
-                soli.map((s) => (s.id === id ? { ...s, contactado: true } : s)),
-            );
+            // Se pide de nuevo la página: la fila puede salir del filtro y el contador de pendientes cambia
+            setRecarga((n) => n + 1);
         } catch {
             alert('No se pudo actualizar el estado');
         }
@@ -143,9 +162,9 @@ export default function SecretarioDashboard() {
         }
     }
 
-    const pendientes = solicitudes.filter((s) => !s.contactado).length;
-    const visibles = solicitudes.filter((s) =>
-        filtro === 'todas' || (filtro === 'visita' ? !!s.visitaPreferida : filtro === 'pendientes' ? !s.contactado : s.contactado));
+    // El filtro ya viene aplicado desde la API
+    const visibles = solicitudes;
+    const paginas = Math.max(1, Math.ceil(total / POR_PAGINA));
 
     return (
         <main className="max-w-6xl mx-auto px-4 py-10">
@@ -163,32 +182,31 @@ export default function SecretarioDashboard() {
                         type="button"
                         role="tab"
                         aria-selected={filtro === valor}
-                        onClick={() => setFiltro(valor)}
+                        onClick={() => cambiarFiltro(valor)}
                         className={`text-sm px-3 py-1.5 rounded-full border ${filtro === valor ? 'bg-marca text-white border-marca' : 'hover:bg-gray-50'}`}
                     >
                         {etiqueta}{valor === 'pendientes' && ` (${pendientes})`}
                     </button>
                 ))}
             </div>
-                {solicitudes.length > 0 && (
-                    <button type="button" onClick={handleExportar} disabled={exportando}
-                        className="text-sm border rounded-lg px-3 py-1.5 hover:bg-gray-50 disabled:opacity-50">
-                        {exportando ? 'Exportando...' : 'Exportar a Excel (todas)'}
-                    </button>
-                )}
+                <button type="button" onClick={handleExportar} disabled={exportando}
+                    className="text-sm border rounded-lg px-3 py-1.5 hover:bg-gray-50 disabled:opacity-50">
+                    {exportando ? 'Exportando...' : 'Exportar a Excel (todas)'}
+                </button>
             </div>
 
-            {cargando && <p className="text-gray-500">Cargando...</p>}
+            {/* Al cambiar de página se mantiene la tabla anterior (atenuada) en vez de un salto a "Cargando..." */}
+            {cargando && visibles.length === 0 && <p className="text-gray-500">Cargando...</p>}
             {error && <p className="text-red-500">{error}</p>}
 
             {!cargando && !error && visibles.length === 0 && (
                 <p className="text-gray-500">
-                    {solicitudes.length === 0 ? 'Todavía no hay solicitudes.' : filtro === 'pendientes' ? 'No hay solicitudes pendientes.' : 'No hay solicitudes en esta vista.'}
+                    {filtro === 'todas' ? 'Todavía no hay solicitudes.' : filtro === 'pendientes' ? 'No hay solicitudes pendientes.' : 'No hay solicitudes en esta vista.'}
                 </p>
             )}
 
-            {!cargando && visibles.length > 0 && (
-                <div className="overflow-x-auto">
+            {visibles.length > 0 && (
+                <div className={`overflow-x-auto ${cargando ? 'opacity-60' : ''}`} aria-busy={cargando}>
                     <table className="w-full border-collapse">
                         <thead>
                             <tr className="text-left border-b text-sm text-gray-500">
@@ -302,6 +320,22 @@ export default function SecretarioDashboard() {
                         </tbody>
                     </table>
                 </div>
+            )}
+
+            {total > POR_PAGINA && (
+                <nav aria-label="Páginas de solicitudes" className="flex items-center justify-between gap-2 mt-4 text-sm">
+                    <button type="button" onClick={() => setPagina((p) => p - 1)} disabled={pagina <= 1 || cargando}
+                        className="border rounded-lg px-3 py-1.5 hover:bg-gray-50 disabled:opacity-50">
+                        ← Anterior
+                    </button>
+                    <span className="text-gray-500">
+                        {(pagina - 1) * POR_PAGINA + 1}–{Math.min(pagina * POR_PAGINA, total)} de {total} · página {pagina} de {paginas}
+                    </span>
+                    <button type="button" onClick={() => setPagina((p) => p + 1)} disabled={pagina >= paginas || cargando}
+                        className="border rounded-lg px-3 py-1.5 hover:bg-gray-50 disabled:opacity-50">
+                        Siguiente →
+                    </button>
+                </nav>
             )}
         </main>
     );

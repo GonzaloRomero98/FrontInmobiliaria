@@ -58,3 +58,13 @@ export async function actualizarEntorno(id:string):Promise<EntornoProyecto> {
 export async function despublicarProyecto(id:string):Promise<void> {
     await api.delete(`/proyectos/${id}`);
 }
+
+export async function publicarProyecto(id:string):Promise<void> {
+    await api.patch(`/proyectos/${id}/publicar`);
+}
+
+// Solo ADMIN: incluye los despublicados
+export async function getProyectosAdmin():Promise<Proyecto[]>{
+    const {data} = await api.get('/proyectos/admin');
+    return data;
+}
