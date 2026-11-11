@@ -12,8 +12,10 @@
   --color-marca: #16304b;
   --color-acento: #1e727d;
   --color-acento-suave: #e6f2f3;
+  /* Geist para el texto, Montserrat (como el logo) para títulos y precios destacados (clase font-titulo) */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-titulo: var(--font-montserrat);
 }
 
 /* Tailwind v4 usa currentColor como color de borde por defecto; el sitio está diseñado con bordes grises suaves */
@@ -23,14 +25,19 @@
   }
   h1, h2, h3 {
     color: var(--color-marca);
+    font-family: var(--font-titulo);
+  }
+  /* Cifras de igual ancho en tablas: precios, m² y fechas quedan alineados por columna */
+  td {
+    font-variant-numeric: tabular-nums;
   }
   :focus-visible {
     outline-color: var(--color-acento);
   }
 }
 
+/* Sin font-family aquí: el body hereda Geist (--font-sans) del html */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }

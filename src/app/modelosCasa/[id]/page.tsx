@@ -77,7 +77,7 @@ export default async function DetallePropiedadID({params}:{params:Promise<{id:st
                         <EtapaEntrega etapa={modelo.proyecto.etapa} fechaEntrega={modelo.proyecto.fechaEntrega} />
                         {/* unidades falta si la API aún no tiene la migración de reservas */}
                         {modelo.estado === 'DISPONIBLE' && modelo.unidades != null && <p className="text-sm text-gray-600 mt-1">{textoQuedan(modelo)}</p>}
-                        <p className="text-2xl font-bold mt-3 text-acento">{formatearPrecio(precio, modelo.moneda)}</p>
+                        <p className="font-titulo text-2xl font-bold mt-3 text-acento">{formatearPrecio(precio, modelo.moneda)}</p>
                         {otraMoneda && (
                             <p className="text-gray-600">
                                 ≈ {otraMoneda} <span className="text-sm">(UF {formatearCLP(uf!.valor)} al {fechaUF(uf!)})</span>

@@ -63,7 +63,7 @@ export default async function ProyectoDetalle({ params }: { params: Promise<{ id
                     {proyecto.direccion ? `${proyecto.direccion}, ` : ''}{proyecto.ciudad.nombre}, {proyecto.ciudad.region.nombre}
                 </p>
                 <EtapaEntrega etapa={proyecto.etapa} fechaEntrega={proyecto.fechaEntrega} />
-                {desde !== null && <p className="text-2xl font-bold text-acento">Desde {formatearUF(desde)}</p>}
+                {desde !== null && <p className="font-titulo text-2xl font-bold text-acento">Desde {formatearUF(desde)}</p>}
                 {proyecto.descripcion && <p className="text-gray-700 max-w-3xl">{proyecto.descripcion}</p>}
                 <BotonWhatsApp
                     mensaje={`Hola, me interesa el proyecto ${proyecto.nombre} en ${proyecto.ciudad.nombre}.`}
