@@ -1,0 +1,29 @@
+'use client';
+
+import dynamic from "next/dynamic";
+import { useState, type ComponentProps } from "react";
+import Visor3D from "./Visor3D";
+
+// three.js solo se descarga si la persona entra al recorrido
+const RecorridoInterior = dynamic(() => import("./RecorridoInterior"), { ssr: false });
+
+// Vista exterior (model-viewer, con su botón de RA) o recorrido interior en primera persona
+export default function VisorCasa(props: ComponentProps<typeof Visor3D>) {
+    const [interior, setInterior] = useState(false);
+
+    return (
+        <div className="flex flex-col gap-2">
+            <div role="group" aria-label="Modo de vista" className="grid grid-cols-2 gap-1 rounded-lg border p-1 text-sm font-medium">
+                {[false, true].map((modo) => (
+                    <button key={String(modo)} type="button" aria-pressed={interior === modo} onClick={() => setInterior(modo)}
+                        className={`rounded-md py-2 ${interior === modo ? 'bg-marca text-white' : 'text-gray-700 hover:bg-gray-50'}`}>
+                        {modo ? 'Recorrido interior' : 'Vista exterior'}
+                    </button>
+                ))}
+            </div>
+            {interior
+                ? <RecorridoInterior modeloUrl={props.modeloUrl} titulo={props.titulo} altura={props.altura} />
+                : <Visor3D {...props} />}
+        </div>
+    );
+}
