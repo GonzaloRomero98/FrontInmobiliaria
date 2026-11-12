@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { MapaEntorno } from "@/components/mapas";
 import { CATEGORIAS_ENTORNO, CategoriaEntorno, EntornoProyecto as Datos } from "@/types/entorno";
 import { formatearDistancia } from "@/lib/formato";
@@ -7,22 +8,33 @@ interface EntornoProyectoProps {
     latitud: number;
     longitud: number;
     datos: Datos | null;
+    // Contenido junto al mapa en escritorio (p. ej. la sala de ventas); debajo en móvil
+    lateral?: ReactNode;
 }
 
-export default function EntornoProyecto({ nombre, latitud, longitud, datos }: EntornoProyectoProps) {
+export default function EntornoProyecto({ nombre, latitud, longitud, datos, lateral }: EntornoProyectoProps) {
     const entorno = datos?.entorno;
     const categorias = Object.keys(CATEGORIAS_ENTORNO) as CategoriaEntorno[];
 
     return (
-        <section className="flex flex-col gap-4" aria-labelledby="titulo-entorno">
+        <section id="ubicacion" className="flex flex-col gap-4 scroll-mt-6" aria-labelledby="titulo-entorno">
             <div>
                 <h2 id="titulo-entorno" className="text-2xl font-bold">Ubicación y entorno</h2>
                 {entorno && (
-                    <p className="text-gray-500 text-sm mt-1">Servicios a menos de {formatearDistancia(entorno.radio)} del proyecto</p>
+                    <p className="text-gray-600 text-sm mt-1">Servicios a menos de {formatearDistancia(entorno.radio)} del proyecto</p>
                 )}
             </div>
 
-            <MapaEntorno latitud={latitud} longitud={longitud} nombre={nombre} lugares={entorno?.lugares ?? []} radio={entorno?.radio ?? 1000} />
+            {lateral ? (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+                    <div className="lg:col-span-2">
+                        <MapaEntorno latitud={latitud} longitud={longitud} nombre={nombre} lugares={entorno?.lugares ?? []} radio={entorno?.radio ?? 1000} />
+                    </div>
+                    {lateral}
+                </div>
+            ) : (
+                <MapaEntorno latitud={latitud} longitud={longitud} nombre={nombre} lugares={entorno?.lugares ?? []} radio={entorno?.radio ?? 1000} />
+            )}
 
             {entorno && (
                 <ul className="grid grid-cols-2 sm:grid-cols-5 gap-3">

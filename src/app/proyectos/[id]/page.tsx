@@ -9,8 +9,9 @@ import { getModeloCasa } from "@/services/modeloCasa.service";
 import EtapaEntrega from "@/components/EtapaEntrega";
 import SalaVentas from "@/components/SalaVentas";
 import { obtenerValorUF } from "@/lib/uf";
-import { formatearUF, precioDesdeUF } from "@/lib/formato";
+import { formatearUF, plural, precioDesdeUF } from "@/lib/formato";
 import { notFound } from "next/navigation";
+import Image from "next/image";
 
 export const revalidate = 60;
 
@@ -56,23 +57,44 @@ export default async function ProyectoDetalle({ params }: { params: Promise<{ id
     const desde = precioDesdeUF(modelos, uf?.valor ?? null);
 
     return (
-        <main className="max-w-6xl mx-auto px-4 py-10 flex flex-col gap-12">
-            <section className="flex flex-col gap-3">
-                <h1 className="text-3xl font-bold">{proyecto.nombre}</h1>
-                <p className="text-gray-500">
-                    {proyecto.direccion ? `${proyecto.direccion}, ` : ''}{proyecto.ciudad.nombre}, {proyecto.ciudad.region.nombre}
-                </p>
-                <EtapaEntrega etapa={proyecto.etapa} fechaEntrega={proyecto.fechaEntrega} />
-                {desde !== null && <p className="font-titulo text-2xl font-bold text-acento">Desde {formatearUF(desde)}</p>}
-                {proyecto.descripcion && <p className="text-gray-700 max-w-3xl">{proyecto.descripcion}</p>}
-                <BotonWhatsApp
-                    mensaje={`Hola, me interesa el proyecto ${proyecto.nombre} en ${proyecto.ciudad.nombre}.`}
-                    className="self-start"
-                />
-                <SalaVentas proyecto={proyecto} className="self-start max-w-sm" />
+        <main className="max-w-6xl mx-auto px-4 py-8 sm:py-10 flex flex-col gap-14">
+            <section className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-8 lg:gap-12 items-center">
+                <div className="flex flex-col gap-5">
+                    <div>
+                        <h1 className="text-3xl sm:text-4xl font-bold">{proyecto.nombre}</h1>
+                        <p className="text-gray-600 mt-2">
+                            {proyecto.direccion ? `${proyecto.direccion}, ` : ''}{proyecto.ciudad.nombre}, {proyecto.ciudad.region.nombre}
+                        </p>
+                        <EtapaEntrega etapa={proyecto.etapa} fechaEntrega={proyecto.fechaEntrega} />
+                    </div>
+                    {desde !== null && (
+                        <div>
+                            <p className="text-sm text-gray-600">Precios desde</p>
+                            <p className="font-titulo text-3xl font-bold text-acento">{formatearUF(desde)}</p>
+                        </div>
+                    )}
+                    {proyecto.descripcion && <p className="text-gray-700 leading-relaxed max-w-prose">{proyecto.descripcion}</p>}
+                    <div className="flex flex-wrap gap-3">
+                        {modelos.length > 0 && (
+                            <a href="#modelos" className="bg-marca text-white rounded-lg px-5 py-3 font-medium hover:bg-marca/90 transition-colors">
+                                Ver {plural(modelos.length, 'modelo', 'modelos')}
+                            </a>
+                        )}
+                        <BotonWhatsApp mensaje={`Hola, me interesa el proyecto ${proyecto.nombre} en ${proyecto.ciudad.nombre}.`} />
+                        {(tieneUbicacion || proyecto.salaDireccion) && (
+                            <a href="#ubicacion" className="border rounded-lg px-5 py-3 font-medium hover:bg-gray-50 transition-colors">Ubicación y sala de ventas</a>
+                        )}
+                    </div>
+                </div>
+                {proyecto.imagenPortada && (
+                    <div className="relative aspect-4/3 rounded-2xl overflow-hidden bg-gray-100 order-first lg:order-0">
+                        <Image src={proyecto.imagenPortada} alt={`Imagen del proyecto ${proyecto.nombre}`} fill priority
+                            sizes="(min-width: 1024px) 45vw, 100vw" className="object-cover" />
+                    </div>
+                )}
             </section>
 
-            <section className="flex flex-col gap-4">
+            <section id="modelos" className="flex flex-col gap-4 scroll-mt-6">
                 <h2 className="text-2xl font-bold">Modelos disponibles</h2>
                 {modelos.length === 0 ? (
                     <p className="text-gray-500">Todavía no hay modelos publicados para este proyecto.</p>
@@ -85,8 +107,11 @@ export default async function ProyectoDetalle({ params }: { params: Promise<{ id
                 )}
             </section>
 
-            {tieneUbicacion && (
-                <EntornoProyecto nombre={proyecto.nombre} latitud={proyecto.latitud!} longitud={proyecto.longitud!} datos={entorno} />
+            {tieneUbicacion ? (
+                <EntornoProyecto nombre={proyecto.nombre} latitud={proyecto.latitud!} longitud={proyecto.longitud!} datos={entorno}
+                    lateral={proyecto.salaDireccion ? <SalaVentas proyecto={proyecto} /> : undefined} />
+            ) : proyecto.salaDireccion && (
+                <div id="ubicacion" className="scroll-mt-6 max-w-sm"><SalaVentas proyecto={proyecto} /></div>
             )}
 
             {normativa && <FichaNormativa normativa={normativa} />}
