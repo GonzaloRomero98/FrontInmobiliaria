@@ -18,6 +18,20 @@ export interface Metricas{
     reservas:{reservasMes:number; ventasMes:number};
     visitas:{proximos7Dias:number; proximas:VisitaProxima[]};
     masSolicitados:{id:string; nombreModelo:string; proyecto:string; solicitudes:number}[];
+    // Últimos 30 días
+    experiencia3d:{escaneosQr:number; sesionesAr:number};
+}
+
+export type TipoEventoModelo = 'QR_ESCANEADO' | 'AR_INICIADA';
+
+// keepalive: la petición sigue aunque el navegador salga de la página para abrir la RA (Scene Viewer / Quick Look).
+// Una métrica perdida no debe molestar al visitante, por eso los errores se ignoran.
+export function registrarEventoModelo(idModelo:string, tipo:TipoEventoModelo):void{
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/metricas/eventos`, {
+        method:'POST', keepalive:true,
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({id_modelo_casa:idModelo, tipo}),
+    }).catch(()=>{});
 }
 
 // Panel de la secretaria (GET /metricas/seguimiento): a quién contactar primero, agenda y reservas por cerrar

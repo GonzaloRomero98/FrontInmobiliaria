@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import Visor3D from "./Visor3D";
 
 interface GaleriaModeloProps {
+    idModelo: string;
     titulo: string;
     modelo3dUrl: string | null;
     imagenes: string[];
@@ -13,7 +14,7 @@ interface GaleriaModeloProps {
 
 // Recorrido 3D y fotos van en pestañas separadas: dentro de un carrusel, arrastrar para girar
 // el modelo chocaría con deslizar para cambiar de foto.
-export default function GaleriaModelo({ titulo, modelo3dUrl, imagenes }: GaleriaModeloProps) {
+export default function GaleriaModelo({ idModelo, titulo, modelo3dUrl, imagenes }: GaleriaModeloProps) {
     const [vista, setVista] = useState<'3d' | 'fotos'>(modelo3dUrl ? '3d' : 'fotos');
     const [actual, setActual] = useState(0);
     const pista = useRef<HTMLDivElement>(null);
@@ -52,7 +53,7 @@ export default function GaleriaModelo({ titulo, modelo3dUrl, imagenes }: Galeria
             )}
 
             {vista === '3d' && modelo3dUrl ? (
-                <Visor3D modeloUrl={modelo3dUrl} titulo={titulo} />
+                <Visor3D idModelo={idModelo} modeloUrl={modelo3dUrl} titulo={titulo} />
             ) : (
                 <>
                     <div className="relative">

@@ -59,7 +59,7 @@ export default async function DetallePropiedadID({params}:{params:Promise<{id:st
         <main className="max-w-6xl mx-auto px-4 py-10">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 flex flex-col gap-6">
-                    <GaleriaModelo titulo={modelo.nombreModelo} modelo3dUrl={modelo.modelo3dUrl} imagenes={imagenesModelo(modelo)} />
+                    <GaleriaModelo idModelo={modelo.id} titulo={modelo.nombreModelo} modelo3dUrl={modelo.modelo3dUrl} imagenes={imagenesModelo(modelo)} />
 
                     <div>
                         <h1 className="text-3xl font-bold">
@@ -135,7 +135,7 @@ export default async function DetallePropiedadID({params}:{params:Promise<{id:st
                 <div className="flex flex-col gap-4">
                     <BotonWhatsApp mensaje={`Hola, me interesa el modelo ${modelo.nombreModelo} del proyecto ${modelo.proyecto.nombre} (${urlActual}).`} />
                     <BotonComparar idModelo={modelo.id} variante="completo" />
-                    {modelo.modelo3dUrl && <QrAr urlPropiedad={urlActual}></QrAr>}
+                    {modelo.modelo3dUrl && <QrAr urlPropiedad={`${urlActual}/ar?src=qr`}></QrAr>}
                     <div className="p-4 border rounded-xl">
                         <FormularioContacto idModeloCasa={modelo.id} conVisita={!!modelo.proyecto.salaDireccion}></FormularioContacto>
                     </div>

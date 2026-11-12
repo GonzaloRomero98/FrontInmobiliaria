@@ -76,7 +76,7 @@ export default function TablaComparacion({ modelos }: { modelos: ModeloCasa[] })
                 {modelos.map((m) => (
                     <div key={m.id} className="flex flex-col gap-2 pb-4">
                         {m.modelo3dUrl ? (
-                            <Visor3D modeloUrl={m.modelo3dUrl} titulo={m.nombreModelo} altura={260} rotarAutomatico={false} />
+                            <Visor3D idModelo={m.id} modeloUrl={m.modelo3dUrl} titulo={m.nombreModelo} altura={260} rotarAutomatico={false} />
                         ) : (
                             <img src={m.imgPrincipal} alt={m.nombreModelo} className="w-full h-[260px] object-cover rounded-xl bg-gray-100" />
                         )}

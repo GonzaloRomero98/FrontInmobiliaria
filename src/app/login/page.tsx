@@ -43,9 +43,13 @@ export default function Login(){
                 }
             }catch(error){
                 console.error('Error de login:', error);
-                setError(isAxiosError(error) && error.response?.status === 429
+                const status = isAxiosError(error) ? error.response?.status : undefined;
+                // Sin respuesta (red caída o API apagada) o un 5xx: no es culpa de los datos ingresados
+                setError(status === 429
                     ? 'Demasiados intentos fallidos. Espera unos minutos e intenta de nuevo.'
-                    : 'Datos incorrectos')
+                    : status === undefined || status >= 500
+                        ? 'No pudimos conectar con el servidor. Revisa tu conexión e intenta de nuevo en unos momentos.'
+                        : 'Correo o contraseña incorrectos')
             }
         }
 

@@ -209,6 +209,12 @@ export default function AdminDashboard() {
                         </Tarjeta>
                         <Tarjeta titulo="Modelos más consultados">
                             <MasConsultados modelos={metricas.masSolicitados} />
+                            {metricas.experiencia3d && (
+                                <p className="text-sm text-slate-600 border-t border-slate-200 pt-3 mt-4">
+                                    Últimos 30 días: <strong className="text-slate-900">{numero(metricas.experiencia3d.escaneosQr)}</strong> escaneos de QR
+                                    · <strong className="text-slate-900">{numero(metricas.experiencia3d.sesionesAr)}</strong> visitas en RA
+                                </p>
+                            )}
                         </Tarjeta>
                     </div>
                 </div>
