@@ -5,7 +5,6 @@ import { URL_SITIO } from "@/lib/sitio";
 
 export const revalidate = 3600;
 
-// Mapa del sitio para buscadores: páginas fijas + cada proyecto y modelo publicado
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const fijas: MetadataRoute.Sitemap = [
         { url: `${URL_SITIO}/`, changeFrequency: 'daily', priority: 1 },

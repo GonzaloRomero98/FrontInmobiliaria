@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-const TAMANO_MAXIMO_BYTES = 5 * 1024 * 1024; // 5MB
+const TAMANO_MAXIMO_BYTES = 5 * 1024 * 1024;
 
 interface SubidaImagenProps {
     archivoSeleccionado: (archivo: File | null) => void;

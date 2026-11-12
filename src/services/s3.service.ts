@@ -1,4 +1,3 @@
-// services/s3.service.ts
 import { api } from "@/lib/api";
 
 interface PresignedUrlResponse {

@@ -134,7 +134,6 @@ export default function PanelLayout({ rol, children }: { rol: string | undefined
                     {navegacion}
                 </aside>
 
-                {/* Móvil y tablet: barra superior con botón de menú */}
                 <div className="lg:hidden print:hidden sticky top-0 z-40 flex items-center justify-between gap-3 bg-marca px-4 h-14">
                     <Link href={esAdmin ? '/admin' : '/secretario'} className="bg-white rounded-lg px-2 py-1.5">
                         <Image src="/logo-inmocap.png" alt={NOMBRE_SITIO} width={562} height={144} className="h-6 w-auto" />

@@ -152,6 +152,17 @@ export function MapaEntornoLeaflet({ latitud, longitud, nombre, lugares, radio }
     );
 }
 
+// Si el punto cambia y queda fuera de la vista (p. ej. al escribir las coordenadas a mano), el mapa lo sigue
+function SeguirPunto({ posicion }: { posicion: [number, number] | null }) {
+    const mapa = useMap();
+    const [lat, lng] = posicion ?? [null, null];
+    useEffect(() => {
+        if (lat === null || lng === null || mapa.getBounds().contains([lat, lng])) return;
+        mapa.setView([lat, lng], Math.max(mapa.getZoom(), 15));
+    }, [mapa, lat, lng]);
+    return null;
+}
+
 function CapturarClick({ onCambio }: { onCambio: (lat: number, lng: number) => void }) {
     useMapEvents({
         click(e) {
@@ -161,14 +172,35 @@ function CapturarClick({ onCambio }: { onCambio: (lat: number, lng: number) => v
     return null;
 }
 
-export function SelectorUbicacionLeaflet({ latitud, longitud, onCambio }: {
+// Otro proyecto ya registrado, dibujado en el selector como referencia
+export interface ProyectoReferencia { id: string; nombre: string; activo: boolean; latitud: number; longitud: number }
+const COLOR_OTROS = '#64748b';
+
+export function SelectorUbicacionLeaflet({ latitud, longitud, onCambio, otros = [], radioOtros = 1000 }: {
     latitud: number | null; longitud: number | null; onCambio: (lat: number, lng: number) => void;
+    // Proyectos existentes con su radio de entorno, para no ubicar uno nuevo encima sin darse cuenta
+    otros?: ProyectoReferencia[]; radioOtros?: number;
 }) {
     const posicion: [number, number] | null = latitud !== null && longitud !== null ? [latitud, longitud] : null;
+    const puntosOtros = useMemo(() => otros.map((p) => [p.latitud, p.longitud] as [number, number]), [otros]);
     return (
         <MapContainer center={posicion ?? CENTRO_CHILE} zoom={posicion ? 15 : 5} style={estiloMapa(320)}>
             <TileLayer attribution={ATRIBUCION} url={TESELAS} />
             <CapturarClick onCambio={onCambio} />
+            {/* Sin punto elegido, se parte mirando los proyectos que ya existen (no todo Chile) */}
+            {!posicion && <AjustarVista puntos={puntosOtros} />}
+            <SeguirPunto posicion={posicion} />
+            {/* No interactivos: un clic dentro de un círculo igual elige el punto */}
+            {otros.map((p) => (
+                <Circle key={`radio-${p.id}`} center={[p.latitud, p.longitud]} radius={radioOtros} interactive={false}
+                    pathOptions={{ color: COLOR_OTROS, weight: 1.5, dashArray: '5 5', fillColor: COLOR_OTROS, fillOpacity: 0.06 }} />
+            ))}
+            {otros.map((p) => (
+                <CircleMarker key={p.id} center={[p.latitud, p.longitud]} radius={6}
+                    pathOptions={{ color: '#fff', weight: 2, fillColor: COLOR_OTROS, fillOpacity: 1 }}>
+                    <Tooltip direction="top">{p.nombre}{p.activo ? '' : ' (despublicado)'}</Tooltip>
+                </CircleMarker>
+            ))}
             {posicion && <Marker position={posicion} icon={pin} />}
         </MapContainer>
     );

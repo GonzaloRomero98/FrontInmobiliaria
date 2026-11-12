@@ -3,5 +3,4 @@ export const DESCRIPCION_SITIO = 'Proyectos inmobiliarios en Chile con recorrido
 export const URL_SITIO = (process.env.NEXT_PUBLIC_PAGE_URL || 'http://localhost:3000').replace(/\/$/, '');
 export const WHATSAPP_NUMERO = (process.env.NEXT_PUBLIC_WHATSAPP_NUMERO ?? '').replace(/\D/g, '');
 
-// Máximo de modelos en el comparador
 export const MAXIMO_COMPARAR = 3;

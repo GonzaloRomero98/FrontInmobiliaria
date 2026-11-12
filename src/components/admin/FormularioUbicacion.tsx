@@ -1,8 +1,9 @@
 'use client'
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { isAxiosError } from "axios";
 import { SelectorUbicacion } from "@/components/mapas";
+import AvisoCercania, { confirmarSiDuplicado, DISTANCIA_DUPLICADO_M, guardarConfirmandoCercania, proyectosCercanos, RADIO_ENTORNO_M, useProyectosEnMapa } from "@/components/admin/AvisoCercania";
 import { actualizarEntorno, actualizarProyecto, getEntorno } from "@/services/proyecto.service";
 import { Proyecto } from "@/types/proyecto";
 import { CATEGORIAS_ENTORNO, CategoriaEntorno, EntornoProyecto } from "@/types/entorno";
@@ -33,6 +34,9 @@ export default function FormularioUbicacion({ proyecto, onGuardado }: { proyecto
     const [entorno, setEntorno] = useState<EntornoProyecto | null>(null);
     const [calculando, setCalculando] = useState(false);
 
+    const otrosProyectos = useProyectosEnMapa(proyecto.id);
+    const cercanos = useMemo(() => proyectosCercanos(latitud, longitud, otrosProyectos), [latitud, longitud, otrosProyectos]);
+
     useEffect(() => {
         getEntorno(proyecto.id).then(setEntorno).catch(() => setEntorno(null));
     }, [proyecto.id]);
@@ -55,13 +59,21 @@ export default function FormularioUbicacion({ proyecto, onGuardado }: { proyecto
 
     async function guardar() {
         setMensaje(null);
+        const cambiaUbicacion = latitud !== proyecto.latitud || longitud !== proyecto.longitud;
+        // Solo se pregunta si se movió el punto (la API tampoco revisa si la ubicación no cambia)
+        if (cambiaUbicacion && !confirmarSiDuplicado(cercanos)) return;
+        const yaConfirmado = cambiaUbicacion && cercanos.some((p) => p.distancia < DISTANCIA_DUPLICADO_M);
         setGuardando(true);
         try {
-            const cambiaUbicacion = latitud !== proyecto.latitud || longitud !== proyecto.longitud;
-            const actualizado = await actualizarProyecto(proyecto.id, {
+            const actualizado = await guardarConfirmandoCercania((confirmarCercania) => actualizarProyecto(proyecto.id, {
                 direccion: direccion.trim() || undefined,
                 ...(latitud !== null && longitud !== null && { latitud, longitud }),
-            });
+                ...(confirmarCercania && { confirmarCercania }),
+            }), yaConfirmado);
+            if (!actualizado) {
+                setMensaje({ tipo: 'error', texto: 'No se guardó la ubicación' });
+                return;
+            }
             onGuardado({ ...proyecto, ...actualizado });
             setMensaje({ tipo: 'ok', texto: 'Ubicación guardada' });
             if (cambiaUbicacion && latitud !== null) {
@@ -105,7 +117,10 @@ export default function FormularioUbicacion({ proyecto, onGuardado }: { proyecto
             <input value={direccion} onChange={(e) => setDireccion(e.target.value)} maxLength={200}
                 placeholder="Dirección (ej: 1 Sur 1234)" className="w-full border rounded-lg px-3 py-2" />
 
-            <SelectorUbicacion latitud={latitud} longitud={longitud} onCambio={(lat, lng) => { setLatitud(lat); setLongitud(lng); }} />
+            <SelectorUbicacion latitud={latitud} longitud={longitud} onCambio={(lat, lng) => { setLatitud(lat); setLongitud(lng); }}
+                otros={otrosProyectos} radioOtros={RADIO_ENTORNO_M} />
+            {otrosProyectos.length > 0 && <p className="text-xs text-gray-500">En gris, los demás proyectos y su radio de {RADIO_ENTORNO_M / 1000} km.</p>}
+            <AvisoCercania cercanos={cercanos} />
 
             <div className="grid grid-cols-2 gap-3">
                 <label className="flex flex-col gap-1 text-sm">

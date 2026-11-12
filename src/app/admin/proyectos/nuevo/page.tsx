@@ -4,7 +4,7 @@ import { Ciudad, Region } from "@/types/ubicacion";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { gerRegiones, getCiudades } from "@/services/ubicacion.service";
 import z from "zod";
@@ -12,6 +12,7 @@ import { crearPoryecto } from "@/services/proyecto.service";
 import { obtenerUrlSubida, subirArchivo } from "@/services/s3.service";
 import SubidaImagen from "@/components/SubidaImagen";
 import { SelectorUbicacion } from "@/components/mapas";
+import AvisoCercania, { confirmarSiDuplicado, DISTANCIA_DUPLICADO_M, guardarConfirmandoCercania, proyectosCercanos, RADIO_ENTORNO_M, useProyectosEnMapa } from "@/components/admin/AvisoCercania";
 import { ETIQUETA_ETAPA, EtapaProyecto } from "@/types/proyecto";
 
 const esquemaProyecto = z.object({
@@ -38,6 +39,8 @@ export default function NuevoProyecto() {
     const [progreso, setProgreso] = useState(0);
     const [latitud, setLatitud] = useState<number | null>(null);
     const [longitud, setLongitud] = useState<number | null>(null);
+    const otrosProyectos = useProyectosEnMapa();
+    const cercanos = useMemo(() => proyectosCercanos(latitud, longitud, otrosProyectos), [latitud, longitud, otrosProyectos]);
 
     const {
         register,
@@ -71,6 +74,10 @@ export default function NuevoProyecto() {
             return;
         }
 
+        // Se pregunta antes de subir la imagen: si el admin se arrepiente, no queda una foto huérfana en S3
+        if (!confirmarSiDuplicado(cercanos)) return;
+        const yaConfirmado = cercanos.some((p) => p.distancia < DISTANCIA_DUPLICADO_M);
+
         try {
             setSubiendoImagen(true);
             setProgreso(0);
@@ -78,7 +85,7 @@ export default function NuevoProyecto() {
             const { uploadUrl, publicUrl, contentType } = await obtenerUrlSubida(archivoImagen, 'proyectos');
             await subirArchivo(archivoImagen, uploadUrl, contentType, setProgreso);
 
-            const proyecto = await crearPoryecto({
+            const proyecto = await guardarConfirmandoCercania((confirmarCercania) => crearPoryecto({
                 nombre: dataForm.nombre,
                 id_ciudad: Number(dataForm.id_ciudad),
                 descripcion: dataForm.descripcion || undefined,
@@ -87,9 +94,13 @@ export default function NuevoProyecto() {
                 etapa: (dataForm.etapa || undefined) as EtapaProyecto | undefined,
                 fechaEntrega: dataForm.fechaEntrega || undefined,
                 ...(latitud !== null && longitud !== null && { latitud, longitud }),
-            });
+                ...(confirmarCercania && { confirmarCercania }),
+            }), yaConfirmado);
+            if (!proyecto) {
+                setError('No se creó el proyecto. Revisa la ubicación en el mapa.');
+                return;
+            }
 
-            // Siguiente paso: completar la normativa del plan regulador
             router.push(`/admin/proyectos/${proyecto.id}`);
         } catch {
             setError('No se pudo crear el proyecto, revisa bien los datos');
@@ -171,7 +182,10 @@ export default function NuevoProyecto() {
                         Ubicación en el mapa (opcional): haz clic donde está el proyecto.
                         {latitud !== null && longitud !== null && <> Seleccionado: {latitud}, {longitud}</>}
                     </p>
-                    <SelectorUbicacion latitud={latitud} longitud={longitud} onCambio={(lat, lng) => { setLatitud(lat); setLongitud(lng); }} />
+                    <SelectorUbicacion latitud={latitud} longitud={longitud} onCambio={(lat, lng) => { setLatitud(lat); setLongitud(lng); }}
+                        otros={otrosProyectos} radioOtros={RADIO_ENTORNO_M} />
+                    {otrosProyectos.length > 0 && <p className="text-xs text-gray-500">En gris, los proyectos ya registrados y su radio de {RADIO_ENTORNO_M / 1000} km.</p>}
+                    <AvisoCercania cercanos={cercanos} />
                 </div>
 
                 <div>

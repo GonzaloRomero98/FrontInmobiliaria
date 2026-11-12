@@ -77,29 +77,23 @@ function valoresIniciales(modelo?: ModeloCasa): Partial<FormValues> {
 export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }){
     const router = useRouter();
 
-    //Precarga de los datos
     const[proyectos, setProyectos] = useState<Proyecto[]>([]);
     const[caracteristica, setCaracteristica] = useState<Caracteristica[]>([]);
     const[caracteristicaSeleccionadas, setCaracteristicaSeleccionadas] = useState<number[]>(modelo?.caracteristicas.map((c) => c.id) ?? []);
     const [error, setError ] = useState<string | null >(null);
 
-    //guardado del archivo
     const [archivoImagen, setArchivoImagen] = useState<File | null>(null);
     const [archivoModelo3D, setArchivoModelo3D] = useState<File | null>(null);
     const [archivoPlano, setArchivoPlano] = useState<File | null>(null);
-
-    //Validacion del archivo
 
     const [subiendoImagen, setSubiendoImagen] = useState(false);
     const [subiendoModelo3D, setSubiendoModelo3d]  = useState(false);
     const [subiendoPlano, setSubiendoPlano] = useState(false);
 
-    //Progreso de subida
     const [progresoImagen, setProgresoImagen] = useState(0);
     const [progresoModelo3d, setProgresoModelo3d] = useState(0);
     const [progresoPlano, setProgresoPlano] = useState(0);
 
-    //acciones formulario
     const{register, handleSubmit, watch, setValue, setError:setFormError, formState:{errors,isSubmitting}}=useForm<FormValues>({
         resolver: zodResolver(esquemaModeloCasa),
         defaultValues: valoresIniciales(modelo)

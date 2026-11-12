@@ -21,7 +21,6 @@ function PorContactar({ solicitudes, ahora, alMarcar }: { solicitudes: Seguimien
                 // Más de 2 días sin respuesta: se destaca (con ícono y texto, no solo color)
                 const atrasada = ahora - new Date(s.creadoEn).getTime() > DOS_DIAS_MS;
                 return (
-                    // En móvil los botones van debajo de los datos; desde sm, a la derecha
                     <li key={s.id} className="flex flex-col sm:flex-row sm:items-center gap-3 py-3 first:pt-0 last:pb-0">
                         <div className="min-w-0 sm:flex-1">
                             <p className="font-semibold text-marca truncate">{s.nombre} {s.apellido}</p>

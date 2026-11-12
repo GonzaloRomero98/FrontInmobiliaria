@@ -51,6 +51,8 @@ export interface CrearPoyectoInput{
     salaTelefono?: string | null;
     salaLatitud?: number | null;
     salaLongitud?: number | null;
+    // Guardar aunque haya otro proyecto a menos de 50 m (sin esto la API responde 409)
+    confirmarCercania?: boolean;
 }
 
 // Enlace "Cómo llegar" de Google Maps (solo URL, sin API ni clave): usa las coordenadas si las hay

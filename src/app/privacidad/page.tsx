@@ -4,9 +4,8 @@ export const metadata: Metadata = {
     title: "Política de privacidad",
 };
 
-// Revisar y completar los datos marcados entre corchetes antes de publicar.
-const RESPONSABLE = "[Nombre de la inmobiliaria]";
-const CORREO_CONTACTO = "[correo@inmobiliaria.cl]";
+const RESPONSABLE = "Inmocap";
+const CORREO_CONTACTO = "contacto@inmocap.cl";
 const DIAS_RETENCION = 365;
 
 export default function PoliticaPrivacidad() {
@@ -49,6 +48,29 @@ export default function PoliticaPrivacidad() {
                     Solo el personal autorizado de {RESPONSABLE} que gestiona las solicitudes. El acceso
                     requiere usuario y contraseña, queda registrado, y los datos viajan y se almacenan en
                     servidores con conexiones cifradas.
+                </p>
+            </section>
+
+            <section className="flex flex-col gap-2">
+                <h2 className="text-xl font-semibold">Cookies y almacenamiento en tu navegador</h2>
+                <p>
+                    Este sitio no usa cookies de publicidad, analítica ni seguimiento. Si solo navegas el
+                    catálogo, no guardamos ninguna cookie.
+                </p>
+                <p>
+                    Si inicias sesión, usamos dos cookies técnicas necesarias para mantenerla abierta: una
+                    con tu credencial de acceso y otra con tu tipo de cuenta. Se borran al cerrar sesión o
+                    al cerrar el navegador, y la sesión vence a las 8 horas. Sin ellas no es posible
+                    ingresar, por eso no requieren tu aceptación.
+                </p>
+                <p>
+                    Las propiedades que agregas al comparador se guardan solo en tu navegador
+                    (almacenamiento local) y no se envían a nuestros servidores. Puedes quitarlas desde el
+                    comparador o borrando los datos del sitio en tu navegador.
+                </p>
+                <p>
+                    Los mapas se cargan desde OpenStreetMap, que recibe tu dirección IP al mostrar el mapa,
+                    como ocurre con cualquier sitio web que visitas.
                 </p>
             </section>
 

@@ -22,7 +22,6 @@ function resumenProyecto(modelos: ModeloCasa[], valorUF: number | null) {
     return { tipo, resumen, desde: desde === null ? null : `Desde ${formatearUF(desde)}` } as const;
 }
 
-// El catálogo se regenera cada minuto
 export const revalidate = 60;
 
 export default async function Home() {

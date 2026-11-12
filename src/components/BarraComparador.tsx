@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MAXIMO_COMPARAR, useComparador } from "@/lib/comparador";
 
-// Barra fija inferior con la selección de modelos para comparar
 export default function BarraComparador() {
     const { ids, reemplazar } = useComparador();
     const ruta = usePathname();
