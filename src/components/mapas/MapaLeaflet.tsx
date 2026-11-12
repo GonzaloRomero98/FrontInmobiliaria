@@ -4,10 +4,10 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import Link from 'next/link';
 import { useEffect, useMemo } from 'react';
-import { Circle, CircleMarker, MapContainer, Marker, Popup, TileLayer, Tooltip, useMap, useMapEvents } from 'react-leaflet';
+import { Circle, CircleMarker, MapContainer, Marker, Popup, ScaleControl, TileLayer, Tooltip, useMap, useMapEvents } from 'react-leaflet';
 import { CATEGORIAS_ENTORNO, LugarCercano } from '@/types/entorno';
 import { formatearDistancia } from '@/lib/formato';
-import { htmlSimbolo, TipoPunto } from './simbolos';
+import { ColorPunto, htmlSimbolo, TipoPunto } from './simbolos';
 
 export interface PuntoProyecto {
     id: string;
@@ -19,6 +19,8 @@ export interface PuntoProyecto {
     tipo?: Exclude<TipoPunto, 'SALA'> | null;
     resumen?: string;
     desde?: string | null;
+    // Color propio del proyecto (lo comparte con su sala de ventas)
+    color: ColorPunto;
 }
 
 export interface PuntoSala {
@@ -30,6 +32,7 @@ export interface PuntoSala {
     comoLlegar: string;
     latitud: number;
     longitud: number;
+    color: ColorPunto;
 }
 
 const CENTRO_CHILE: [number, number] = [-33.45, -70.66];
@@ -46,11 +49,11 @@ const pin = L.divIcon({
 });
 
 const iconos = new Map<string, L.DivIcon>();
-function icono(tipo: TipoPunto | null): L.DivIcon {
-    const clave = tipo ?? 'NINGUNO';
+function icono(tipo: TipoPunto | null, color: ColorPunto): L.DivIcon {
+    const clave = `${tipo ?? 'NINGUNO'}-${color.fondo}`;
     if (!iconos.has(clave)) {
         iconos.set(clave, L.divIcon({
-            className: '', html: htmlSimbolo(tipo),
+            className: '', html: htmlSimbolo(tipo, 26, color),
             iconSize: [26, 26], iconAnchor: tipo === 'SALA' ? [13, 13] : [13, 26], popupAnchor: [0, tipo === 'SALA' ? -13 : -26],
         }));
     }
@@ -75,7 +78,7 @@ export function MapaProyectosLeaflet({ proyectos, salas = [], altura = 420 }: { 
             <TileLayer attribution={ATRIBUCION} url={TESELAS} />
             <AjustarVista puntos={puntos} />
             {proyectos.map((p) => (
-                <Marker key={p.id} position={[p.latitud, p.longitud]} icon={icono(p.tipo ?? null)}>
+                <Marker key={p.id} position={[p.latitud, p.longitud]} icon={icono(p.tipo ?? null, p.color)}>
                     <Popup>
                         <strong>{p.nombre}</strong><br />{p.comuna}<br />
                         {p.resumen && <>{p.resumen}<br /></>}
@@ -85,7 +88,7 @@ export function MapaProyectosLeaflet({ proyectos, salas = [], altura = 420 }: { 
                 </Marker>
             ))}
             {salas.map((s) => (
-                <Marker key={`sala-${s.idProyecto}`} position={[s.latitud, s.longitud]} icon={icono('SALA')}>
+                <Marker key={`sala-${s.idProyecto}`} position={[s.latitud, s.longitud]} icon={icono('SALA', s.color)}>
                     <Popup>
                         <strong>Sala de ventas</strong> · {s.proyecto}<br />{s.direccion}<br />
                         {s.horario && <>{s.horario}<br /></>}
@@ -98,13 +101,41 @@ export function MapaProyectosLeaflet({ proyectos, salas = [], altura = 420 }: { 
     );
 }
 
+// Radio del entorno en el color de acento de la marca: borde punteado (se lee como zona, no como calle) y relleno suave
+const COLOR_RADIO = '#1e727d';
+
+// Encuadra el mapa para que el círculo completo quepa en cualquier pantalla (un zoom fijo lo cortaba)
+function EncuadrarRadio({ latitud, longitud, radio }: { latitud: number; longitud: number; radio: number }) {
+    const mapa = useMap();
+    useEffect(() => {
+        mapa.fitBounds(L.latLng(latitud, longitud).toBounds(radio * 2), { padding: [16, 16] });
+    }, [mapa, latitud, longitud, radio]);
+    return null;
+}
+
+// Etiqueta con la distancia, centrada sobre el borde norte del círculo
+function etiquetaRadio(radio: number): L.DivIcon {
+    return L.divIcon({
+        className: '',
+        html: `<span style="position:absolute;transform:translate(-50%,-50%);white-space:nowrap;background:#fff;color:${COLOR_RADIO};border:1.5px solid ${COLOR_RADIO};border-radius:999px;padding:2px 10px;font:600 12px/1.4 system-ui,sans-serif;box-shadow:0 1px 3px rgba(0,0,0,.15)">${formatearDistancia(radio)} a la redonda</span>`,
+        iconSize: [0, 0],
+    });
+}
+
 export function MapaEntornoLeaflet({ latitud, longitud, nombre, lugares, radio }: {
     latitud: number; longitud: number; nombre: string; lugares: LugarCercano[]; radio: number;
 }) {
+    const etiqueta = useMemo(() => etiquetaRadio(radio), [radio]);
+    // zoomSnap 0.25: el encuadre puede quedar entre niveles enteros y el círculo ocupa casi todo el alto
     return (
-        <MapContainer center={[latitud, longitud]} zoom={15} scrollWheelZoom={false} style={estiloMapa(420)}>
+        <MapContainer center={[latitud, longitud]} zoom={15} zoomSnap={0.25} scrollWheelZoom={false} style={estiloMapa(420)}>
             <TileLayer attribution={ATRIBUCION} url={TESELAS} />
-            <Circle center={[latitud, longitud]} radius={radio} pathOptions={{ color: '#111827', weight: 1, fillOpacity: 0.04 }} />
+            <EncuadrarRadio latitud={latitud} longitud={longitud} radio={radio} />
+            <ScaleControl imperial={false} position="bottomleft" />
+            <Circle center={[latitud, longitud]} radius={radio} interactive={false}
+                pathOptions={{ color: COLOR_RADIO, weight: 2.5, dashArray: '8 6', fillColor: COLOR_RADIO, fillOpacity: 0.07 }} />
+            {/* 1 grado de latitud ≈ 111.320 m: así la etiqueta queda justo sobre el borde norte */}
+            <Marker position={[latitud + radio / 111_320, longitud]} icon={etiqueta} interactive={false} keyboard={false} />
             {lugares.map((l) => {
                 const categoria = CATEGORIAS_ENTORNO[l.categoria];
                 return (
