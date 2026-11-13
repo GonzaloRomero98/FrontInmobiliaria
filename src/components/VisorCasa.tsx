@@ -29,7 +29,8 @@ export default function VisorCasa(props: ComponentProps<typeof Visor3D>) {
                 optionalFeatures: ['dom-overlay', 'anchors'],
                 domOverlay: { root: capaAr! },
             });
-            sesion.addEventListener('end', () => setSesionAr(null));
+            // Al salir se queda en el recorrido (mismo lienzo); volver a model-viewer en ese instante tumbaba la pestaña
+            sesion.addEventListener('end', () => { setSesionAr(null); setInterior(true); });
             setSesionAr(sesion);
         } catch {
             avisar('No se pudo abrir la cámara. Revisa que el navegador tenga permiso para usarla.', { error: true });

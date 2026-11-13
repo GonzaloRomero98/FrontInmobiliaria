@@ -42,17 +42,20 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
     const [estado, setEstado] = useState<'cargando' | 'listo' | 'error'>('cargando');
     const [intento, setIntento] = useState(0);
     const [colocada, setColocada] = useState(false);
+    const iniciarAr = useRef<((sesion: XRSession) => void) | null>(null);
 
     useEffect(() => {
         const div = contenedor.current!;
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: !!sesionAr });
+        // alpha: en RA el fondo queda transparente para ver la cámara; fuera de ella lo tapa escena.background
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
         renderer.toneMapping = THREE.NeutralToneMapping;
         const canvas = renderer.domElement;
         lienzo.current!.appendChild(canvas);
 
         const escena = new THREE.Scene();
-        if (!sesionAr) escena.background = new THREE.Color('#f3f4f6');
+        const fondo = new THREE.Color('#f3f4f6');
+        escena.background = fondo;
         const pmrem = new THREE.PMREMGenerator(renderer);
         const entorno = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
         escena.environment = entorno;
@@ -151,17 +154,32 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
         // compensa la deriva del seguimiento (la casa "subiéndose" al caminar).
         let fuenteHit: XRHitTestSource | undefined;
         let ancla: XRAnchor | undefined;
-        let enSuelo = false;
+        let enSuelo = false, enAr = false;
         const anclaInicial = new THREE.Vector3(), baseModelo = new THREE.Vector3();
-        if (sesionAr) {
+        // La sesión se conecta a este mismo renderer y al salir se sigue en el recorrido con joystick:
+        // destruir el contexto WebGL (y montar model-viewer) justo al cerrar la RA tumbaba la pestaña en Android
+        iniciarAr.current = (sesion) => {
+            if (enAr) return;
+            enAr = true;
+            enSuelo = false;
+            escena.background = null;
+            sesion.addEventListener('end', () => {
+                enAr = false;
+                fuenteHit = undefined; // el navegador ya los invalidó al cerrar la sesión
+                ancla = undefined;
+                renderer.xr.enabled = false;
+                escena.background = fondo;
+                if (modelo) { modelo.position.set(0, 0, 0); modelo.rotation.y = 0; modelo.visible = true; }
+                setColocada(false);
+            });
             renderer.xr.enabled = true;
             renderer.xr.setReferenceSpaceType('local');
-            renderer.xr.setSession(sesionAr)
-                .then(() => sesionAr.requestReferenceSpace('viewer'))
-                .then((espacio) => sesionAr.requestHitTestSource?.({ space: espacio }))
+            renderer.xr.setSession(sesion)
+                .then(() => sesion.requestReferenceSpace('viewer'))
+                .then((espacio) => sesion.requestHitTestSource?.({ space: espacio }))
                 .then((f) => { if (cancelado) f?.cancel(); else fuenteHit = f; })
-                .catch(() => sesionAr.end().catch(() => {}));
-        }
+                .catch(() => sesion.end().catch(() => {}));
+        };
         const colocarEnElSuelo = (frame: XRFrame) => {
             const ref = renderer.xr.getReferenceSpace()!;
             const ojos = frame.getViewerPose(ref)?.transform;
@@ -191,7 +209,7 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
         renderer.setAnimationLoop((tiempo, frame) => {
             const dt = Math.min((tiempo - (anterior || tiempo)) / 1000, 0.1);
             anterior = tiempo;
-            if (sesionAr) {
+            if (enAr) {
                 if (modelo && frame && fuenteHit) colocarEnElSuelo(frame);
                 if (modelo && frame && ancla) seguirAncla(frame);
                 // Sin colocar no se dibuja la casa: aparecería alrededor de la cabeza y no en el suelo
@@ -216,10 +234,10 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
 
         return () => {
             cancelado = true;
+            iniciarAr.current = null;
             renderer.setAnimationLoop(null);
             // La sesión no se cierra aquí: React monta dos veces en desarrollo; la cierran Salir o el botón atrás
-            fuenteHit?.cancel();
-            ancla?.delete();
+            if (enAr) { fuenteHit?.cancel(); ancla?.delete(); }
             setColocada(false);
             observador.disconnect();
             div.removeEventListener('keydown', alTeclear);
@@ -240,7 +258,11 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
             renderer.dispose();
             canvas.remove();
         };
-    }, [modeloUrl, intento, sesionAr]);
+    }, [modeloUrl, intento]);
+
+    useEffect(() => {
+        if (sesionAr) iniciarAr.current?.(sesionAr);
+    }, [sesionAr]);
 
     function moverJoystick(e: EventoPuntero<HTMLDivElement>) {
         const r = e.currentTarget.getBoundingClientRect();
