@@ -13,9 +13,10 @@ const ESTILO_OPCION = "block w-full text-left px-4 py-2 text-sm hover:bg-gray-50
 
 // Sin sesión muestra "Ingresar"; con sesión, la foto y el nombre con un menú (panel, perfil, cerrar sesión).
 // La cookie se lee en el navegador y no en el servidor, para no quitarle la caché (ISR) a las páginas públicas.
+// Se mira `rol_usuario` porque la del token es HttpOnly y JavaScript no puede verla.
 export default function MenuUsuario(){
     const pathname = usePathname();
-    const [token, setToken] = useState<string | null>(null);
+    const [rolCookie, setRolCookie] = useState<string | null>(null);
     const [perfil, setPerfil] = useState<Usuario | null>(null);
     const [abierto, setAbierto] = useState(false);
     const contenedor = useRef<HTMLDivElement>(null);
@@ -24,12 +25,12 @@ export default function MenuUsuario(){
     // Se revisa en cada navegación: así el menú aparece tras el login y desaparece al cerrar sesión
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect -- la cookie solo existe en el navegador
-        setToken(Cookies.get('auth_token') ?? null);
+        setRolCookie(Cookies.get('rol_usuario') ?? null);
         setAbierto(false);
     }, [pathname]);
 
     useEffect(() => {
-        if(!token){
+        if(!rolCookie){
             // eslint-disable-next-line react-hooks/set-state-in-effect -- limpia el perfil al cerrar sesión
             setPerfil(null);
             return;
@@ -38,7 +39,7 @@ export default function MenuUsuario(){
         cargar();
         window.addEventListener(EVENTO_PERFIL_ACTUALIZADO, cargar);
         return () => window.removeEventListener(EVENTO_PERFIL_ACTUALIZADO, cargar);
-    }, [token]);
+    }, [rolCookie]);
 
     // Cierra con clic afuera o con Escape (devolviendo el foco al botón)
     useEffect(() => {
@@ -60,12 +61,12 @@ export default function MenuUsuario(){
         };
     }, [abierto]);
 
-    if(!token){
+    if(!rolCookie){
         return <Link href="/login" className="text-gray-500 hover:underline">Ingresar</Link>;
     }
 
     const nombre = perfil?.nombre ?? 'Mi cuenta';
-    const rol = perfil?.rol.nombre ?? Cookies.get('rol_usuario');
+    const rol = perfil?.rol.nombre ?? rolCookie;
 
     return (
         <div ref={contenedor} className="relative">

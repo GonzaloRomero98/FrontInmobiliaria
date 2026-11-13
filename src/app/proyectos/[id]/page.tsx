@@ -14,6 +14,9 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 
 export const revalidate = 60;
+// Sin esto Next 16 arma la página en cada visita (4 llamadas a la API desde la IP del servidor, que comparten el
+// límite de 100/min por IP): con lista vacía cada proyecto se genera al primer pedido y se cachea 60 s (ISR)
+export async function generateStaticParams() { return []; }
 
 // generateMetadata y la página piden el mismo proyecto: cache() evita la doble llamada a la API
 const obtenerProyecto = cache(async (id: string) => {

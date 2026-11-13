@@ -33,7 +33,7 @@ export default function Login(){
             try{
                 const respuesta = await login(data);
 
-                Cookies.set('auth_token', respuesta.access_token, OPCIONES_COOKIE_SESION);
+                // El token ya quedó en la cookie HttpOnly que puso la API
                 Cookies.set('rol_usuario', respuesta.usuario.rol, OPCIONES_COOKIE_SESION);
                 
                 if(respuesta.usuario.rol === 'ADMIN'){

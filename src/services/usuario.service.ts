@@ -1,5 +1,4 @@
-import { api, OPCIONES_COOKIE_SESION } from "@/lib/api";
-import Cookies from "js-cookie";
+import { api } from "@/lib/api";
 
 export type Rol = 'ADMIN'|'SECRETARIO';
 
@@ -45,8 +44,7 @@ export async function actualizarUsuario(id:string, cambios:{activo?:boolean; con
 }
 
 // El cambio invalida todos los tokens anteriores (también los de otros dispositivos):
-// se guarda el token nuevo que devuelve la API para que esta sesión siga abierta
+// la API pone el token nuevo en la cookie HttpOnly para que esta sesión siga abierta
 export async function cambiarMiContrasena(actual:string, nueva:string):Promise<void>{
-    const {data} = await api.patch<{access_token:string}>('/usuarios/me/contrasena', {actual, nueva});
-    Cookies.set('auth_token', data.access_token, OPCIONES_COOKIE_SESION);
+    await api.patch('/usuarios/me/contrasena', {actual, nueva});
 }

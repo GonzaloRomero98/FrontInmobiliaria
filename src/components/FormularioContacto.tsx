@@ -133,6 +133,7 @@ export default function FormularioContacto({ idModeloCasa, conVisita = false }: 
                 <input
                     {...register('mensaje')}
                     placeholder="Dejenos un mensaje (Opcional)"
+                    maxLength={2000}
                     className="w-full border rounded-lg px-3 py-2"
                 />
             </div>

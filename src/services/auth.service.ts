@@ -5,8 +5,8 @@ interface loginData{
     contrasena:string;
 }
 
+// El token no viene en el cuerpo: la API lo deja en una cookie HttpOnly
 interface loginResponse{
-    access_token:string;
     usuario:{
         id:string;
         correo:string;
@@ -16,4 +16,9 @@ interface loginResponse{
 export async function login(data:loginData):Promise<loginResponse> {
     const {data: response} = await api.post('/auth/login',data);
     return response
+}
+
+// Borra la cookie HttpOnly del token (el navegador no puede hacerlo desde JavaScript)
+export async function logout():Promise<void>{
+    await api.post('/auth/logout');
 }

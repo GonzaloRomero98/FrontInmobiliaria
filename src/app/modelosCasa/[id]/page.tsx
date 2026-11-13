@@ -19,6 +19,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 
 export const revalidate = 60;
+// Igual que en /proyectos/[id]: cachea la página 60 s (ISR) en vez de llamar a la API en cada visita
+export async function generateStaticParams() { return []; }
 
 const obtenerModelo = cache(async (id: string) => {
     try {
