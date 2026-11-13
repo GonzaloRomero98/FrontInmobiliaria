@@ -40,6 +40,11 @@ export default function PoliticaPrivacidad() {
                     Si realizas una reserva o compra, tus datos se conservan mientras dure la relación
                     contractual y los plazos legales que correspondan.
                 </p>
+                <p>
+                    Por seguridad registramos cada envío del formulario y cada acceso del personal a tus
+                    datos (fecha, acción y dirección IP). Ese registro se conserva 2 años y luego se
+                    elimina automáticamente.
+                </p>
             </section>
 
             <section className="flex flex-col gap-2">
