@@ -1,12 +1,13 @@
 'use client'
 
-import { actualizarModeloCasa, duplicarModeloCasa, getModelosAdmin } from "@/services/modeloCasa.service";
+import { actualizarModeloCasa, duplicarModeloCasa, eliminarModeloCasa, getModelosAdmin } from "@/services/modeloCasa.service";
 import { ETIQUETA_ESTADO, ModeloCasa } from "@/types/modeloCasa"
 import { unidadesDisponibles } from "@/lib/formato";
+import { mensajeError } from "@/lib/errores";
+import { avisar, confirmar } from "@/components/Dialogos";
 import { useEffect, useState } from "react"
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { isAxiosError } from "axios";
 
 export default function ListadoModelosCasa(){
     const [modelos, setModelos] = useState<ModeloCasa[]>([]);
@@ -18,33 +19,67 @@ export default function ListadoModelosCasa(){
         getModelosAdmin().then(setModelos).catch(()=> setError('No se pudo cargar los modelos')).finally(()=> setCargando(false));
     },[]);
 
-    async function cambiar(modelo:ModeloCasa, cambios:{activo:boolean}){
-        setError(null);
+    // Los errores van en un aviso: el mensaje de arriba de la lista no se ve si se actuó desde más abajo
+    async function cambiar(modelo:ModeloCasa, cambios:{activo:boolean}):Promise<boolean>{
         try{
             await actualizarModeloCasa(modelo.id, cambios);
             setModelos((lista) => lista.map((m) => m.id === modelo.id ? {...m, ...cambios} : m));
+            return true;
         }catch{
-            setError('No se pudo actualizar el modelo');
+            avisar('No se pudo actualizar el modelo', {error:true});
+            return false;
         }
     }
 
-    function alternarPublicado(modelo:ModeloCasa){
-        if(modelo.activo && !confirm(`¿Despublicar "${modelo.nombreModelo}"? Pasará a borrador y dejará de verse en el catálogo; sus solicitudes se conservan.`)) return;
-        cambiar(modelo, {activo: !modelo.activo});
+    // Despublicar es reversible: se hace sin preguntar y se ofrece deshacer
+    async function alternarPublicado(modelo:ModeloCasa){
+        const despublicando = modelo.activo;
+        if(await cambiar(modelo, {activo: !modelo.activo}) && despublicando){
+            avisar(`«${modelo.nombreModelo}» pasó a borrador y ya no se ve en el catálogo. Sus solicitudes se conservan.`,
+                {accion: {texto:'Deshacer', alHacer: () => cambiar(modelo, {activo:true})}});
+        }
     }
 
-    async function duplicar(modelo:ModeloCasa){
-        const nombre = prompt('Nombre del nuevo modelo (la copia queda como borrador):', `${modelo.nombreModelo} (copia)`)?.trim();
-        if(!nombre) return;
-        setError(null);
-        try{
-            const copia = await duplicarModeloCasa(modelo.id, nombre);
-            router.push(`/admin/modelosCasa/${copia.id}`);
-        }catch(err){
-            // Se muestra en un aviso: el mensaje de arriba de la lista no se ve si se duplicó desde más abajo
-            const mensaje = isAxiosError(err) ? err.response?.data?.message : null;
-            alert(Array.isArray(mensaje) ? mensaje.join('. ') : mensaje ?? 'No se pudo duplicar el modelo');
-        }
+    function duplicar(modelo:ModeloCasa){
+        return confirmar({
+            titulo:`Duplicar «${modelo.nombreModelo}»`,
+            mensaje:'La copia queda como borrador, con los mismos datos, características y fotos.',
+            boton:'Duplicar',
+            campo:{etiqueta:'Nombre del nuevo modelo', inicial:`${modelo.nombreModelo} (copia)`},
+            // Se llama con el diálogo abierto: un nombre repetido (409) se muestra ahí mismo y se puede corregir
+            accion: async (nombre) => {
+                try{
+                    const copia = await duplicarModeloCasa(modelo.id, nombre);
+                    router.push(`/admin/modelosCasa/${copia.id}`);
+                }catch(err){
+                    return mensajeError(err, 'No se pudo duplicar el modelo');
+                }
+            },
+        });
+    }
+
+    async function eliminar(modelo:ModeloCasa){
+        const confirmado = await confirmar({
+            titulo:`Eliminar «${modelo.nombreModelo}»`,
+            mensaje:<>
+                <p>Se borra definitivamente, con sus fotos y métricas. <strong>No se puede deshacer.</strong></p>
+                <p>Si solo quieres sacarlo del catálogo, despublícalo. Un modelo con solicitudes de clientes no se puede eliminar.</p>
+            </>,
+            boton:'Eliminar definitivamente',
+            peligroso:true,
+            campo:{etiqueta:`Escribe «${modelo.nombreModelo}» para confirmar`},
+            accion: async (texto) => {
+                if(texto !== modelo.nombreModelo) return 'El nombre no coincide.';
+                try{
+                    await eliminarModeloCasa(modelo.id);
+                }catch(err){
+                    return mensajeError(err, 'No se pudo eliminar el modelo');
+                }
+            },
+        });
+        if(confirmado === null) return;
+        setModelos((lista) => lista.filter((m) => m.id !== modelo.id));
+        avisar(`«${modelo.nombreModelo}» fue eliminado.`);
     }
 
     if(cargando){
@@ -98,6 +133,9 @@ export default function ListadoModelosCasa(){
                                 <button type="button" onClick={() => alternarPublicado(modelo)}
                                     className={`text-sm border rounded-lg px-3 py-1.5 ${modelo.activo ? 'border-red-200 text-red-600 hover:bg-red-50' : 'border-green-300 text-green-700 hover:bg-green-50'}`}>
                                     {modelo.activo ? 'Despublicar' : 'Publicar'}
+                                </button>
+                                <button type="button" onClick={() => eliminar(modelo)} className="text-sm text-red-600 px-2 py-1.5 hover:underline">
+                                    Eliminar
                                 </button>
                             </div>
                         </div>

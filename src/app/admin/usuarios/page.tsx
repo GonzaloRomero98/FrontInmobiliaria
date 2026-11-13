@@ -1,14 +1,10 @@
 'use client'
 
 import { actualizarUsuario, crearUsuario, getUsuarios, Rol, Usuario } from "@/services/usuario.service";
-import { isAxiosError } from "axios";
 import { FormEvent, useEffect, useState } from "react";
-
 // Muestra el mensaje de validación del backend (política de contraseña, correo duplicado...)
-function mensajeError(e: unknown, porDefecto: string): string {
-    const mensaje = isAxiosError(e) ? e.response?.data?.message : null;
-    return Array.isArray(mensaje) ? mensaje.join('. ') : mensaje ?? porDefecto;
-}
+import { mensajeError } from "@/lib/errores";
+import { confirmar } from "@/components/Dialogos";
 
 const NUEVO = { correo: '', nombre: '', contrasena: '', rol: 'SECRETARIO' as Rol };
 
@@ -44,7 +40,13 @@ export default function Usuarios() {
     }
 
     async function alternarActivo(usuario: Usuario) {
-        if (usuario.activo && !confirm(`¿Desactivar a ${usuario.nombre}? No podrá iniciar sesión y su sesión actual se cierra.`)) return;
+        // Se puede reactivar, pero la sesión que se cierra no vuelve: por eso se pregunta
+        if (usuario.activo && await confirmar({
+            titulo: `Desactivar a ${usuario.nombre}`,
+            mensaje: 'No podrá iniciar sesión y su sesión actual se cierra de inmediato. Puedes reactivarlo cuando quieras.',
+            boton: 'Desactivar',
+            peligroso: true,
+        }) === null) return;
         setError(null);
         setAviso(null);
         try {

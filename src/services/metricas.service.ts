@@ -1,10 +1,12 @@
 import { api } from "@/lib/api";
+import type { EstadoVisita } from "@/types/solicitud";
 
 export interface VisitaProxima{
     id:string;
     nombre:string;
     apellido:string;
     visitaPreferida:string;
+    visitaEstado:EstadoVisita | null;
     modelo:string | null;
     proyecto:string | null;
 }

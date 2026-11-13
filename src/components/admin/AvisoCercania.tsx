@@ -5,6 +5,7 @@ import { AlertTriangle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { formatearDistancia } from "@/lib/formato";
 import { getProyectosAdmin } from "@/services/proyecto.service";
+import { confirmar } from "@/components/Dialogos";
 
 // Mismos valores que el backend: radio del entorno y distancia a la que se pide confirmar (posible duplicado)
 export const RADIO_ENTORNO_M = 1000;
@@ -46,11 +47,18 @@ const nombreCon = (p: ProyectoCercano) => `«${p.nombre}»${p.activo ? '' : ' (d
 // Bajo 100 m, el metro exacto (formatearDistancia redondea a decenas y "4 m" quedaría en "0 m")
 const metros = (m: number) => m < 100 ? `${m} m` : formatearDistancia(m);
 
+// No es destructivo: guardar igual o volver a mover el punto. Sí se pregunta porque casi siempre es un duplicado.
+const preguntarCercania = async (mensaje: string) => await confirmar({
+    titulo: '¿Es otro proyecto en el mismo lugar?',
+    mensaje,
+    boton: 'Guardar igual',
+}) !== null;
+
 // Antes de guardar: si hay un proyecto casi en el mismo punto, el admin confirma. true = seguir.
-export function confirmarSiDuplicado(cercanos: ProyectoCercano[]): boolean {
+export async function confirmarSiDuplicado(cercanos: ProyectoCercano[]): Promise<boolean> {
     const duplicado = cercanos.find((p) => p.distancia < DISTANCIA_DUPLICADO_M);
-    return !duplicado || window.confirm(
-        `El punto está a ${metros(duplicado.distancia)} del proyecto ${nombreCon(duplicado)}.\n\n¿Es otro proyecto en el mismo lugar? Acepta para guardar igual.`);
+    return !duplicado || preguntarCercania(
+        `El punto está a ${metros(duplicado.distancia)} del proyecto ${nombreCon(duplicado)}. Si es un error, cancela y mueve el punto en el mapa.`);
 }
 
 // Guarda; si la API igual responde 409 (la lista local estaba desactualizada), pregunta con su mensaje y reintenta
@@ -60,7 +68,7 @@ export async function guardarConfirmandoCercania<T>(enviar: (confirmar: boolean)
         return await enviar(yaConfirmado);
     } catch (error) {
         if (!yaConfirmado && isAxiosError(error) && error.response?.status === 409 && error.response.data?.cercanos) {
-            return window.confirm(`${error.response.data.message}\n\nAcepta para guardar igual.`) ? enviar(true) : null;
+            return await preguntarCercania(error.response.data.message) ? enviar(true) : null;
         }
         throw error;
     }

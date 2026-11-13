@@ -1,12 +1,16 @@
 'use client'
 
 import { useEffect, useState } from "react";
+import { flushSync } from "react-dom";
 import Link from "next/link";
+import { avisar } from "@/components/Dialogos";
+import { mensajeError } from "@/lib/errores";
+import { CotizacionEmitida, folioCotizacion } from "@/types/solicitud";
 import EtapaEntrega from "@/components/EtapaEntrega";
 import { calcularCredito } from "@/lib/hipotecario";
 import { equivalencia, formatearCLP, formatearNumero, formatearPrecio, plural } from "@/lib/formato";
 import { fechaUF, type ValorUF } from "@/lib/uf";
-import { getSolicitud, Solicitud } from "@/services/solicitud.service";
+import { emitirCotizacion, FichaSolicitud, getSolicitud } from "@/services/solicitud.service";
 import { ETIQUETA_ESTADO, ETIQUETA_TIPO_VIVIENDA } from "@/types/modeloCasa";
 
 const fecha = (d: Date) => d.toLocaleDateString('es-CL');
@@ -46,18 +50,47 @@ function Campo({ etiqueta, valor, onCambio, min, max, step = 1 }: { etiqueta: st
     );
 }
 
-export default function Cotizacion({ idSolicitud, uf }: { idSolicitud: string; uf: ValorUF | null }) {
-    const [solicitud, setSolicitud] = useState<Solicitud | null>(null);
+// Sin idCotizacion: cotización nueva, que se guarda con folio al descargarla.
+// Con idCotizacion: una ya emitida, que se muestra con sus valores congelados para reimprimirla.
+export default function Cotizacion({ idSolicitud, idCotizacion, uf: ufDelDia }: { idSolicitud: string; idCotizacion?: string; uf: ValorUF | null }) {
+    const [solicitud, setSolicitud] = useState<FichaSolicitud | null>(null);
     const [error, setError] = useState<string | null>(null);
-    const [pie, setPie] = useState(20);
-    const [tasa, setTasa] = useState(4.5);
-    const [plazo, setPlazo] = useState(25);
-    const [validez, setValidez] = useState(15);
-    const [nota, setNota] = useState('');
+    const [condiciones, setCondiciones] = useState({ pie: 20, tasa: 4.5, plazo: 25, validez: 15, nota: '' });
+    const [emitida, setEmitida] = useState<CotizacionEmitida | null>(null);
+    const [emitiendo, setEmitiendo] = useState(false);
 
     useEffect(() => {
-        getSolicitud(idSolicitud).then(setSolicitud).catch(() => setError('No se pudo cargar la solicitud'));
-    }, [idSolicitud]);
+        getSolicitud(idSolicitud).then((s) => {
+            setSolicitud(s);
+            if (!idCotizacion) return;
+            const guardada = s.cotizaciones.find((c) => c.id === idCotizacion);
+            if (guardada) setEmitida(guardada);
+            else setError('No se encontró la cotización');
+        }).catch(() => setError('No se pudo cargar la solicitud'));
+    }, [idSolicitud, idCotizacion]);
+
+    // Cambiar una condición después de emitir arma otra cotización (otro folio al descargar)
+    const cambiar = (campo: keyof typeof condiciones) => (valor: number | string) => {
+        setCondiciones((c) => ({ ...c, [campo]: valor }));
+        setEmitida(null);
+    };
+
+    async function descargar() {
+        if (!emitida) {
+            setEmitiendo(true);
+            try {
+                const nueva = await emitirCotizacion(idSolicitud, { ...condiciones, nota: condiciones.nota.trim(), uf: ufDelDia });
+                // El folio tiene que estar en la hoja antes de abrir el diálogo de impresión
+                flushSync(() => setEmitida(nueva));
+            } catch (err) {
+                avisar(mensajeError(err, 'No se pudo guardar la cotización; no se descargó'), { error: true });
+                return;
+            } finally {
+                setEmitiendo(false);
+            }
+        }
+        window.print();
+    }
 
     // El título es el nombre de archivo que propone "Guardar como PDF"
     useEffect(() => {
@@ -69,14 +102,21 @@ export default function Cotizacion({ idSolicitud, uf }: { idSolicitud: string; u
 
     const modelo = solicitud.modeloCasa;
     const { proyecto } = modelo;
-    const precio = Number(modelo.precio);
+    // Emitida: los valores guardados (precio, UF y condiciones); si no, los del modelo y el formulario
+    const d = emitida?.datos;
+    const { pie, tasa, plazo, validez, nota } = d ?? condiciones;
+    const precio = d?.precio ?? Number(modelo.precio);
+    const moneda = d?.moneda ?? modelo.moneda;
+    const uf = d ? d.uf : ufDelDia;
     const valorUF = uf?.valor ?? null;
-    const esVenta = modelo.tipoOperacion === 'VENTA';
+    const esVenta = (d?.tipoOperacion ?? modelo.tipoOperacion) === 'VENTA';
     const credito = calcularCredito({ precio, piePorcentaje: pie, tasaAnual: tasa, plazoAnios: plazo });
-    const monto = (v: number) => formatearPrecio(v, modelo.moneda);
-    const otra = (v: number) => equivalencia(v, modelo.moneda, valorUF);
-    const hoy = new Date();
+    const monto = (v: number) => formatearPrecio(v, moneda);
+    const otra = (v: number) => equivalencia(v, moneda, valorUF);
+    const hoy = emitida ? new Date(emitida.creadoEn) : new Date();
     const vence = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + validez);
+    // Abierta desde el historial: solo se reimprime, no se cambian las condiciones
+    const congelada = !!idCotizacion;
 
     return (
         <main className="max-w-3xl mx-auto px-4 py-10 flex flex-col gap-6">
@@ -84,33 +124,48 @@ export default function Cotizacion({ idSolicitud, uf }: { idSolicitud: string; u
 
             <section className="no-imprimir flex flex-col gap-4 p-5 border rounded-xl bg-gray-50" aria-label="Ajustes de la cotización">
                 <div className="flex flex-wrap justify-between items-baseline gap-2">
-                    <Link href="/secretario/solicitudes" className="text-sm text-gray-500 hover:underline">← Solicitudes</Link>
+                    <Link href={`/secretario/solicitudes/${idSolicitud}`} className="text-sm text-gray-500 hover:underline">
+                        ← Ficha de {solicitud.nombre} {solicitud.apellido}
+                    </Link>
                     <p className="text-xs text-gray-500">Este panel no aparece en el PDF.</p>
                 </div>
-                {modelo.estado !== 'DISPONIBLE' && (
+                {congelada && emitida && (
+                    <p className="text-sm bg-white border rounded-lg px-3 py-2">
+                        Cotización <strong>{folioCotizacion(emitida.folio)}</strong> emitida el {fecha(hoy)}: se reimprime con los mismos valores,
+                        aunque el precio o la UF hayan cambiado.
+                    </p>
+                )}
+                {!congelada && modelo.estado !== 'DISPONIBLE' && (
                     <p role="alert" className="text-sm font-medium text-amber-800 bg-amber-100 rounded-lg px-3 py-2">
                         Atención: este modelo está {ETIQUETA_ESTADO[modelo.estado].toLowerCase()}.
                     </p>
                 )}
-                {esVenta && (
-                    <div className="grid grid-cols-3 gap-2">
-                        <Campo etiqueta="Pie (%)" valor={pie} onCambio={setPie} min={0} max={100} />
-                        <Campo etiqueta="Tasa anual (%)" valor={tasa} onCambio={setTasa} min={0} max={20} step={0.1} />
-                        <Campo etiqueta="Plazo (años)" valor={plazo} onCambio={setPlazo} min={1} max={40} />
-                    </div>
+                {!congelada && (
+                    <>
+                        {esVenta && (
+                            <div className="grid grid-cols-3 gap-2">
+                                <Campo etiqueta="Pie (%)" valor={pie} onCambio={cambiar('pie')} min={0} max={100} />
+                                <Campo etiqueta="Tasa anual (%)" valor={tasa} onCambio={cambiar('tasa')} min={0} max={20} step={0.1} />
+                                <Campo etiqueta="Plazo (años)" valor={plazo} onCambio={cambiar('plazo')} min={1} max={40} />
+                            </div>
+                        )}
+                        <div className="grid grid-cols-3 gap-2">
+                            <Campo etiqueta="Validez (días)" valor={validez} onCambio={cambiar('validez')} min={1} max={90} />
+                            <label className="col-span-2 flex flex-col gap-1 text-sm">
+                                Nota (opcional)
+                                <input value={nota} onChange={(e) => cambiar('nota')(e.target.value)} maxLength={300}
+                                    placeholder="Ej.: precio sujeto a disponibilidad" className="border rounded-lg px-3 py-2" />
+                            </label>
+                        </div>
+                    </>
                 )}
-                <div className="grid grid-cols-3 gap-2">
-                    <Campo etiqueta="Validez (días)" valor={validez} onCambio={setValidez} min={1} max={90} />
-                    <label className="col-span-2 flex flex-col gap-1 text-sm">
-                        Nota (opcional)
-                        <input value={nota} onChange={(e) => setNota(e.target.value)} maxLength={300}
-                            placeholder="Ej.: precio sujeto a disponibilidad" className="border rounded-lg px-3 py-2" />
-                    </label>
-                </div>
-                <button type="button" onClick={() => window.print()} className="bg-marca text-white rounded-lg py-2.5 font-medium">
-                    Descargar PDF
+                <button type="button" onClick={descargar} disabled={emitiendo} className="bg-marca text-white rounded-lg py-2.5 font-medium disabled:opacity-50">
+                    {emitiendo ? 'Guardando…' : emitida ? `Descargar de nuevo (${folioCotizacion(emitida.folio)})` : 'Descargar PDF'}
                 </button>
-                <p className="text-xs text-gray-500 -mt-2">En el diálogo de impresión elige &quot;Guardar como PDF&quot;.</p>
+                <p className="text-xs text-gray-500 -mt-2">
+                    {emitida ? 'No crea otro folio. ' : 'Al descargarla queda guardada en la ficha con un folio. '}
+                    En el diálogo de impresión elige &quot;Guardar como PDF&quot;.
+                </p>
             </section>
 
             <article className="hoja flex flex-col gap-5 p-8 border rounded-xl bg-white text-gray-900" aria-label="Cotización">
@@ -119,7 +174,7 @@ export default function Cotizacion({ idSolicitud, uf }: { idSolicitud: string; u
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src="/logo-inmocap.png" alt="Inmocap" className="h-10 w-auto" />
                     <div className="text-right text-sm">
-                        <p className="text-lg font-bold">Cotización</p>
+                        <p className="text-lg font-bold">Cotización{emitida && ` ${folioCotizacion(emitida.folio)}`}</p>
                         <p>Emitida el {fecha(hoy)}</p>
                         <p>Válida hasta el {fecha(vence)}</p>
                     </div>
@@ -134,7 +189,7 @@ export default function Cotizacion({ idSolicitud, uf }: { idSolicitud: string; u
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     {modelo.imgPrincipal && <img src={modelo.imgPrincipal} alt={modelo.nombreModelo} className="w-40 h-28 object-cover rounded-lg" />}
                     <div className="text-sm">
-                        <p className="text-xl font-bold">{modelo.nombreModelo}</p>
+                        <p className="text-xl font-bold">{d?.nombreModelo ?? modelo.nombreModelo}</p>
                         <p>{ETIQUETA_TIPO_VIVIENDA[modelo.tipoVivienda] ?? 'Casa'} · {esVenta ? 'Venta' : 'Arriendo'}</p>
                         <p>{proyecto.nombre}, {proyecto.ciudad.nombre}, {proyecto.ciudad.region.nombre}</p>
                         <EtapaEntrega etapa={proyecto.etapa} fechaEntrega={proyecto.fechaEntrega} />

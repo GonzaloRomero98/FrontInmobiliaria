@@ -4,7 +4,9 @@ import { enlaceWhatsApp, formatearFechaHora, normalizarRut, rutValido } from "@/
 import { descargarSolicitudesCsv, EVENTO_SOLICITUDES_ACTUALIZADAS, FiltroSolicitud, getSolicitudes, marcarContactado, Solicitud } from "@/services/solicitud.service";
 import { cambiarEstadoReserva, crearReserva } from "@/services/reserva.service";
 import { Reserva } from "@/types/reserva";
-import { isAxiosError } from "axios";
+import { ETIQUETA_ORIGEN, ETIQUETA_VISITA } from "@/types/solicitud";
+import { mensajeError } from "@/lib/errores";
+import { avisar, confirmar } from "@/components/Dialogos";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -25,11 +27,6 @@ function reservaActiva(soli: Solicitud): Reserva | undefined {
     return soli.reservas?.find((r) => r.estado !== 'ANULADA');
 }
 
-function mensajeError(err: unknown, porDefecto: string): string {
-    const mensaje = isAxiosError(err) ? err.response?.data?.message : null;
-    return Array.isArray(mensaje) ? mensaje.join('. ') : mensaje ?? porDefecto;
-}
-
 export default function BandejaSolicitudes() {
     const [solicitudes, setSolicitudes] = useState<Solicitud[]>([]);
     const [cargando, setCargando] = useState(true);
@@ -41,6 +38,17 @@ export default function BandejaSolicitudes() {
     const [pendientes, setPendientes] = useState(0);
     // Se incrementa para volver a pedir la página actual (p. ej. tras marcar contactado)
     const [recarga, setRecarga] = useState(0);
+    // Lo que se escribe y lo que se consulta: la API se llama 300 ms después de la última tecla
+    const [texto, setTexto] = useState('');
+    const [buscar, setBuscar] = useState('');
+
+    useEffect(() => {
+        const temporizador = setTimeout(() => {
+            setBuscar(texto.trim());
+            setPagina(1);
+        }, 300);
+        return () => clearTimeout(temporizador);
+    }, [texto]);
 
     useEffect(() => {
         let cancelado = false;
@@ -48,7 +56,7 @@ export default function BandejaSolicitudes() {
             setCargando(true);
             setError(null);
             try {
-                const data = await getSolicitudes(pagina, POR_PAGINA, filtro);
+                const data = await getSolicitudes(pagina, POR_PAGINA, filtro, buscar);
                 if (cancelado) return;
                 // La última fila de la última página dejó de calzar con el filtro: se retrocede una página
                 if (data.solicitudes.length === 0 && pagina > 1) {
@@ -66,7 +74,7 @@ export default function BandejaSolicitudes() {
         }
         cargar();
         return () => { cancelado = true; };
-    }, [pagina, filtro, recarga]);
+    }, [pagina, filtro, recarga, buscar]);
 
     function cambiarFiltro(valor: Filtro) {
         setFiltro(valor);
@@ -80,7 +88,7 @@ export default function BandejaSolicitudes() {
             setRecarga((n) => n + 1);
             window.dispatchEvent(new Event(EVENTO_SOLICITUDES_ACTUALIZADAS));
         } catch {
-            alert('No se pudo actualizar el estado');
+            avisar('No se pudo actualizar el estado', { error: true });
         }
     }
 
@@ -89,6 +97,8 @@ export default function BandejaSolicitudes() {
     const [rut, setRut] = useState('');
     const [lote, setLote] = useState('');
     const [errorRut, setErrorRut] = useState<string | null>(null);
+    // Error de la API al guardar (p. ej. sin unidades disponibles): se muestra en el mismo formulario, que sigue abierto
+    const [errorReserva, setErrorReserva] = useState<string | null>(null);
     const [guardandoReserva, setGuardandoReserva] = useState(false);
     // Evita un segundo clic mientras la petición de vender o anular sigue en curso
     const [cambiandoId, setCambiandoId] = useState<string | null>(null);
@@ -98,6 +108,7 @@ export default function BandejaSolicitudes() {
         setRut('');
         setLote('');
         setErrorRut(null);
+        setErrorReserva(null);
     }
 
     function reemplazarReserva(idSolicitud: string, reserva: Reserva) {
@@ -114,30 +125,38 @@ export default function BandejaSolicitudes() {
             return;
         }
         setGuardandoReserva(true);
+        setErrorReserva(null);
         try {
             const reserva = await crearReserva({ id_solicitud: idSolicitud, rut: rutNormalizado, lote: lote.trim() || undefined });
             reemplazarReserva(idSolicitud, reserva);
             setReservandoId(null);
         } catch (err) {
-            alert(mensajeError(err, 'No se pudo registrar la reserva'));
+            setErrorReserva(mensajeError(err, 'No se pudo registrar la reserva'));
         } finally {
             setGuardandoReserva(false);
         }
     }
 
     async function handleCambiarReserva(idSolicitud: string, reserva: Reserva, estado: 'VENDIDA' | 'ANULADA') {
-        const pregunta = estado === 'VENDIDA'
-            ? '¿Marcar esta reserva como vendida? Ya no se podrá anular desde aquí.'
-            : '¿Anular esta reserva? La unidad vuelve a quedar disponible.';
-        if (!confirm(pregunta)) return;
-        setCambiandoId(reserva.id);
-        try {
-            reemplazarReserva(idSolicitud, await cambiarEstadoReserva(reserva.id, estado));
-        } catch (err) {
-            alert(mensajeError(err, 'No se pudo actualizar la reserva'));
-        } finally {
-            setCambiandoId(null);
-        }
+        const vender = estado === 'VENDIDA';
+        // Ninguna de las dos admite deshacer: vendida no se anula desde aquí y anular libera la unidad para otro cliente
+        await confirmar({
+            titulo: vender ? 'Marcar la reserva como vendida' : 'Anular la reserva',
+            mensaje: vender ? 'Ya no se podrá anular desde aquí.' : 'La unidad vuelve a quedar disponible para otro cliente.',
+            boton: vender ? 'Marcar vendida' : 'Anular reserva',
+            peligroso: !vender,
+            // Con el diálogo abierto: si la API falla, el error se ve ahí y se puede reintentar
+            accion: async () => {
+                setCambiandoId(reserva.id);
+                try {
+                    reemplazarReserva(idSolicitud, await cambiarEstadoReserva(reserva.id, estado));
+                } catch (err) {
+                    return mensajeError(err, 'No se pudo actualizar la reserva');
+                } finally {
+                    setCambiandoId(null);
+                }
+            },
+        });
     }
 
     async function handleExportar() {
@@ -145,7 +164,7 @@ export default function BandejaSolicitudes() {
         try {
             await descargarSolicitudesCsv();
         } catch {
-            alert('No se pudo exportar las solicitudes');
+            avisar('No se pudo exportar las solicitudes', { error: true });
         } finally {
             setExportando(false);
         }
@@ -158,9 +177,16 @@ export default function BandejaSolicitudes() {
     return (
         <main className="max-w-6xl mx-auto px-4 py-10">
             {/* Navegación, perfil y cierre de sesión están en el menú lateral del panel */}
-            <div className="mb-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
                 <h1 className="text-2xl font-bold">Solicitudes de contacto</h1>
+                <Link href="/secretario/solicitudes/nueva" className="bg-marca text-white text-sm rounded-lg px-4 py-2 font-medium hover:bg-marca/90">
+                    Nueva solicitud
+                </Link>
             </div>
+
+            <input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} maxLength={100}
+                placeholder="Buscar por nombre, correo o celular" aria-label="Buscar solicitudes"
+                className="w-full sm:max-w-sm border rounded-lg px-3 py-2 mb-3" />
 
             <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
             <div className="flex gap-2" role="tablist" aria-label="Filtrar solicitudes">
@@ -189,7 +215,8 @@ export default function BandejaSolicitudes() {
 
             {!cargando && !error && visibles.length === 0 && (
                 <p className="text-gray-500">
-                    {filtro === 'todas' ? 'Todavía no hay solicitudes.' : filtro === 'pendientes' ? 'No hay solicitudes pendientes.' : 'No hay solicitudes en esta vista.'}
+                    {buscar ? `Ninguna solicitud de esta vista coincide con «${buscar}».`
+                        : filtro === 'todas' ? 'Todavía no hay solicitudes.' : filtro === 'pendientes' ? 'No hay solicitudes pendientes.' : 'No hay solicitudes en esta vista.'}
                 </p>
             )}
 
@@ -214,7 +241,12 @@ export default function BandejaSolicitudes() {
                                 return (
                                 <tr key={soli.id} className="border-b text-sm align-top">
                                     <td className="py-3 pr-4 whitespace-nowrap text-gray-500">{new Date(soli.creadoEn).toLocaleDateString('es-CL')}</td>
-                                    <td className="py-3 pr-4 font-medium">{soli.nombre} {soli.apellido}</td>
+                                    <td className="py-3 pr-4 font-medium">
+                                        <Link href={`/secretario/solicitudes/${soli.id}`} className="text-marca underline underline-offset-2 hover:no-underline">
+                                            {soli.nombre} {soli.apellido}
+                                        </Link>
+                                        {soli.origen !== 'WEB' && <span className="block text-xs font-normal text-gray-500">{ETIQUETA_ORIGEN[soli.origen]}</span>}
+                                    </td>
                                     <td className="py-3 pr-4">
                                         <div className="flex flex-col gap-1">
                                             <a href={`mailto:${soli.correo}`} className="underline">{soli.correo}</a>
@@ -232,7 +264,10 @@ export default function BandejaSolicitudes() {
                                         {soli.modeloCasa ? `${soli.modeloCasa.proyecto.nombre} — ${soli.modeloCasa.nombreModelo}` : '-'}
                                     </td>
                                     <td className="py-3 pr-4 max-w-xs">{soli.mensaje ?? '-'}</td>
-                                    <td className="py-3 pr-4 whitespace-nowrap">{soli.visitaPreferida ? formatearFechaHora(soli.visitaPreferida) : '-'}</td>
+                                    <td className="py-3 pr-4 whitespace-nowrap">
+                                        {soli.visitaPreferida ? formatearFechaHora(soli.visitaPreferida) : '-'}
+                                        {soli.visitaEstado && <span className="block text-xs text-gray-500">{ETIQUETA_VISITA[soli.visitaEstado]}</span>}
+                                    </td>
                                     <td className="py-3 pr-4 font-medium">
                                         {soli.contactado ? (
                                             <span className="text-green-600 font-medium">Contactado</span>
@@ -284,6 +319,7 @@ export default function BandejaSolicitudes() {
                                                             Cancelar
                                                         </button>
                                                     </div>
+                                                    {errorReserva && <p role="alert" className="text-red-500 text-xs">{errorReserva}</p>}
                                                 </form>
                                             )}
                                             {reserva?.estado === 'RESERVADA' && (

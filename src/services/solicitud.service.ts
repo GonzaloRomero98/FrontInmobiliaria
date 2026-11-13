@@ -1,6 +1,6 @@
 import { api } from "@/lib/api";
 import { ModeloCasa } from "@/types/modeloCasa";
-import { CrearSolicitudInput } from "@/types/solicitud";
+import { CotizacionEmitida, CrearSolicitudInput, CrearSolicitudPanelInput, EstadoVisita, NotaSolicitud, OrigenSolicitud } from "@/types/solicitud";
 import { Reserva } from "@/types/reserva";
 
 export interface Solicitud{
@@ -12,6 +12,8 @@ export interface Solicitud{
     mensaje: string | null;
     contactado: boolean;
     visitaPreferida: string | null;
+    visitaEstado: EstadoVisita | null;
+    origen: OrigenSolicitud;
     creadoEn: string;
     modeloCasa: ModeloCasa;
     reservas: Reserva[];
@@ -34,8 +36,9 @@ export interface PaginaSolicitudes {
     limite: number;
 }
 
-export async function getSolicitudes(pagina:number, limite:number, filtro:FiltroSolicitud):Promise<PaginaSolicitudes> {
-    const {data} = await api.get('/solicitudes', {params:{pagina, limite, filtro}});
+// buscar: nombre, apellido, correo o celular (vacío = sin búsqueda)
+export async function getSolicitudes(pagina:number, limite:number, filtro:FiltroSolicitud, buscar = ''):Promise<PaginaSolicitudes> {
+    const {data} = await api.get('/solicitudes', {params:{pagina, limite, filtro, ...(buscar && {buscar})}});
     return data;
 }
 
@@ -48,7 +51,10 @@ export async function getResumenSolicitudes(): Promise<{pendientes:number}> {
     return data;
 }
 
-export async function getSolicitud(id: string): Promise<Solicitud> {
+// Ficha del cliente: incluye sus notas y cotizaciones (más recientes primero)
+export type FichaSolicitud = Solicitud & { notas: NotaSolicitud[]; cotizaciones: CotizacionEmitida[] };
+
+export async function getSolicitud(id: string): Promise<FichaSolicitud> {
     const {data} = await api.get(`/solicitudes/${id}`);
     return data;
 }
@@ -62,6 +68,27 @@ export async function descargarSolicitudesCsv(): Promise<void> {
     enlace.download = `solicitudes-${new Date().toISOString().slice(0, 10)}.csv`;
     enlace.click();
     URL.revokeObjectURL(url);
+}
+
+export async function crearSolicitudPanel(datos: CrearSolicitudPanelInput): Promise<Solicitud> {
+    const {data} = await api.post('/solicitudes/panel', datos);
+    return data;
+}
+
+export async function agregarNota(id: string, texto: string): Promise<void> {
+    await api.post(`/solicitudes/${id}/notas`, {texto});
+}
+
+// fecha (ISO) = agendar o reagendar; estado = confirmar o marcar asistencia
+export async function actualizarVisita(id: string, cambios: {fecha?: string; estado?: EstadoVisita}): Promise<void> {
+    await api.patch(`/solicitudes/${id}/visita`, cambios);
+}
+
+export type CondicionesCotizacion = Pick<CotizacionEmitida['datos'], 'pie' | 'tasa' | 'plazo' | 'validez' | 'nota' | 'uf'>;
+
+export async function emitirCotizacion(id: string, condiciones: CondicionesCotizacion): Promise<CotizacionEmitida> {
+    const {data} = await api.post(`/solicitudes/${id}/cotizaciones`, condiciones);
+    return data;
 }
 
 export async function marcarContactado(id:string) :Promise<Solicitud>{

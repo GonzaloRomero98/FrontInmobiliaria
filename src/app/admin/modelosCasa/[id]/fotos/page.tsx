@@ -16,6 +16,8 @@ export default function FotosModeloCasa(){
     const [error, setError] = useState<string | null>(null);
     // Cambiar la key vacía el selector de archivos tras subir
     const [versionSelector, setVersionSelector] = useState(0);
+    // Foto cuyo botón Eliminar se convirtió en "¿Eliminar? Sí / No"
+    const [porEliminar, setPorEliminar] = useState<string | null>(null);
 
     const cargar = useCallback(()=>
         getModeloAdminById(id).then(setModelo).catch(()=> setError('No se pudo cargar el modelo')), [id]);
@@ -42,7 +44,7 @@ export default function FotosModeloCasa(){
     }
 
     async function eliminar(fotoId:string){
-        if(!confirm('¿Eliminar esta foto de la galería?')) return;
+        setPorEliminar(null);
         try{
             await eliminarFotoModelo(id, fotoId);
             setModelo((m) => m && {...m, fotos: m.fotos.filter((f) => f.id !== fotoId)});
@@ -93,9 +95,20 @@ export default function FotosModeloCasa(){
                                 <button type="button" onClick={() => mover(i, 1)} disabled={i === modelo.fotos.length - 1} aria-label={`Mover foto ${i + 1} hacia adelante`}
                                     className="text-sm border rounded px-2 py-0.5 hover:bg-gray-50 disabled:opacity-30">→</button>
                                 <span className="text-xs text-gray-500 mx-1">{i + 1}</span>
-                                <button type="button" onClick={() => eliminar(foto.id)} className="text-sm text-red-600 hover:underline ml-auto">
-                                    Eliminar
-                                </button>
+                                {porEliminar === foto.id ? (
+                                    <span className="ml-auto flex items-center gap-2 text-sm">
+                                        ¿Eliminar?
+                                        <button type="button" onClick={() => eliminar(foto.id)} aria-label={`Sí, eliminar la foto ${i + 1}`}
+                                            className="font-semibold text-red-600 hover:underline">Sí</button>
+                                        {/* El foco queda en "No": un Enter de más no borra la foto */}
+                                        <button type="button" onClick={() => setPorEliminar(null)} autoFocus className="hover:underline">No</button>
+                                    </span>
+                                ) : (
+                                    <button type="button" onClick={() => setPorEliminar(foto.id)} aria-label={`Eliminar la foto ${i + 1}`}
+                                        className="text-sm text-red-600 hover:underline ml-auto">
+                                        Eliminar
+                                    </button>
+                                )}
                             </div>
                         </div>
                     ))}

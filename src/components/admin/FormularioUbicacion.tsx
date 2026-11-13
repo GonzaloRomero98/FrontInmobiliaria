@@ -61,7 +61,7 @@ export default function FormularioUbicacion({ proyecto, onGuardado }: { proyecto
         setMensaje(null);
         const cambiaUbicacion = latitud !== proyecto.latitud || longitud !== proyecto.longitud;
         // Solo se pregunta si se movió el punto (la API tampoco revisa si la ubicación no cambia)
-        if (cambiaUbicacion && !confirmarSiDuplicado(cercanos)) return;
+        if (cambiaUbicacion && !(await confirmarSiDuplicado(cercanos))) return;
         const yaConfirmado = cambiaUbicacion && cercanos.some((p) => p.distancia < DISTANCIA_DUPLICADO_M);
         setGuardando(true);
         try {

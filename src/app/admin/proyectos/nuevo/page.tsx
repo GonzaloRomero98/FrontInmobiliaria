@@ -75,7 +75,7 @@ export default function NuevoProyecto() {
         }
 
         // Se pregunta antes de subir la imagen: si el admin se arrepiente, no queda una foto huérfana en S3
-        if (!confirmarSiDuplicado(cercanos)) return;
+        if (!(await confirmarSiDuplicado(cercanos))) return;
         const yaConfirmado = cercanos.some((p) => p.distancia < DISTANCIA_DUPLICADO_M);
 
         try {

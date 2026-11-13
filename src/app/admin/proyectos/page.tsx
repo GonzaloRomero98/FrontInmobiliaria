@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { despublicarProyecto, getNormativa, getProyectosAdmin, publicarProyecto } from "@/services/proyecto.service";
+import { despublicarProyecto, eliminarProyecto, getNormativa, getProyectosAdmin, publicarProyecto } from "@/services/proyecto.service";
 import { Proyecto } from "@/types/proyecto";
+import { mensajeError } from "@/lib/errores";
+import { avisar, confirmar } from "@/components/Dialogos";
 
 interface FilaProyecto {
     proyecto: Proyecto;
@@ -38,14 +40,16 @@ export default function ListadoProyectos() {
             .finally(() => setCargando(false));
     }, []);
 
+    // Despublicar es reversible: se hace sin preguntar y se ofrece deshacer
     async function despublicar(proyecto: Proyecto) {
-        if (!confirm(`¿Despublicar "${proyecto.nombre}"? El proyecto y todos sus modelos dejarán de verse en el catálogo. Podrás volver a publicarlo desde esta lista.`)) return;
         try {
             await despublicarProyecto(proyecto.id);
             setError(null);
             setFilas(await leerFilas());
+            avisar(`«${proyecto.nombre}» y sus modelos ya no se ven en el catálogo.`,
+                { accion: { texto: 'Deshacer', alHacer: () => publicar(proyecto) } });
         } catch {
-            setError('No se pudo despublicar el proyecto');
+            avisar('No se pudo despublicar el proyecto', { error: true });
         }
     }
 
@@ -55,8 +59,32 @@ export default function ListadoProyectos() {
             setError(null);
             setFilas(await leerFilas());
         } catch {
-            setError('No se pudo volver a publicar el proyecto');
+            avisar('No se pudo volver a publicar el proyecto', { error: true });
         }
+    }
+
+    async function eliminar(proyecto: Proyecto) {
+        const confirmado = await confirmar({
+            titulo: `Eliminar «${proyecto.nombre}»`,
+            mensaje: <>
+                <p>Se borra definitivamente <strong>junto con todos sus modelos</strong>, sus fotos y su normativa. <strong>No se puede deshacer.</strong></p>
+                <p>Si solo quieres sacarlo del catálogo, despublícalo. Si algún modelo tiene solicitudes de clientes, no se puede eliminar.</p>
+            </>,
+            boton: 'Eliminar definitivamente',
+            peligroso: true,
+            campo: { etiqueta: `Escribe «${proyecto.nombre}» para confirmar` },
+            accion: async (texto) => {
+                if (texto !== proyecto.nombre) return 'El nombre no coincide.';
+                try {
+                    await eliminarProyecto(proyecto.id);
+                } catch (err) {
+                    return mensajeError(err, 'No se pudo eliminar el proyecto');
+                }
+            },
+        });
+        if (confirmado === null) return;
+        setFilas((lista) => lista.filter((f) => f.proyecto.id !== proyecto.id));
+        avisar(`«${proyecto.nombre}» fue eliminado.`);
     }
 
     if (cargando) {
@@ -90,21 +118,26 @@ export default function ListadoProyectos() {
                                     </span>
                                 )}
                             </div>
-                            {proyecto.activo ? (
-                                <div className="flex flex-wrap gap-2">
-                                    <Link href={`/admin/proyectos/${proyecto.id}`} className="text-sm border rounded-lg px-3 py-1.5 hover:bg-gray-50">
-                                        Editar
-                                    </Link>
-                                    <button type="button" onClick={() => despublicar(proyecto)} className="text-sm border border-red-200 text-red-600 rounded-lg px-3 py-1.5 hover:bg-red-50">
-                                        Despublicar
+                            <div className="flex flex-wrap gap-2">
+                                {proyecto.activo ? (
+                                    <>
+                                        <Link href={`/admin/proyectos/${proyecto.id}`} className="text-sm border rounded-lg px-3 py-1.5 hover:bg-gray-50">
+                                            Editar
+                                        </Link>
+                                        <button type="button" onClick={() => despublicar(proyecto)} className="text-sm border border-red-200 text-red-600 rounded-lg px-3 py-1.5 hover:bg-red-50">
+                                            Despublicar
+                                        </button>
+                                    </>
+                                ) : (
+                                    // Para editarlo hay que publicarlo primero: la API no expone los despublicados
+                                    <button type="button" onClick={() => publicar(proyecto)} className="text-sm border border-green-200 text-green-700 rounded-lg px-3 py-1.5 hover:bg-green-50">
+                                        Volver a publicar
                                     </button>
-                                </div>
-                            ) : (
-                                // Para editarlo hay que publicarlo primero: la API no expone los despublicados
-                                <button type="button" onClick={() => publicar(proyecto)} className="text-sm border border-green-200 text-green-700 rounded-lg px-3 py-1.5 hover:bg-green-50">
-                                    Volver a publicar
+                                )}
+                                <button type="button" onClick={() => eliminar(proyecto)} className="text-sm text-red-600 px-2 py-1.5 hover:underline">
+                                    Eliminar
                                 </button>
-                            )}
+                            </div>
                         </div>
                     ))}
                 </div>

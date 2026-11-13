@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { usePanel } from "@/components/panel/PanelLayout";
 import { Accion, Esqueleto, hace, Informativa, numero, ProximasVisitas, Tarjeta, ZONA } from "@/components/panel/Tablero";
 import { enlaceWhatsApp } from "@/lib/formato";
+import { avisar } from "@/components/Dialogos";
 import { getSeguimiento, Seguimiento } from "@/services/metricas.service";
 import { EVENTO_SOLICITUDES_ACTUALIZADAS, marcarContactado } from "@/services/solicitud.service";
 
@@ -91,7 +92,7 @@ export default function InicioSecretaria() {
             window.dispatchEvent(new Event(EVENTO_SOLICITUDES_ACTUALIZADAS));
             await cargar();
         } catch {
-            alert('No se pudo marcar como contactada');
+            avisar('No se pudo marcar como contactada', { error: true });
         }
     }
 

@@ -1,6 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { ReactNode } from "react";
+import { ETIQUETA_VISITA, EstadoVisita } from "@/types/solicitud";
 
 // Piezas comunes de los inicios del panel (admin y secretaria)
 
@@ -54,7 +55,7 @@ export function Informativa({ cifra, texto, children }: { cifra: number; texto: 
     );
 }
 
-export interface Visita { id: string; nombre: string; apellido: string; visitaPreferida: string; modelo: string | null; proyecto: string | null }
+export interface Visita { id: string; nombre: string; apellido: string; visitaPreferida: string; visitaEstado: EstadoVisita | null; modelo: string | null; proyecto: string | null }
 
 const parteFecha = (iso: string, opciones: Intl.DateTimeFormatOptions) => new Date(iso).toLocaleString('es-CL', { timeZone: ZONA, ...opciones });
 
@@ -78,8 +79,14 @@ export function ProximasVisitas({ visitas }: { visitas: Visita[] }) {
                 <li key={v.id} className="flex gap-3 py-2.5 first:pt-0 last:pb-0">
                     <Dia iso={v.visitaPreferida} />
                     <div className="min-w-0">
-                        <p className="font-semibold text-marca truncate">{v.nombre} {v.apellido} · {hora(v.visitaPreferida)}</p>
-                        <p className="text-sm text-slate-600 truncate">{[v.modelo, v.proyecto].filter(Boolean).join(' · ')}</p>
+                        {/* A la ficha del cliente: ahí se confirma, se reagenda o se marca la asistencia */}
+                        <Link href={`/secretario/solicitudes/${v.id}`} className="block font-semibold text-marca truncate hover:underline">
+                            {v.nombre} {v.apellido} · {hora(v.visitaPreferida)}
+                        </Link>
+                        <p className="text-sm text-slate-600 truncate">
+                            {v.visitaEstado && <span className={v.visitaEstado === 'POR_CONFIRMAR' ? 'font-semibold text-amber-700' : 'text-green-700'}>{ETIQUETA_VISITA[v.visitaEstado]} · </span>}
+                            {[v.modelo, v.proyecto].filter(Boolean).join(' · ')}
+                        </p>
                     </div>
                 </li>
             ))}

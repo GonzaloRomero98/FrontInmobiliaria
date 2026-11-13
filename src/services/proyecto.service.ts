@@ -59,6 +59,11 @@ export async function despublicarProyecto(id:string):Promise<void> {
     await api.delete(`/proyectos/${id}`);
 }
 
+// Borrado definitivo junto con sus modelos; la API responde 409 si algún modelo tiene solicitudes
+export async function eliminarProyecto(id:string):Promise<void> {
+    await api.delete(`/proyectos/${id}/definitivo`);
+}
+
 export async function publicarProyecto(id:string):Promise<void> {
     await api.patch(`/proyectos/${id}/publicar`);
 }

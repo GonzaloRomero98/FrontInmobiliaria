@@ -5,6 +5,7 @@ import Encabezado from "@/components/Encabezado";
 import PieDePagina from "@/components/PieDePagina";
 import BarraComparador from "@/components/BarraComparador";
 import SoloSitioPublico from "@/components/SoloSitioPublico";
+import Dialogos from "@/components/Dialogos";
 import { DESCRIPCION_SITIO, NOMBRE_SITIO, URL_SITIO } from "@/lib/sitio";
 
 const geistSans = Geist({
@@ -48,6 +49,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <div className="flex-1">{children}</div>
         <SoloSitioPublico><PieDePagina /></SoloSitioPublico>
         <BarraComparador />
+        <Dialogos />
       </body>
     </html>
   );

@@ -50,6 +50,11 @@ export async function agregarFotoModelo(idModelo:string, fotoDto:ImagenDto ) {
     return data;
 }
 
+// Borrado definitivo; la API responde 409 si el modelo tiene solicitudes
+export async function eliminarModeloCasa(id:string):Promise<void> {
+    await api.delete(`/modeloCasa/${id}/definitivo`);
+}
+
 export async function  eliminarFotoModelo(idModelo:string,foto_id:string ):Promise<void> {
     await api.delete(`/modeloCasa/${idModelo}/fotos/${foto_id}`);
 }
