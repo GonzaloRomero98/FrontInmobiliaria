@@ -11,9 +11,11 @@ interface Visor3DProps {
     altura?:number | string;
     rotarAutomatico?:boolean;
     botonArGrande?:boolean;
+    // Si viene, el botón de RA llama a esto en vez de abrir la RA de model-viewer
+    alEntrarAr?:() => void;
 }
 
-export default function Visor3D({idModelo, modeloUrl, titulo, altura = 500, rotarAutomatico = true, botonArGrande = false}:Visor3DProps){
+export default function Visor3D({idModelo, modeloUrl, titulo, altura = 500, rotarAutomatico = true, botonArGrande = false, alEntrarAr}:Visor3DProps){
     const visor = useRef<HTMLElement>(null);
     const [error, setError] = useState(false);
     // model-viewer guarda en caché el fallo por URL: el reintento pide la misma URL con otro parámetro (S3 lo ignora)
@@ -42,7 +44,7 @@ export default function Visor3D({idModelo, modeloUrl, titulo, altura = 500, rota
         ref={visor}
         src={src}
         alt={`Modelo 3D de ${titulo}`}
-        ar
+        ar={!alEntrarAr}
         ar-modes="webxr scene-viewer quick-look"
         camera-controls
         auto-rotate={rotarAutomatico || undefined}
@@ -60,10 +62,11 @@ export default function Visor3D({idModelo, modeloUrl, titulo, altura = 500, rota
             borderRadius: '12px',
         }}
         >
-        {/* model-viewer solo muestra este botón si el dispositivo puede abrir la RA */}
+        {/* model-viewer solo muestra este botón si el dispositivo puede abrir la RA; con alEntrarAr
+            queda fuera del slot y siempre visible (quien lo pasa ya comprobó que hay RA) */}
         <button
-            slot="ar-button"
-            onClick={() => registrarEventoModelo(idModelo, 'AR_INICIADA')}
+            slot={alEntrarAr ? undefined : 'ar-button'}
+            onClick={() => { registrarEventoModelo(idModelo, 'AR_INICIADA'); alEntrarAr?.(); }}
             style={botonArGrande ? {
                 position: 'absolute', left: '50%', bottom: '20px', transform: 'translateX(-50%)',
                 backgroundColor: '#16304b', color: 'white', borderRadius: '9999px', border: 'none',

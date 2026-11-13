@@ -35,8 +35,9 @@ export default async function VistaAR({ params, searchParams }: {
 
             <ul className="text-sm text-gray-700 list-disc pl-5 flex flex-col gap-1">
                 <li>
-                    <strong>Vista exterior:</strong> toca <strong>Ver en tu espacio (AR)</strong>, apunta la cámara al suelo
-                    y mueve el celular despacio hasta que aparezca la vivienda a escala real.
+                    <strong>Ver en tu espacio (AR):</strong> en Android, apunta la cámara al suelo cerca de tus pies y la vivienda
+                    aparecerá a escala real a tu alrededor, desde la entrada; camina con el celular para recorrerla.
+                    En iPhone se muestra por fuera: apunta al suelo y mueve el celular despacio hasta que aparezca.
                 </li>
                 <li>
                     <strong>Recorrido interior:</strong> camina con el joystick y arrastra el dedo para mirar.

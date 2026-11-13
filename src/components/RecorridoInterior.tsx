@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type PointerEvent as EventoPuntero } from "react";
+import { createPortal } from "react-dom";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
@@ -25,28 +26,33 @@ interface RecorridoInteriorProps {
     modeloUrl: string;
     titulo: string;
     altura?: number | string;
+    // RA "desde adentro": la sesión WebXR ya abierta (la pide VisorCasa en el toque) y su capa DOM
+    sesionAr?: XRSession | null;
+    capaAr?: HTMLElement | null;
 }
 
 // Primera persona dentro del GLB (en metros, igual que la RA). Parte en el nodo "Entrada" si el modelo lo trae
 // (un Empty de Blender en la puerta, con su eje Y verde mirando hacia adentro); si no, en el centro de la planta.
-export default function RecorridoInterior({ modeloUrl, titulo, altura = 500 }: RecorridoInteriorProps) {
+// Con sesionAr la casa se dibuja a escala real sobre la cámara, con la Entrada donde está parada la persona.
+export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, sesionAr, capaAr }: RecorridoInteriorProps) {
     const contenedor = useRef<HTMLDivElement>(null);
     const lienzo = useRef<HTMLDivElement>(null);
     const perilla = useRef<HTMLDivElement>(null);
     const joystick = useRef({ x: 0, y: 0 });
     const [estado, setEstado] = useState<'cargando' | 'listo' | 'error'>('cargando');
     const [intento, setIntento] = useState(0);
+    const [colocada, setColocada] = useState(false);
 
     useEffect(() => {
         const div = contenedor.current!;
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: !!sesionAr });
         renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
         renderer.toneMapping = THREE.NeutralToneMapping;
         const canvas = renderer.domElement;
         lienzo.current!.appendChild(canvas);
 
         const escena = new THREE.Scene();
-        escena.background = new THREE.Color('#f3f4f6');
+        if (!sesionAr) escena.background = new THREE.Color('#f3f4f6');
         const pmrem = new THREE.PMREMGenerator(renderer);
         const entorno = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
         escena.environment = entorno;
@@ -140,11 +146,57 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500 }: R
         canvas.addEventListener('pointerup', soltar);
         canvas.addEventListener('pointercancel', soltar);
 
+        // RA: se apunta al suelo (hit-test desde el centro de la pantalla) y con el primer punto se coloca la
+        // casa una sola vez, con la Entrada bajo los pies y mirando hacia donde mira el celular. El ancla
+        // compensa la deriva del seguimiento (la casa "subiéndose" al caminar).
+        let fuenteHit: XRHitTestSource | undefined;
+        let ancla: XRAnchor | undefined;
+        let enSuelo = false;
+        const anclaInicial = new THREE.Vector3(), baseModelo = new THREE.Vector3();
+        if (sesionAr) {
+            renderer.xr.enabled = true;
+            renderer.xr.setReferenceSpaceType('local');
+            renderer.xr.setSession(sesionAr)
+                .then(() => sesionAr.requestReferenceSpace('viewer'))
+                .then((espacio) => sesionAr.requestHitTestSource?.({ space: espacio }))
+                .then((f) => { if (cancelado) f?.cancel(); else fuenteHit = f; })
+                .catch(() => sesionAr.end().catch(() => {}));
+        }
+        const colocarEnElSuelo = (frame: XRFrame) => {
+            const ref = renderer.xr.getReferenceSpace()!;
+            const ojos = frame.getViewerPose(ref)?.transform;
+            const hit = frame.getHitTestResults(fuenteHit!)[0];
+            const suelo = hit?.getPose(ref)?.transform.position;
+            // Más de medio metro bajo los ojos: es el suelo y no una mesa
+            if (!ojos || !suelo || ojos.position.y - suelo.y < 0.5) return;
+            const { x, y, z, w } = ojos.orientation;
+            const frente = new THREE.Vector3(0, 0, -1).applyQuaternion(new THREE.Quaternion(x, y, z, w));
+            const giro = Math.atan2(-frente.x, -frente.z) - yaw;
+            modelo!.rotation.y = giro;
+            modelo!.position.set(ojos.position.x, suelo.y, ojos.position.z).sub(pies.clone().applyAxisAngle(EJE_Y, giro));
+            baseModelo.copy(modelo!.position);
+            anclaInicial.set(suelo.x, suelo.y, suelo.z);
+            hit.createAnchor?.()?.then((a) => { if (cancelado) a.delete(); else ancla = a; }, () => {});
+            fuenteHit!.cancel();
+            fuenteHit = undefined;
+            enSuelo = true;
+            setColocada(true);
+        };
+        const seguirAncla = (frame: XRFrame) => {
+            const p = frame.getPose(ancla!.anchorSpace, renderer.xr.getReferenceSpace()!)?.transform.position;
+            if (p) modelo!.position.set(p.x, p.y, p.z).sub(anclaInicial).add(baseModelo);
+        };
+
         let anterior = 0;
-        renderer.setAnimationLoop((tiempo) => {
+        renderer.setAnimationLoop((tiempo, frame) => {
             const dt = Math.min((tiempo - (anterior || tiempo)) / 1000, 0.1);
             anterior = tiempo;
-            if (modelo) {
+            if (sesionAr) {
+                if (modelo && frame && fuenteHit) colocarEnElSuelo(frame);
+                if (modelo && frame && ancla) seguirAncla(frame);
+                // Sin colocar no se dibuja la casa: aparecería alrededor de la cabeza y no en el suelo
+                if (modelo) modelo.visible = enSuelo;
+            } else if (modelo) {
                 let adelante = -joystick.current.y, lado = joystick.current.x;
                 for (const t of teclas) { adelante += TECLAS[t][0]; lado += TECLAS[t][1]; }
                 mov.set(lado, 0, -adelante).clampLength(0, 1).multiplyScalar(VELOCIDAD * dt).applyAxisAngle(EJE_Y, yaw);
@@ -156,6 +208,7 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500 }: R
                 }
                 if (mov.lengthSq()) ajustarPiso();
             }
+            // En RA la cámara la mueve el celular (three la pisa con la pose de WebXR)
             camara.position.set(pies.x, pies.y + ALTURA_OJOS, pies.z);
             camara.rotation.set(pitch, yaw, 0);
             renderer.render(escena, camara);
@@ -164,6 +217,10 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500 }: R
         return () => {
             cancelado = true;
             renderer.setAnimationLoop(null);
+            // La sesión no se cierra aquí: React monta dos veces en desarrollo; la cierran Salir o el botón atrás
+            fuenteHit?.cancel();
+            ancla?.delete();
+            setColocada(false);
             observador.disconnect();
             div.removeEventListener('keydown', alTeclear);
             div.removeEventListener('keyup', alTeclear);
@@ -183,7 +240,7 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500 }: R
             renderer.dispose();
             canvas.remove();
         };
-    }, [modeloUrl, intento]);
+    }, [modeloUrl, intento, sesionAr]);
 
     function moverJoystick(e: EventoPuntero<HTMLDivElement>) {
         const r = e.currentTarget.getBoundingClientRect();
@@ -230,6 +287,24 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500 }: R
                 onPointerCancel={soltarJoystick}>
                 <div ref={perilla} className="absolute left-1/2 top-1/2 size-12 -ml-6 -mt-6 rounded-full bg-white/90 shadow pointer-events-none" />
             </div>
+
+            {/* En RA esto va sobre la cámara (capa DOM de WebXR); se camina con el cuerpo, sin joystick */}
+            {sesionAr && capaAr && createPortal(
+                <div className="flex h-full flex-col items-center justify-between p-5 text-center">
+                    <button type="button" onClick={() => sesionAr.end().catch(() => {})}
+                        className="self-end rounded-full bg-white px-5 py-2.5 font-semibold text-gray-900 shadow">
+                        Salir
+                    </button>
+                    {!colocada && (
+                        <p role="status" className="rounded-xl bg-black/65 px-4 py-3 font-medium text-white">
+                            {estado === 'error' ? 'No se pudo cargar el modelo 3D. Sal e inténtalo de nuevo.'
+                                : estado === 'cargando' ? 'Cargando la casa…'
+                                : 'Apunta el celular al suelo, cerca de tus pies. La casa aparecerá a tu alrededor, desde la entrada.'}
+                        </p>
+                    )}
+                </div>,
+                capaAr,
+            )}
         </div>
     );
 }
