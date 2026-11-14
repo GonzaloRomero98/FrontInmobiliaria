@@ -7,21 +7,19 @@ import { formatearDistancia } from "@/lib/formato";
 import { getProyectosAdmin } from "@/services/proyecto.service";
 import { confirmar } from "@/components/Dialogos";
 
-// Mismos valores que el backend: radio del entorno y distancia a la que se pide confirmar (posible duplicado)
+// Mismos valores que el backend: radio del entorno y distancia desde la que se pide confirmar un posible duplicado.
 export const RADIO_ENTORNO_M = 1000;
 export const DISTANCIA_DUPLICADO_M = 50;
 
 export interface ProyectoEnMapa { id: string; nombre: string; activo: boolean; latitud: number; longitud: number }
 export interface ProyectoCercano extends ProyectoEnMapa { distancia: number }
 
-// Distancia en metros entre dos coordenadas (haversine)
 function distanciaMetros(lat1: number, lon1: number, lat2: number, lon2: number): number {
     const rad = Math.PI / 180;
     const a = Math.sin((lat2 - lat1) * rad / 2) ** 2 + Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin((lon2 - lon1) * rad / 2) ** 2;
     return 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-// Los demás proyectos con ubicación (también los despublicados), para dibujarlos y avisar si el punto queda cerca
 export function useProyectosEnMapa(excluirId?: string): ProyectoEnMapa[] {
     const [proyectos, setProyectos] = useState<ProyectoEnMapa[]>([]);
     useEffect(() => {
@@ -34,7 +32,6 @@ export function useProyectosEnMapa(excluirId?: string): ProyectoEnMapa[] {
     return proyectos;
 }
 
-// Proyectos a menos de 1 km del punto, del más cercano al más lejano
 export function proyectosCercanos(latitud: number | null, longitud: number | null, proyectos: ProyectoEnMapa[]): ProyectoCercano[] {
     if (latitud === null || longitud === null) return [];
     return proyectos
@@ -44,25 +41,23 @@ export function proyectosCercanos(latitud: number | null, longitud: number | nul
 }
 
 const nombreCon = (p: ProyectoCercano) => `«${p.nombre}»${p.activo ? '' : ' (despublicado)'}`;
-// Bajo 100 m, el metro exacto (formatearDistancia redondea a decenas y "4 m" quedaría en "0 m")
+// Bajo 100 m se muestra el metro exacto, porque formatearDistancia redondea a decenas.
 const metros = (m: number) => m < 100 ? `${m} m` : formatearDistancia(m);
 
-// No es destructivo: guardar igual o volver a mover el punto. Sí se pregunta porque casi siempre es un duplicado.
 const preguntarCercania = async (mensaje: string) => await confirmar({
     titulo: '¿Es otro proyecto en el mismo lugar?',
     mensaje,
     boton: 'Guardar igual',
 }) !== null;
 
-// Antes de guardar: si hay un proyecto casi en el mismo punto, el admin confirma. true = seguir.
 export async function confirmarSiDuplicado(cercanos: ProyectoCercano[]): Promise<boolean> {
     const duplicado = cercanos.find((p) => p.distancia < DISTANCIA_DUPLICADO_M);
     return !duplicado || preguntarCercania(
         `El punto está a ${metros(duplicado.distancia)} del proyecto ${nombreCon(duplicado)}. Si es un error, cancela y mueve el punto en el mapa.`);
 }
 
-// Guarda; si la API igual responde 409 (la lista local estaba desactualizada), pregunta con su mensaje y reintenta
-// confirmando. null = el admin decidió no guardar.
+// Si la API responde 409 porque la lista local estaba desactualizada, se pregunta y se reintenta confirmando.
+// Devuelve null si el admin decide no guardar.
 export async function guardarConfirmandoCercania<T>(enviar: (confirmar: boolean) => Promise<T>, yaConfirmado: boolean): Promise<T | null> {
     try {
         return await enviar(yaConfirmado);
@@ -74,7 +69,6 @@ export async function guardarConfirmandoCercania<T>(enviar: (confirmar: boolean)
     }
 }
 
-// Aviso bajo el mapa: proyectos dentro de 1 km del punto elegido, destacando los que están casi encima
 export default function AvisoCercania({ cercanos }: { cercanos: ProyectoCercano[] }) {
     if (cercanos.length === 0) return null;
     const hayDuplicado = cercanos[0].distancia < DISTANCIA_DUPLICADO_M;

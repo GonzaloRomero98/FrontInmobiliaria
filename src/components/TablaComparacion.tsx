@@ -23,7 +23,6 @@ export default function TablaComparacion({ modelos }: { modelos: ModeloCasa[] })
     const router = useRouter();
     const { reemplazar } = useComparador();
 
-    // Lo que se compara en pantalla pasa a ser la selección guardada (sirve al abrir un link compartido)
     const idsClave = modelos.map((m) => m.id).join(',');
     useEffect(() => {
         reemplazar(idsClave ? idsClave.split(',') : []);
@@ -35,7 +34,7 @@ export default function TablaComparacion({ modelos }: { modelos: ModeloCasa[] })
         router.replace(restantes.length ? `/comparar?ids=${restantes.join(',')}` : '/comparar');
     }
 
-    // Los precios solo se comparan si todos están en la misma moneda
+    // Los precios solo se comparan si todos están en la misma moneda.
     const mismaMoneda = new Set(modelos.map((m) => m.moneda)).size === 1;
     const moneda = modelos[0]?.moneda;
 

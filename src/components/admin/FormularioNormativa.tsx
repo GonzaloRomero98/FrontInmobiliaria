@@ -96,48 +96,48 @@ export default function FormularioNormativa({ idProyecto, normativa }: { idProye
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="sm:col-span-2">
-                    <label className="text-sm">Instrumento</label>
-                    <input {...register('instrumento')} placeholder="Plan Regulador Comunal de Talca (2019)" className={campo} />
+                    <label htmlFor="normativa-instrumento" className="text-sm">Instrumento</label>
+                    <input id="normativa-instrumento" {...register('instrumento')} placeholder="Plan Regulador Comunal de Talca (2019)" className={campo} />
                     {error('instrumento')}
                 </div>
                 <div>
-                    <label className="text-sm">Zona</label>
-                    <input {...register('zona')} placeholder="ZH-2" className={campo} />
+                    <label htmlFor="normativa-zona" className="text-sm">Zona</label>
+                    <input id="normativa-zona" {...register('zona')} placeholder="ZH-2" className={campo} />
                     {error('zona')}
                 </div>
             </div>
 
             <div>
-                <label className="text-sm">Usos permitidos</label>
-                <textarea {...register('usosPermitidos')} rows={3} className={campo}
+                <label htmlFor="normativa-usosPermitidos" className="text-sm">Usos permitidos</label>
+                <textarea id="normativa-usosPermitidos" {...register('usosPermitidos')} rows={3} className={campo}
                     placeholder="Residencial; equipamiento de comercio y servicios de escala menor. Prohibido industria y bodegaje." />
                 {error('usosPermitidos')}
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <div>
-                    <label className="text-sm">Altura máx. (pisos)</label>
-                    <input {...register('alturaMaximaPisos')} inputMode="numeric" className={campo} />
+                    <label htmlFor="normativa-alturaMaximaPisos" className="text-sm">Altura máx. (pisos)</label>
+                    <input id="normativa-alturaMaximaPisos" {...register('alturaMaximaPisos')} inputMode="numeric" className={campo} />
                     {error('alturaMaximaPisos')}
                 </div>
                 <div>
-                    <label className="text-sm">Altura máx. (metros)</label>
-                    <input {...register('alturaMaximaMetros')} inputMode="decimal" className={campo} />
+                    <label htmlFor="normativa-alturaMaximaMetros" className="text-sm">Altura máx. (metros)</label>
+                    <input id="normativa-alturaMaximaMetros" {...register('alturaMaximaMetros')} inputMode="decimal" className={campo} />
                     {error('alturaMaximaMetros')}
                 </div>
                 <div>
-                    <label className="text-sm">Densidad máx. (hab/ha)</label>
-                    <input {...register('densidadMaxima')} inputMode="numeric" className={campo} />
+                    <label htmlFor="normativa-densidadMaxima" className="text-sm">Densidad máx. (hab/ha)</label>
+                    <input id="normativa-densidadMaxima" {...register('densidadMaxima')} inputMode="numeric" className={campo} />
                     {error('densidadMaxima')}
                 </div>
                 <div>
-                    <label className="text-sm">Coef. constructibilidad</label>
-                    <input {...register('coefConstructibilidad')} inputMode="decimal" placeholder="1.6" className={campo} />
+                    <label htmlFor="normativa-coefConstructibilidad" className="text-sm">Coef. constructibilidad</label>
+                    <input id="normativa-coefConstructibilidad" {...register('coefConstructibilidad')} inputMode="decimal" placeholder="1.6" className={campo} />
                     {error('coefConstructibilidad')}
                 </div>
                 <div>
-                    <label className="text-sm">Ocupación de suelo (%)</label>
-                    <input {...register('ocupacionSueloPorcentaje')} inputMode="numeric" placeholder="60" className={campo} />
+                    <label htmlFor="normativa-ocupacionSueloPorcentaje" className="text-sm">Ocupación de suelo (%)</label>
+                    <input id="normativa-ocupacionSueloPorcentaje" {...register('ocupacionSueloPorcentaje')} inputMode="numeric" placeholder="60" className={campo} />
                     {error('ocupacionSueloPorcentaje')}
                 </div>
             </div>
@@ -156,20 +156,20 @@ export default function FormularioNormativa({ idProyecto, normativa }: { idProye
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="sm:col-span-2">
-                    <label className="text-sm">URL de la ordenanza oficial</label>
-                    <input {...register('urlOrdenanza')} placeholder="https://..." className={campo} />
+                    <label htmlFor="normativa-urlOrdenanza" className="text-sm">URL de la ordenanza oficial</label>
+                    <input id="normativa-urlOrdenanza" {...register('urlOrdenanza')} placeholder="https://..." className={campo} />
                     {error('urlOrdenanza')}
                 </div>
                 <div>
-                    <label className="text-sm">Fecha de consulta</label>
-                    <input type="date" {...register('fechaConsulta')} className={campo} />
+                    <label htmlFor="normativa-fechaConsulta" className="text-sm">Fecha de consulta</label>
+                    <input type="date" id="normativa-fechaConsulta" {...register('fechaConsulta')} className={campo} />
                     {error('fechaConsulta')}
                 </div>
             </div>
 
             <div>
-                <label className="text-sm">Observaciones (opcional)</label>
-                <textarea {...register('observaciones')} rows={2} className={campo} placeholder="Ej: modificación del PRC en trámite" />
+                <label htmlFor="normativa-observaciones" className="text-sm">Observaciones (opcional)</label>
+                <textarea id="normativa-observaciones" {...register('observaciones')} rows={2} className={campo} placeholder="Ej: modificación del PRC en trámite" />
                 {error('observaciones')}
             </div>
 

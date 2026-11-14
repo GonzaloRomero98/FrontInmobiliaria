@@ -8,7 +8,7 @@ export default function BotonDesconectar({className = "text-sm text-gray-500 hov
     const router = useRouter();
 
     async function cerrarSesion(){
-        // La cookie del token es HttpOnly: solo la API puede borrarla. Si la API no responde, igual se sale del panel.
+        // La cookie del token es HttpOnly y solo la API puede borrarla. Si la API no responde, igual se sale del panel.
         await logout().catch(() => {});
         Cookies.remove('rol_usuario');
         router.push('/login');

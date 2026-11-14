@@ -19,7 +19,7 @@ function PorContactar({ solicitudes, ahora, alMarcar }: { solicitudes: Seguimien
     return (
         <ul className="divide-y divide-slate-100">
             {solicitudes.map((s) => {
-                // Más de 2 días sin respuesta: se destaca (con ícono y texto, no solo color)
+                // Con más de 2 días sin respuesta se marca como atrasada, con ícono y texto además del color.
                 const atrasada = ahora - new Date(s.creadoEn).getTime() > DOS_DIAS_MS;
                 return (
                     <li key={s.id} className="flex flex-col sm:flex-row sm:items-center gap-3 py-3 first:pt-0 last:pb-0">
@@ -77,7 +77,6 @@ function ReservasPorCerrar({ reservas }: { reservas: Seguimiento['reservas']['po
 export default function InicioSecretaria() {
     const { perfil } = usePanel();
     const [datos, setDatos] = useState<Seguimiento | null>(null);
-    // Momento de la carga: referencia para marcar las solicitudes atrasadas
     const [ahora, setAhora] = useState(0);
     const [error, setError] = useState(false);
 

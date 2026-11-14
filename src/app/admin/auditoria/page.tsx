@@ -22,7 +22,7 @@ interface Borrador {
 
 const SIN_FILTROS: Borrador = { correo: '', modulo: '', soloRechazados: false, desde: '', hasta: '' };
 
-// Fechas del formulario (AAAA-MM-DD, hora local) -> instantes ISO; "hasta" incluye el día completo
+// Pasa las fechas del formulario (hora local) a formato ISO. La fecha "hasta" incluye el día completo.
 function aFiltros(b: Borrador): FiltrosAuditoria {
     const medianoche = (dia: string, sumarDias = 0) => {
         const d = new Date(`${dia}T00:00:00`);
@@ -200,7 +200,6 @@ export default function Auditoria() {
                                     </td>
                                     <td className="py-2 pr-4 min-w-60">
                                         {r.descripcion && <span className="block">{r.descripcion}</span>}
-                                        {/* La acción técnica se mantiene: es la que identifica la ruta exacta */}
                                         <span className={`block font-mono break-all ${r.descripcion ? 'text-xs text-gray-400' : 'text-xs'}`}>{r.accion}</span>
                                     </td>
                                     <td className="py-2 pr-4 whitespace-nowrap">

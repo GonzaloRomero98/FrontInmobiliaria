@@ -33,7 +33,6 @@ export default function FormularioDatosProyecto({ proyecto, onGuardado }: { proy
             const actualizado = await actualizarProyecto(proyecto.id, {
                 nombre: nombre.trim(),
                 descripcion: descripcion.trim(),
-                // Vacío = sin informar: null borra lo guardado
                 etapa: (etapa || null) as EtapaProyecto | null,
                 fechaEntrega: fechaEntrega || null,
                 ...(imagenPortada && { imagenPortada }),

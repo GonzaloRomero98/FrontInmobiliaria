@@ -14,9 +14,8 @@ export default function FotosModeloCasa(){
     const [archivos, setArchivos] = useState<File[]>([]);
     const [subiendo, setSubiendo] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
-    // Cambiar la key vacía el selector de archivos tras subir
+    // Al cambiar la key se vacía el selector de archivos después de subir.
     const [versionSelector, setVersionSelector] = useState(0);
-    // Foto cuyo botón Eliminar se convirtió en "¿Eliminar? Sí / No"
     const [porEliminar, setPorEliminar] = useState<string | null>(null);
 
     const cargar = useCallback(()=>
@@ -53,7 +52,7 @@ export default function FotosModeloCasa(){
         }
     }
 
-    // Se mueve en pantalla al instante y se guarda; si falla, se vuelve al orden anterior
+    // El orden cambia en pantalla de inmediato y luego se guarda. Si falla, se vuelve al orden anterior.
     async function mover(i:number, delta:-1 | 1){
         if(!modelo) return;
         const anterior = modelo.fotos;
@@ -100,7 +99,6 @@ export default function FotosModeloCasa(){
                                         ¿Eliminar?
                                         <button type="button" onClick={() => eliminar(foto.id)} aria-label={`Sí, eliminar la foto ${i + 1}`}
                                             className="font-semibold text-red-600 hover:underline">Sí</button>
-                                        {/* El foco queda en "No": un Enter de más no borra la foto */}
                                         <button type="button" onClick={() => setPorEliminar(null)} autoFocus className="hover:underline">No</button>
                                     </span>
                                 ) : (

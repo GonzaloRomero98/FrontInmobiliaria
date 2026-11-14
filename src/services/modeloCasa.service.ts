@@ -17,7 +17,6 @@ export async function getModeloCasaById(id:string):Promise<ModeloCasa> {
     return data;
 }
 
-// Panel admin: incluye borradores
 export async function getModelosAdmin(): Promise<ModeloCasa[]> {
     const {data} = await api.get('/modeloCasa/admin');
     return data;
@@ -28,13 +27,11 @@ export async function getModeloAdminById(id:string): Promise<ModeloCasa> {
     return data;
 }
 
-// Se consulta antes de subir archivos a S3; excluirId = el modelo que se está editando
 export async function nombreModeloDisponible(nombre:string, excluirId?:string):Promise<boolean>{
     const {data} = await api.get('/modeloCasa/admin/nombre-disponible', {params:{nombre, excluirId}});
     return data.disponible;
 }
 
-// La copia queda como borrador; si el nombre ya existe el backend responde 409
 export async function duplicarModeloCasa(id:string, nombreModelo:string):Promise<ModeloCasa>{
     const {data} = await api.post(`/modeloCasa/${id}/duplicar`, {nombreModelo});
     return data;
@@ -50,7 +47,6 @@ export async function agregarFotoModelo(idModelo:string, fotoDto:ImagenDto ) {
     return data;
 }
 
-// Borrado definitivo; la API responde 409 si el modelo tiene solicitudes
 export async function eliminarModeloCasa(id:string):Promise<void> {
     await api.delete(`/modeloCasa/${id}/definitivo`);
 }
@@ -59,7 +55,6 @@ export async function  eliminarFotoModelo(idModelo:string,foto_id:string ):Promi
     await api.delete(`/modeloCasa/${idModelo}/fotos/${foto_id}`);
 }
 
-// ids = todas las fotos del modelo en el nuevo orden
 export async function ordenarFotosModelo(idModelo:string, ids:string[]):Promise<void> {
     await api.put(`/modeloCasa/${idModelo}/fotos/orden`, {ids});
 }

@@ -8,7 +8,7 @@ import Link from "next/link";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 
 const TIPOS_FOTO = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_FOTO_BYTES = 2 * 1024 * 1024; // el mismo límite que la carpeta `perfiles` del backend
+const MAX_FOTO_BYTES = 2 * 1024 * 1024;
 const NOMBRE_ROL = {ADMIN: 'Administrador', SECRETARIO: 'Secretario'} as const;
 const ESTILO_TARJETA = "border rounded-xl p-6 flex flex-col gap-4";
 const ESTILO_BOTON = "bg-marca text-white rounded-lg px-4 py-2 font-medium disabled:opacity-50";
@@ -63,7 +63,7 @@ function SeccionFoto({perfil, alCambiar}:{perfil:Usuario; alCambiar:(u:Usuario) 
 
     async function elegirFoto(e:ChangeEvent<HTMLInputElement>){
         const archivo = e.target.files?.[0];
-        e.target.value = ''; // permite volver a elegir el mismo archivo
+        e.target.value = '';
         if(!archivo) return;
         setAviso(null);
         if(!TIPOS_FOTO.includes(archivo.type)){
@@ -107,7 +107,6 @@ function SeccionFoto({perfil, alCambiar}:{perfil:Usuario; alCambiar:(u:Usuario) 
             <div className="flex flex-wrap items-center gap-4">
                 <AvatarUsuario nombre={perfil.nombre} fotoUrl={perfil.fotoUrl} tamano={80} />
                 <div className="flex flex-wrap gap-2">
-                    {/* El input queda accesible por teclado dentro del label; el anillo muestra el foco */}
                     <label className={`${ESTILO_BOTON} cursor-pointer focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-marca ${subiendo ? 'opacity-50 pointer-events-none' : ''}`}>
                         {perfil.fotoUrl ? 'Cambiar foto' : 'Subir foto'}
                         <input type="file" accept={TIPOS_FOTO.join(',')} onChange={elegirFoto} disabled={subiendo} className="sr-only" />

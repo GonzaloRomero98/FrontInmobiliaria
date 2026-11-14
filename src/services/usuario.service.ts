@@ -12,7 +12,6 @@ export interface Usuario{
     rol:{id:number; nombre:Rol};
 }
 
-// Lo emite "Mi perfil" al guardar, para que el menú del encabezado muestre el nombre y la foto nuevos
 export const EVENTO_PERFIL_ACTUALIZADO = 'perfil-actualizado';
 
 export async function getMiPerfil():Promise<Usuario>{
@@ -20,7 +19,6 @@ export async function getMiPerfil():Promise<Usuario>{
     return data;
 }
 
-// fotoUrl null quita la foto
 export async function actualizarMiPerfil(cambios:{nombre?:string; fotoUrl?:string | null}):Promise<Usuario>{
     const {data} = await api.patch('/usuarios/me', cambios);
     window.dispatchEvent(new Event(EVENTO_PERFIL_ACTUALIZADO));
@@ -37,14 +35,12 @@ export async function crearUsuario(usuario:{correo:string; nombre:string; contra
     return data;
 }
 
-// El ADMIN activa/desactiva una cuenta o le asigna una contraseña nueva
 export async function actualizarUsuario(id:string, cambios:{activo?:boolean; contrasena?:string}):Promise<Usuario>{
     const {data} = await api.patch(`/usuarios/${id}`, cambios);
     return data;
 }
 
-// El cambio invalida todos los tokens anteriores (también los de otros dispositivos):
-// la API pone el token nuevo en la cookie HttpOnly para que esta sesión siga abierta
+// El cambio invalida los tokens anteriores. La API deja uno nuevo en la cookie para que esta sesión siga abierta.
 export async function cambiarMiContrasena(actual:string, nueva:string):Promise<void>{
     await api.patch('/usuarios/me/contrasena', {actual, nueva});
 }

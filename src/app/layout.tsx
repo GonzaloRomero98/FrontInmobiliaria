@@ -18,7 +18,6 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// Títulos y precios: geométrica como la letra del logo
 const montserrat = Montserrat({
   variable: "--font-montserrat",
   subsets: ["latin"],

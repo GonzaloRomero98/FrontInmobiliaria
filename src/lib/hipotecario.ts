@@ -1,7 +1,7 @@
 export interface ParametrosCredito {
-    precio: number;          // en la moneda de la propiedad (normalmente UF)
-    piePorcentaje: number;   // 0-100
-    tasaAnual: number;       // % anual
+    precio: number;
+    piePorcentaje: number;
+    tasaAnual: number;
     plazoAnios: number;
 }
 
@@ -14,7 +14,7 @@ export interface ResultadoCredito {
     rentaSugerida: number;
 }
 
-// Proporción máxima de la renta que los bancos suelen aceptar para el dividendo
+// Parte máxima de la renta que los bancos suelen aceptar para el dividendo.
 export const CARGA_FINANCIERA_MAXIMA = 0.25;
 
 // Dividendo con cuota fija (sistema francés), sin seguros ni gastos operacionales.

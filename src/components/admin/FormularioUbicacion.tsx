@@ -41,7 +41,7 @@ export default function FormularioUbicacion({ proyecto, onGuardado }: { proyecto
         getEntorno(proyecto.id).then(setEntorno).catch(() => setEntorno(null));
     }, [proyecto.id]);
 
-    // Tras cambiar la ubicación el backend calcula el entorno en segundo plano: se consulta hasta que esté
+    // Al cambiar la ubicación el backend calcula el entorno en segundo plano, así que se consulta hasta que esté listo.
     const esperarEntorno = useCallback(async () => {
         setCalculando(true);
         for (let i = 0; i < INTENTOS_ENTORNO; i++) {
@@ -60,7 +60,6 @@ export default function FormularioUbicacion({ proyecto, onGuardado }: { proyecto
     async function guardar() {
         setMensaje(null);
         const cambiaUbicacion = latitud !== proyecto.latitud || longitud !== proyecto.longitud;
-        // Solo se pregunta si se movió el punto (la API tampoco revisa si la ubicación no cambia)
         if (cambiaUbicacion && !(await confirmarSiDuplicado(cercanos))) return;
         const yaConfirmado = cambiaUbicacion && cercanos.some((p) => p.distancia < DISTANCIA_DUPLICADO_M);
         setGuardando(true);
@@ -114,8 +113,11 @@ export default function FormularioUbicacion({ proyecto, onGuardado }: { proyecto
                 <p className="text-sm text-gray-500">Haz clic en el mapa en la ubicación del proyecto. Con ella se calculan los servicios cercanos.</p>
             </div>
 
-            <input value={direccion} onChange={(e) => setDireccion(e.target.value)} maxLength={200}
-                placeholder="Dirección (ej: 1 Sur 1234)" className="w-full border rounded-lg px-3 py-2" />
+            <label className="flex flex-col gap-1 text-sm">
+                Dirección
+                <input value={direccion} onChange={(e) => setDireccion(e.target.value)} maxLength={200}
+                    placeholder="Ej.: 1 Sur 1234" className="w-full border rounded-lg px-3 py-2" />
+            </label>
 
             <SelectorUbicacion latitud={latitud} longitud={longitud} onCambio={(lat, lng) => { setLatitud(lat); setLongitud(lng); }}
                 otros={otrosProyectos} radioOtros={RADIO_ENTORNO_M} />

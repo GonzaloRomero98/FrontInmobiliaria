@@ -3,13 +3,10 @@ import Link from "next/link";
 import { ReactNode } from "react";
 import { ETIQUETA_VISITA, EstadoVisita } from "@/types/solicitud";
 
-// Piezas comunes de los inicios del panel (admin y secretaria)
-
 export const ZONA = 'America/Santiago';
 
 export const numero = (n: number) => n.toLocaleString('es-CL');
 
-// "hace 5 minutos", "hace 2 horas", "hace 3 días"
 export function hace(iso: string): string {
     const minutos = Math.round((Date.now() - new Date(iso).getTime()) / 60_000);
     const rtf = new Intl.RelativeTimeFormat('es', { numeric: 'auto' });
@@ -32,7 +29,6 @@ export function Tarjeta({ titulo, enlace, extra, children, id }: { titulo: strin
     );
 }
 
-// Cifra que pide acción: fondo de acento y enlace a donde se resuelve
 export function Accion({ cifra, texto, href, enlace }: { cifra: number; texto: string; href: string; enlace: string }) {
     return (
         <Link href={href} className="group flex flex-col bg-acento-suave border border-acento/20 rounded-2xl p-5 hover:border-acento/50 transition-colors">
@@ -45,7 +41,6 @@ export function Accion({ cifra, texto, href, enlace }: { cifra: number; texto: s
     );
 }
 
-// Cifra solo informativa (gris, más chica)
 export function Informativa({ cifra, texto, children }: { cifra: number; texto: string; children?: ReactNode }) {
     return (
         <div className="px-5 py-4">
@@ -59,7 +54,6 @@ export interface Visita { id: string; nombre: string; apellido: string; visitaPr
 
 const parteFecha = (iso: string, opciones: Intl.DateTimeFormatOptions) => new Date(iso).toLocaleString('es-CL', { timeZone: ZONA, ...opciones });
 
-// Cuadrito con el día de la semana y el número del día
 export function Dia({ iso }: { iso: string }) {
     return (
         <span className="w-12 shrink-0 text-center border rounded-lg py-1 leading-tight">
@@ -79,7 +73,6 @@ export function ProximasVisitas({ visitas }: { visitas: Visita[] }) {
                 <li key={v.id} className="flex gap-3 py-2.5 first:pt-0 last:pb-0">
                     <Dia iso={v.visitaPreferida} />
                     <div className="min-w-0">
-                        {/* A la ficha del cliente: ahí se confirma, se reagenda o se marca la asistencia */}
                         <Link href={`/secretario/solicitudes/${v.id}`} className="block font-semibold text-marca truncate hover:underline">
                             {v.nombre} {v.apellido} · {hora(v.visitaPreferida)}
                         </Link>

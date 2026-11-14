@@ -14,7 +14,6 @@ function alturaMaxima(n: Normativa): string | null {
     return partes.length ? partes.join(' · ') : null;
 }
 
-// Ficha de plan regulador explicada en lenguaje simple para el comprador
 export default function FichaNormativa({ normativa }: { normativa: Normativa }) {
     const indicadores = [
         {

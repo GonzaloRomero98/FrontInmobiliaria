@@ -8,17 +8,17 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  /* Colores del logo: marino para acciones principales y títulos, turquesa para enlaces y precios */
+  /* Colores sacados del logo. */
   --color-marca: #16304b;
   --color-acento: #1e727d;
   --color-acento-suave: #e6f2f3;
-  /* Geist para el texto, Montserrat (como el logo) para títulos y precios destacados (clase font-titulo) */
+  /* Montserrat se parece a la letra del logo y se usa en títulos y precios (clase font-titulo). */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-titulo: var(--font-montserrat);
 }
 
-/* Tailwind v4 usa currentColor como color de borde por defecto; el sitio está diseñado con bordes grises suaves */
+/* Tailwind v4 usa currentColor para los bordes; el sitio usa bordes grises suaves. */
 @layer base {
   *, ::after, ::before, ::backdrop, ::file-selector-button {
     border-color: var(--color-gray-200, currentcolor);
@@ -27,16 +27,19 @@
     color: var(--color-marca);
     font-family: var(--font-titulo);
   }
-  /* Cifras de igual ancho en tablas: precios, m² y fechas quedan alineados por columna */
+  /* Cifras del mismo ancho para que precios y fechas queden alineados en las tablas. */
   td {
     font-variant-numeric: tabular-nums;
   }
   :focus-visible {
     outline-color: var(--color-acento);
   }
+  /* El gris por defecto del placeholder no alcanza el contraste mínimo; gray-500 sí (4,8:1). */
+  ::placeholder {
+    color: var(--color-gray-500);
+  }
 }
 
-/* Sin font-family aquí: el body hereda Geist (--font-sans) del html */
 body {
   background: var(--background);
   color: var(--foreground);

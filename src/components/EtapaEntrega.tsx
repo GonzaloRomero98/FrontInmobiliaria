@@ -1,7 +1,6 @@
 import { ETIQUETA_ETAPA, EtapaProyecto, formatearMesEntrega } from "@/types/proyecto";
 
 export default function EtapaEntrega({ etapa, fechaEntrega }: { etapa: EtapaProyecto | null; fechaEntrega: string | null }) {
-    // En entrega inmediata la fecha no aporta
     const fecha = fechaEntrega && etapa !== 'ENTREGA_INMEDIATA' ? fechaEntrega : null;
     if (!etapa && !fecha) return null;
     return (

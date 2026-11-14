@@ -20,7 +20,6 @@ export default function SimuladorDividendo({ precio, moneda, valorUF }: Simulado
 
     const resultado = calcularCredito({ precio, piePorcentaje: pie, tasaAnual: tasa, plazoAnios: plazo });
 
-    // Muestra el monto en la moneda de la propiedad y su equivalente si se conoce la UF
     function monto(valor: number) {
         if (moneda === 'UF') {
             return (

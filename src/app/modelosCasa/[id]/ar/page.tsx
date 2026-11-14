@@ -5,8 +5,8 @@ import VisorCasa from "@/components/VisorCasa";
 import { getModeloCasaById } from "@/services/modeloCasa.service";
 import RegistrarEscaneo from "./RegistrarEscaneo";
 
-// Destino del QR: vista exterior con RA y recorrido interior. El navegador exige un toque para abrir
-// la cámara, así que el botón "Ver en tu espacio" queda grande y a mano.
+// Página a la que lleva el QR.
+// El navegador exige un toque para abrir la cámara, por eso el botón de RA es grande.
 export const metadata: Metadata = {
     title: 'Ver en tu espacio (RA)',
     robots: { index: false },
@@ -35,7 +35,7 @@ export default async function VistaAR({ params, searchParams }: {
 
             <ul className="text-sm text-gray-700 list-disc pl-5 flex flex-col gap-1">
                 <li>
-                    <strong>Ver en tu espacio (AR):</strong> en Android, apunta la cámara al suelo cerca de tus pies y la vivienda
+                    <strong>Ver en tu espacio (RA):</strong> en Android, apunta la cámara al suelo cerca de tus pies y la vivienda
                     aparecerá a escala real a tu alrededor, desde la entrada; camina con el celular para recorrerla.
                     En iPhone se muestra por fuera: apunta al suelo y mueve el celular despacio hasta que aparezca.
                 </li>
@@ -45,7 +45,7 @@ export default async function VistaAR({ params, searchParams }: {
                 </li>
             </ul>
             <p className="text-xs text-gray-500">
-                Si no ves el botón de AR, tu dispositivo no es compatible con realidad aumentada: igual puedes girar el modelo o recorrerlo por dentro.
+                Si no ves el botón de RA, tu dispositivo no es compatible con realidad aumentada: igual puedes girar el modelo o recorrerlo por dentro.
             </p>
 
             <Link href={`/modelosCasa/${modelo.id}`} className="text-center border rounded-lg py-2.5 font-medium hover:bg-gray-50">

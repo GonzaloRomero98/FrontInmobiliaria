@@ -1,5 +1,5 @@
-// Símbolos del mapa de la portada. Sin Leaflet: lo usa también la leyenda, que se renderiza en el servidor.
-// El color identifica al proyecto (y a su sala de ventas); la letra y la forma dicen qué es, sin depender del color.
+// Símbolos del mapa de la portada. El color identifica al proyecto y la letra y la forma dicen qué es,
+// para no depender solo del color. No usa Leaflet porque también lo usa la leyenda, que se arma en el servidor.
 export type TipoPunto = 'CASA' | 'DEPARTAMENTO' | 'MIXTO' | 'SALA';
 
 export const SIMBOLOS: Record<TipoPunto, { letra: string; etiqueta: string }> = {
@@ -11,21 +11,17 @@ export const SIMBOLOS: Record<TipoPunto, { letra: string; etiqueta: string }> = 
 
 export interface ColorPunto { fondo: string; texto: string }
 
-// Un color por proyecto. Validados con validate_palette.js --pairs all (en un mapa todos los puntos se comparan con
-// todos): estos 4 pasan todos los chequeos, incluido daltonismo; con un quinto ya hay pares que no se distinguen.
-// `texto` es el color de la letra con mejor contraste sobre ese fondo.
+// Colores revisados para que se distingan entre sí, también con daltonismo. Con un quinto color ya había pares parecidos.
 export const COLORES_PROYECTO: readonly ColorPunto[] = [
     { fondo: '#2a78d6', texto: '#ffffff' },
     { fondo: '#e2622b', texto: '#0b0b0b' },
     { fondo: '#17a673', texto: '#0b0b0b' },
     { fondo: '#a3367a', texto: '#ffffff' },
 ];
-// Desde el quinto proyecto (y en la clave de símbolos de la leyenda): gris neutro
 export const COLOR_NEUTRO: ColorPunto = { fondo: '#64748b', texto: '#ffffff' };
 
 export const colorProyecto = (indice: number): ColorPunto => COLORES_PROYECTO[indice] ?? COLOR_NEUTRO;
 
-// Proyectos: gota; sala de ventas: cuadrado redondeado
 export function htmlSimbolo(tipo: TipoPunto | null, tamano = 26, color: ColorPunto = COLOR_NEUTRO): string {
     const letra = tipo ? SIMBOLOS[tipo].letra : '';
     const forma = tipo === 'SALA' ? 'border-radius:6px' : 'border-radius:50% 50% 50% 0;transform:rotate(-45deg)';

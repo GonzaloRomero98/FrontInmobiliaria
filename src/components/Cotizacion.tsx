@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { flushSync } from "react-dom";
 import Link from "next/link";
 import { avisar } from "@/components/Dialogos";
+import { usePanel } from "@/components/panel/PanelLayout";
 import { mensajeError } from "@/lib/errores";
 import { CotizacionEmitida, folioCotizacion } from "@/types/solicitud";
 import EtapaEntrega from "@/components/EtapaEntrega";
@@ -15,7 +16,7 @@ import { ETIQUETA_ESTADO, ETIQUETA_TIPO_VIVIENDA } from "@/types/modeloCasa";
 
 const fecha = (d: Date) => d.toLocaleDateString('es-CL');
 
-// Al imprimir solo queda la hoja: sin encabezado/pie del sitio ni panel, y con los colores de fondo
+// Al imprimir solo queda la hoja, sin el menú del panel y con los colores de fondo.
 const ESTILO_IMPRESION = `
 @page { size: A4; margin: 14mm; }
 @media print {
@@ -43,21 +44,22 @@ function Campo({ etiqueta, valor, onCambio, min, max, step = 1 }: { etiqueta: st
         <label className="flex flex-col gap-1 text-sm">
             {etiqueta}
             <input type="number" value={valor} min={min} max={max} step={step}
-                // Fuera de rango se acota: el PDF nunca muestra un pie de 150 % o un plazo negativo
+                // Los valores fuera de rango se ajustan para que el PDF no muestre, por ejemplo, un pie de 150 %.
                 onChange={(e) => onCambio(Math.min(max, Math.max(min, Number(e.target.value) || 0)))}
                 className="border rounded-lg px-3 py-2" />
         </label>
     );
 }
 
-// Sin idCotizacion: cotización nueva, que se guarda con folio al descargarla.
-// Con idCotizacion: una ya emitida, que se muestra con sus valores congelados para reimprimirla.
+// Sin idCotizacion es una cotización nueva, que recibe folio al emitirla.
+// Con idCotizacion es una ya emitida y se muestra con sus valores guardados.
 export default function Cotizacion({ idSolicitud, idCotizacion, uf: ufDelDia }: { idSolicitud: string; idCotizacion?: string; uf: ValorUF | null }) {
     const [solicitud, setSolicitud] = useState<FichaSolicitud | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [condiciones, setCondiciones] = useState({ pie: 20, tasa: 4.5, plazo: 25, validez: 15, nota: '' });
     const [emitida, setEmitida] = useState<CotizacionEmitida | null>(null);
     const [emitiendo, setEmitiendo] = useState(false);
+    const { perfil } = usePanel();
 
     useEffect(() => {
         getSolicitud(idSolicitud).then((s) => {
@@ -69,7 +71,6 @@ export default function Cotizacion({ idSolicitud, idCotizacion, uf: ufDelDia }: 
         }).catch(() => setError('No se pudo cargar la solicitud'));
     }, [idSolicitud, idCotizacion]);
 
-    // Cambiar una condición después de emitir arma otra cotización (otro folio al descargar)
     const cambiar = (campo: keyof typeof condiciones) => (valor: number | string) => {
         setCondiciones((c) => ({ ...c, [campo]: valor }));
         setEmitida(null);
@@ -80,7 +81,7 @@ export default function Cotizacion({ idSolicitud, idCotizacion, uf: ufDelDia }: 
             setEmitiendo(true);
             try {
                 const nueva = await emitirCotizacion(idSolicitud, { ...condiciones, nota: condiciones.nota.trim(), uf: ufDelDia });
-                // El folio tiene que estar en la hoja antes de abrir el diálogo de impresión
+                // El folio tiene que estar en la hoja antes de abrir el diálogo de impresión.
                 flushSync(() => setEmitida(nueva));
             } catch (err) {
                 avisar(mensajeError(err, 'No se pudo guardar la cotización; no se descargó'), { error: true });
@@ -92,8 +93,8 @@ export default function Cotizacion({ idSolicitud, idCotizacion, uf: ufDelDia }: 
         window.print();
     }
 
-    // El título es el nombre de archivo que propone "Guardar como PDF"
     useEffect(() => {
+        // El título se usa como nombre del archivo al guardar como PDF.
         if (solicitud) document.title = `Cotización ${solicitud.modeloCasa.nombreModelo} - ${solicitud.nombre} ${solicitud.apellido}`;
     }, [solicitud]);
 
@@ -102,7 +103,6 @@ export default function Cotizacion({ idSolicitud, idCotizacion, uf: ufDelDia }: 
 
     const modelo = solicitud.modeloCasa;
     const { proyecto } = modelo;
-    // Emitida: los valores guardados (precio, UF y condiciones); si no, los del modelo y el formulario
     const d = emitida?.datos;
     const { pie, tasa, plazo, validez, nota } = d ?? condiciones;
     const precio = d?.precio ?? Number(modelo.precio);
@@ -115,7 +115,6 @@ export default function Cotizacion({ idSolicitud, idCotizacion, uf: ufDelDia }: 
     const otra = (v: number) => equivalencia(v, moneda, valorUF);
     const hoy = emitida ? new Date(emitida.creadoEn) : new Date();
     const vence = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + validez);
-    // Abierta desde el historial: solo se reimprime, no se cambian las condiciones
     const congelada = !!idCotizacion;
 
     return (
@@ -160,18 +159,17 @@ export default function Cotizacion({ idSolicitud, idCotizacion, uf: ufDelDia }: 
                     </>
                 )}
                 <button type="button" onClick={descargar} disabled={emitiendo} className="bg-marca text-white rounded-lg py-2.5 font-medium disabled:opacity-50">
-                    {emitiendo ? 'Guardando…' : emitida ? `Descargar de nuevo (${folioCotizacion(emitida.folio)})` : 'Descargar PDF'}
+                    {emitiendo ? 'Emitiendo…' : emitida ? `Descargar de nuevo (${folioCotizacion(emitida.folio)})` : 'Emitir cotización y descargar PDF'}
                 </button>
-                <p className="text-xs text-gray-500 -mt-2">
-                    {emitida ? 'No crea otro folio. ' : 'Al descargarla queda guardada en la ficha con un folio. '}
+                <p className="text-sm text-gray-600 -mt-2">
+                    {emitida ? 'No crea otro folio. ' : <><strong>Al emitirla se crea un folio</strong> y queda guardada en la ficha, aunque canceles la impresión. </>}
                     En el diálogo de impresión elige &quot;Guardar como PDF&quot;.
                 </p>
             </section>
 
             <article className="hoja flex flex-col gap-5 p-8 border rounded-xl bg-white text-gray-900" aria-label="Cotización">
                 <div className="flex justify-between items-start gap-4">
-                    {/* <img> y no next/image: debe estar cargada al momento de imprimir */}
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    {/* eslint-disable-next-line @next/next/no-img-element -- se usa img porque la imagen tiene que estar cargada al imprimir */}
                     <img src="/logo-inmocap.png" alt="Inmocap" className="h-10 w-auto" />
                     <div className="text-right text-sm">
                         <p className="text-lg font-bold">Cotización{emitida && ` ${folioCotizacion(emitida.folio)}`}</p>
@@ -180,13 +178,29 @@ export default function Cotizacion({ idSolicitud, idCotizacion, uf: ufDelDia }: 
                     </div>
                 </div>
 
-                <div className="text-sm">
-                    <p className="font-semibold">Cliente</p>
-                    <p>{solicitud.nombre} {solicitud.apellido} · {solicitud.correo} · {solicitud.celular}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <p className="font-semibold">Cliente</p>
+                        <p>{solicitud.nombre} {solicitud.apellido} · {solicitud.correo} · {solicitud.celular}</p>
+                    </div>
+                    {/* Datos de quien envía el PDF, para que el cliente sepa a quién responder. */}
+                    {(perfil || proyecto.salaDireccion) && (
+                        <div>
+                            <p className="font-semibold">Te atiende</p>
+                            {perfil && <p>{perfil.nombre} · {perfil.correo}</p>}
+                            {proyecto.salaDireccion && (
+                                <p>
+                                    Sala de ventas: {proyecto.salaDireccion}
+                                    {proyecto.salaHorario && ` · ${proyecto.salaHorario}`}
+                                    {proyecto.salaTelefono && ` · ${proyecto.salaTelefono}`}
+                                </p>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex gap-4 border-t pt-4">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    {/* eslint-disable-next-line @next/next/no-img-element -- se usa img porque la imagen tiene que estar cargada al imprimir */}
                     {modelo.imgPrincipal && <img src={modelo.imgPrincipal} alt={modelo.nombreModelo} className="w-40 h-28 object-cover rounded-lg" />}
                     <div className="text-sm">
                         <p className="text-xl font-bold">{d?.nombreModelo ?? modelo.nombreModelo}</p>

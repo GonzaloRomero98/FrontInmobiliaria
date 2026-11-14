@@ -7,7 +7,7 @@ interface PresignedUrlResponse {
     contentType: string;
 }
 
-// Los navegadores suelen dejar vacío el tipo de los modelos 3D
+// Los navegadores suelen dejar vacío el tipo de los archivos 3D.
 const TIPOS_POR_EXTENSION: Record<string, string> = {
     glb: 'model/gltf-binary',
     gltf: 'model/gltf+json',
@@ -31,7 +31,7 @@ export async function obtenerUrlSubida(
     return data;
 }
 
-// contentType debe ser el mismo con el que se firmó la URL (viene en la respuesta de obtenerUrlSubida)
+// contentType debe ser el mismo con que se firmó la URL.
 export function subirArchivo(archivo: File, url: string, contentType: string, onProgress?: (pct: number) => void): Promise<void> {
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();

@@ -8,7 +8,7 @@ export const ETIQUETA_ETAPA: Record<EtapaProyecto, string> = {
     ENTREGA_INMEDIATA: 'Entrega inmediata',
 };
 
-// "2027-06-30" -> "junio de 2027" (sin pasar por UTC, que correría el día)
+// Se arma el texto sin pasar por UTC, que podía correr la fecha un día.
 export function formatearMesEntrega(fecha: string): string {
     const [anio, mes] = fecha.split('-').map(Number);
     return new Date(anio, mes - 1, 1).toLocaleDateString('es-CL', { month: 'long', year: 'numeric' });
@@ -23,9 +23,7 @@ export interface Proyecto{
     latitud: number | null;
     longitud: number | null;
     etapa: EtapaProyecto | null;
-    // 'YYYY-MM-DD'
     fechaEntrega: string | null;
-    // Sala de ventas (opcional)
     salaDireccion: string | null;
     salaHorario: string | null;
     salaTelefono: string | null;
@@ -51,11 +49,10 @@ export interface CrearPoyectoInput{
     salaTelefono?: string | null;
     salaLatitud?: number | null;
     salaLongitud?: number | null;
-    // Guardar aunque haya otro proyecto a menos de 50 m (sin esto la API responde 409)
     confirmarCercania?: boolean;
 }
 
-// Enlace "Cómo llegar" de Google Maps (solo URL, sin API ni clave): usa las coordenadas si las hay
+// Enlace de Google Maps sin API ni clave. Usa las coordenadas si existen.
 export function urlComoLlegar(p: Pick<Proyecto, 'salaDireccion' | 'salaLatitud' | 'salaLongitud'>): string {
     const destino = p.salaLatitud !== null && p.salaLongitud !== null ? `${p.salaLatitud},${p.salaLongitud}` : p.salaDireccion ?? '';
     return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destino)}`;

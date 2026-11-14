@@ -4,13 +4,17 @@ import SubidaImagen from "@/components/SubidaImagen";
 import SubidaModelo3d from "@/components/SubirArchivo";
 import { getCaracteristicas } from "@/services/caracteristica.service";
 import { actualizarModeloCasa, crearModeloCasa, nombreModeloDisponible } from "@/services/modeloCasa.service";
-import { getProyectos } from "@/services/proyecto.service";
+import { getNormativa, getProyectos } from "@/services/proyecto.service";
 import { obtenerUrlSubida, subirArchivo } from "@/services/s3.service";
+import { formatearNumero } from "@/lib/formato";
+import { revisarNormativa } from "@/lib/normativa";
 import { Caracteristica } from "@/types/caracteristicas";
 import { ETIQUETA_TIPO_VIVIENDA, ModeloCasa, ModeloCasaInput, Moneda, Operacion, SUBSIDIOS } from "@/types/modeloCasa";
+import { Normativa } from "@/types/normativa";
 import { Proyecto } from "@/types/proyecto";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { isAxiosError } from "axios";
+import Link from "next/link";
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -18,18 +22,16 @@ import z from "zod";
 
 const esquemaModeloCasa = z.object({
     id_proyecto: z.string().min(1, 'Selecciona el proyecto'),
-    // trim: el nombre que se comprueba es el mismo que se guarda
     nombreModelo: z.string().trim().min(1, 'El nombre es obligatorio').max(150),
     tipoOperacion: z.enum(['VENTA', 'ARRIENDO']),
-    dormitorios: z.string().min(1, 'Campo Obligatorio'),
+    dormitorios: z.string().min(1, 'Campo obligatorio'),
     banos: z.string().min(1,'Campo obligatorio'),
-    estacionamiento: z.string().min(1,'campoObligatorio'),
+    estacionamiento: z.string().min(1, 'Campo obligatorio'),
     mascotas: z.boolean(),
-    superficieConstruida: z.string().min(1, 'Campo Obligatorio'),
+    superficieConstruida: z.string().min(1, 'Campo obligatorio'),
     tipoVivienda: z.enum(['CASA', 'DEPARTAMENTO']),
-    // Obligatoria solo en casas (ver superRefine)
     superficieTerreno: z.string().optional(),
-    precio: z.string().min(1, 'Campo Obligatorio'),
+    precio: z.string().min(1, 'Campo obligatorio'),
     moneda: z.enum(['UF','CLP']),
     gastosComunes: z.string().regex(/^\d*$/, 'Monto en pesos, sin puntos ni decimales').optional(),
     subsidios: z.array(z.enum(['DS1', 'DS19'])),
@@ -47,7 +49,11 @@ const esquemaModeloCasa = z.object({
 
 type FormValues = z.infer<typeof esquemaModeloCasa>;
 
-// Valores iniciales del formulario: vacíos al crear, los del modelo al editar
+const ETIQUETA = "flex flex-col gap-1 text-sm";
+const CAMPO = "w-full border rounded-lg px-3 py-2";
+const SECCION = "flex flex-col gap-4";
+const TITULO_SECCION = "font-titulo font-semibold text-marca mb-3";
+
 function valoresIniciales(modelo?: ModeloCasa): Partial<FormValues> {
     if (!modelo) return {mascotas:false, tipoVivienda:'CASA', subsidios:[], unidades:'1', publicado:true};
     return {
@@ -68,7 +74,7 @@ function valoresIniciales(modelo?: ModeloCasa): Partial<FormValues> {
         bono: modelo.bono ?? '',
         quitarModelo3d: false,
         quitarPlano: false,
-        // ?? 1: una API sin la migración de reservas no envía unidades (y descarta el campo al guardar)
+        // Si la API no tiene la migración de reservas no envía unidades, por eso se usa 1.
         unidades: String(modelo.unidades ?? 1),
         publicado: modelo.activo,
     };
@@ -101,13 +107,32 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
     const quitarModelo3d = watch('quitarModelo3d');
     const quitarPlano = watch('quitarPlano');
     const esCasa = watch('tipoVivienda') === 'CASA';
+    const idProyecto = watch('id_proyecto');
+
+    // Se guarda junto al id del proyecto para no mostrar la normativa del proyecto anterior mientras carga la nueva.
+    const [normativa, setNormativa] = useState<{ idProyecto: string; datos: Normativa | null } | null>(null);
+    const normativaActual = idProyecto && normativa?.idProyecto === idProyecto ? normativa.datos : undefined;
+    const revision = normativaActual ? revisarNormativa({
+        tipoVivienda: watch('tipoVivienda'),
+        superficieConstruida: Number(watch('superficieConstruida')),
+        superficieTerreno: Number(watch('superficieTerreno')),
+    }, normativaActual) : null;
+    const sinCoeficientes = normativaActual === null
+        || (normativaActual !== undefined && normativaActual.coefConstructibilidad == null && normativaActual.coefOcupacionSuelo == null);
 
     useEffect(()=>{
         getProyectos().then(setProyectos).catch(()=> setError('no se pudo cargar los proyectos'));
         getCaracteristicas().then(setCaracteristica).catch(()=>setError('no se puedo cargar las caracteristicas'));
     },[]);
 
-    // El select se llena después del primer render: se vuelve a fijar el proyecto del modelo
+    useEffect(()=>{
+        if(!idProyecto) return;
+        let vigente = true;
+        // Si falla solo se pierde la ayuda de la normativa, el formulario sigue funcionando.
+        getNormativa(idProyecto).then((datos) => { if(vigente) setNormativa({ idProyecto, datos }); }).catch(() => {});
+        return () => { vigente = false; };
+    },[idProyecto]);
+
     useEffect(()=>{
         if(modelo && proyectos.length) setValue('id_proyecto', modelo.proyecto.id);
     },[modelo, proyectos, setValue]);
@@ -119,14 +144,13 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
     async function onSubmit(dataForm:FormValues) {
         setError(null);
 
-        // Al editar, la imagen solo se reemplaza si se elige una nueva
         if(!archivoImagen && !modelo){
             setFormError('imgPrincipal',{type:'manual', message:'Falta subir la imagen de la propiedad'});
             return;
         }
 
         try{
-            // Antes de subir la imagen y el .glb: con un nombre repetido no se sube nada a S3
+            // El nombre se revisa antes de subir la imagen y el .glb, para no subir archivos a S3 si está repetido.
             if(!(await nombreModeloDisponible(dataForm.nombreModelo, modelo?.id))){
                 setFormError('nombreModelo', {type:'manual', message:'Ya existe un modelo con ese nombre. Elige otro antes de subir los archivos.'});
                 return;
@@ -141,7 +165,6 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                 imgPrincipal = publicUrlImagen;
             }
 
-            // El modelo 3D es opcional: se conserva el actual, se reemplaza o se quita
             let modelo3dUrl: string | null = dataForm.quitarModelo3d ? null : modelo?.modelo3dUrl ?? null;
             if(archivoModelo3D && !dataForm.quitarModelo3d){
                 setSubiendoModelo3d(true);
@@ -151,7 +174,6 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                 modelo3dUrl = publicUrlModelo3d;
             }
 
-            // Plano de planta opcional: misma lógica que el modelo 3D
             let planoUrl: string | null = dataForm.quitarPlano ? null : modelo?.planoUrl ?? null;
             if(archivoPlano && !dataForm.quitarPlano){
                 setSubiendoPlano(true);
@@ -183,7 +205,7 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                 unidades: Number(dataForm.unidades),
                 activo: dataForm.publicado,
             };
-            // Al crear sin 3D no se envía el campo; al editar null lo quita
+            // Al crear sin 3D el campo no se envía. Al editar, null quita el modelo 3D.
             if(modelo3dUrl !== null || modelo) inputFormModelo.modelo3dUrl = modelo3dUrl;
 
             if(modelo){
@@ -191,7 +213,6 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                 router.push('/admin/modelosCasa');
             }else{
                 const creado = await crearModeloCasa(inputFormModelo);
-                // Un borrador no tiene ficha pública todavía
                 router.push(creado.activo ? `/modelosCasa/${creado.id}` : '/admin/modelosCasa');
             }
         }catch(e){
@@ -199,7 +220,6 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
             const mensaje = isAxiosError(e) ? e.response?.data?.message : undefined;
             setError(status === 409
                 ? 'Ya existe un modelo con ese nombre'
-                // 400 de reglas de negocio (p. ej. unidades por debajo de las reservadas o vendidas)
                 : status === 400 && typeof mensaje === 'string' ? mensaje
                 : modelo ? 'No se pudo guardar el modelo' : 'No se pudo crear el modelo');
             setSubiendoImagen(false);
@@ -209,97 +229,172 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
     }
 
     return(
-            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-                <div>
-                    <select {...register('id_proyecto')} className="w-full border rounded-lg px-3 py-2">
-                        <option value="">Selecciona un proyecto</option>
-                        {proyectos.map((p) => (
-                            <option key={p.id} value={p.id}>{p.nombre}</option>
-                        ))}
-                    </select>
-                    {errors.id_proyecto && <p className="text-red-500 text-sm mt-1">{errors.id_proyecto.message}</p>}
-                </div>
-
-                <div>
-                    <input
-                        {...register('nombreModelo')}
-                        placeholder="Nombre del modelo"
-                        className="w-full border rounded-lg px-3 py-2"
-                    />
-                    {errors.nombreModelo && <p className="text-red-500 text-sm mt-1">{errors.nombreModelo.message}</p>}
-                </div>
-
-                <div>
-                    <select {...register('tipoOperacion')} className="w-full border rounded-lg px-3 py-2">
-                        <option value="VENTA">Venta</option>
-                        <option value="ARRIENDO">Arriendo</option>
-                    </select>
-                </div>
-
-                <div>
-                    <select {...register('tipoVivienda')} aria-label="Tipo de vivienda" className="w-full border rounded-lg px-3 py-2">
-                        {Object.entries(ETIQUETA_TIPO_VIVIENDA).map(([valor, etiqueta]) => (
-                            <option key={valor} value={valor}>{etiqueta}</option>
-                        ))}
-                    </select>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2">
+            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-8">
+                <fieldset className={SECCION}>
+                    <legend className={TITULO_SECCION}>Identificación</legend>
                     <div>
-                        <input {...register('dormitorios')} type="number" placeholder="Dormitorios" className="w-full border rounded-lg px-3 py-2" />
-                        {errors.dormitorios && <p className="text-red-500 text-sm mt-1">{errors.dormitorios.message}</p>}
+                        <label className={ETIQUETA}>
+                            Proyecto
+                            <select {...register('id_proyecto')} className={CAMPO}>
+                                <option value="">Selecciona un proyecto</option>
+                                {proyectos.map((p) => (
+                                    <option key={p.id} value={p.id}>{p.nombre}</option>
+                                ))}
+                            </select>
+                        </label>
+                        {errors.id_proyecto && <p className="text-red-500 text-sm mt-1">{errors.id_proyecto.message}</p>}
                     </div>
-                    <div>
-                        <input {...register('banos')} type="number" placeholder="Baños" className="w-full border rounded-lg px-3 py-2" />
-                        {errors.banos && <p className="text-red-500 text-sm mt-1">{errors.banos.message}</p>}
-                    </div>
-                    <div>
-                        <input {...register('estacionamiento')} type="number" placeholder="Estacionamientos" className="w-full border rounded-lg px-3 py-2" />
-                        {errors.estacionamiento && <p className="text-red-500 text-sm mt-1">{errors.estacionamiento.message}</p>}
-                    </div>
-                </div>
 
-                <div className="grid grid-cols-2 gap-2">
                     <div>
-                        <input {...register('superficieConstruida')} type="number" step="0.01" placeholder="Superficie construida (m²)" className="w-full border rounded-lg px-3 py-2" />
-                        {errors.superficieConstruida && <p className="text-red-500 text-sm mt-1">{errors.superficieConstruida.message}</p>}
+                        <label className={ETIQUETA}>
+                            Nombre del modelo
+                            <input {...register('nombreModelo')} className={CAMPO} />
+                        </label>
+                        {errors.nombreModelo && <p className="text-red-500 text-sm mt-1">{errors.nombreModelo.message}</p>}
                     </div>
-                    <div>
-                        <input {...register('superficieTerreno')} type="number" step="0.01" placeholder={esCasa ? 'Superficie terreno (m²)' : 'Superficie terreno (m², opcional)'} aria-label="Superficie terreno" className="w-full border rounded-lg px-3 py-2" />
-                        {errors.superficieTerreno && <p className="text-red-500 text-sm mt-1">{errors.superficieTerreno.message}</p>}
-                    </div>
-                </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                    <div>
-                        <input {...register('precio')} type="number" step="0.0001" placeholder="Precio" className="w-full border rounded-lg px-3 py-2" />
-                        {errors.precio && <p className="text-red-500 text-sm mt-1">{errors.precio.message}</p>}
+                    <div className="grid grid-cols-2 gap-2">
+                        <label className={ETIQUETA}>
+                            Operación
+                            <select {...register('tipoOperacion')} className={CAMPO}>
+                                <option value="VENTA">Venta</option>
+                                <option value="ARRIENDO">Arriendo</option>
+                            </select>
+                        </label>
+                        <label className={ETIQUETA}>
+                            Tipo de vivienda
+                            <select {...register('tipoVivienda')} className={CAMPO}>
+                                {Object.entries(ETIQUETA_TIPO_VIVIENDA).map(([valor, etiqueta]) => (
+                                    <option key={valor} value={valor}>{etiqueta}</option>
+                                ))}
+                            </select>
+                        </label>
                     </div>
-                    <div>
-                        <select {...register('moneda')} className="w-full border rounded-lg px-3 py-2">
-                            <option value="UF">UF</option>
-                            <option value="CLP">CLP</option>
-                        </select>
-                    </div>
-                </div>
+                </fieldset>
 
-                <div className="flex gap-4">
+                <fieldset className={SECCION}>
+                    <legend className={TITULO_SECCION}>Programa</legend>
+                    <div className="grid grid-cols-3 gap-2">
+                        <div>
+                            <label className={ETIQUETA}>
+                                Dormitorios
+                                <input {...register('dormitorios')} type="number" min="0" className={CAMPO} />
+                            </label>
+                            {errors.dormitorios && <p className="text-red-500 text-sm mt-1">{errors.dormitorios.message}</p>}
+                        </div>
+                        <div>
+                            <label className={ETIQUETA}>
+                                Baños
+                                <input {...register('banos')} type="number" min="0" className={CAMPO} />
+                            </label>
+                            {errors.banos && <p className="text-red-500 text-sm mt-1">{errors.banos.message}</p>}
+                        </div>
+                        <div>
+                            <label className={ETIQUETA}>
+                                Estacionamientos
+                                <input {...register('estacionamiento')} type="number" min="0" className={CAMPO} />
+                            </label>
+                            {errors.estacionamiento && <p className="text-red-500 text-sm mt-1">{errors.estacionamiento.message}</p>}
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                        <div>
+                            <label className={ETIQUETA}>
+                                Superficie construida (m²)
+                                <input {...register('superficieConstruida')} type="number" step="0.01" className={CAMPO} />
+                            </label>
+                            {errors.superficieConstruida && <p className="text-red-500 text-sm mt-1">{errors.superficieConstruida.message}</p>}
+                        </div>
+                        <div>
+                            <label className={ETIQUETA}>
+                                {esCasa ? 'Superficie terreno (m²)' : 'Superficie terreno (m², opcional)'}
+                                <input {...register('superficieTerreno')} type="number" step="0.01" className={CAMPO} />
+                            </label>
+                            {errors.superficieTerreno && <p className="text-red-500 text-sm mt-1">{errors.superficieTerreno.message}</p>}
+                        </div>
+                    </div>
+
+                    {esCasa && revision && normativaActual && (
+                        <div role="status" className={`rounded-lg border px-3 py-2 text-sm ${revision.exceso > 0 ? 'border-amber-200 bg-amber-50 text-amber-900' : 'text-gray-600'}`}>
+                            <p className="font-medium">Plan regulador{normativaActual.zona && ` (zona ${normativaActual.zona})`}</p>
+                            <ul className="mt-1">
+                                {revision.maximoConstruido !== null && (
+                                    <li>
+                                        Máximo construido: {formatearNumero(revision.maximoConstruido)} m²
+                                        (coef. {formatearNumero(normativaActual.coefConstructibilidad ?? 0)} × {formatearNumero(Number(watch('superficieTerreno')))} m² de terreno)
+                                    </li>
+                                )}
+                                {revision.exceso > 0 && (
+                                    <li className="font-medium">Este modelo supera el máximo en {formatearNumero(revision.exceso)} m². Revísalo con el arquitecto antes de publicarlo.</li>
+                                )}
+                                {revision.maximoPrimerPiso !== null && (
+                                    <li>
+                                        Primer piso máx.: {formatearNumero(revision.maximoPrimerPiso)} m²
+                                        (ocupación de suelo {formatearNumero((normativaActual.coefOcupacionSuelo ?? 0) * 100, 0)} %), solo como referencia
+                                    </li>
+                                )}
+                            </ul>
+                        </div>
+                    )}
+                    {esCasa && sinCoeficientes && (
+                        <p className="text-xs text-gray-500">
+                            Este proyecto no tiene coeficientes cargados en su normativa, por eso no se puede calcular el máximo construido.{' '}
+                            <Link href={`/admin/proyectos/${idProyecto}`} className="underline">Completar la normativa</Link>
+                        </p>
+                    )}
+
                     <label className="flex items-center gap-2 text-sm">
                         <input type="checkbox" {...register('mascotas')} />
                         Permite mascotas
                     </label>
-                </div>
 
-                <div>
-                    <input {...register('gastosComunes')} type="number" min="0" step="1"
-                        placeholder={esCasa ? 'Gastos comunes mensuales en $ (si es condominio)' : 'Gastos comunes mensuales en $ (opcional)'}
-                        aria-label="Gastos comunes" className="w-full border rounded-lg px-3 py-2" />
-                    {errors.gastosComunes && <p className="text-red-500 text-sm mt-1">{errors.gastosComunes.message}</p>}
-                </div>
+                    <div>
+                        <p className="text-sm mb-2">Características</p>
+                        <div className="grid grid-cols-2 gap-1">
+                            {caracteristica.map((c) => (
+                                <label key={c.id} className="flex items-center gap-2 text-sm">
+                                    <input
+                                        type="checkbox"
+                                        checked={caracteristicaSeleccionadas.includes(c.id)}
+                                        onChange={() => mostrarCaracteristicas(c.id)}
+                                    />
+                                    {c.nombre}
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+                </fieldset>
 
-                <div className="flex flex-col gap-2">
-                    <div className="flex gap-4 text-sm">
-                        <span className="font-medium">Apto para subsidio:</span>
+                <fieldset className={SECCION}>
+                    <legend className={TITULO_SECCION}>Precio</legend>
+                    <div className="grid grid-cols-2 gap-2">
+                        <div>
+                            <label className={ETIQUETA}>
+                                Precio
+                                <input {...register('precio')} type="number" step="0.0001" min="0" className={CAMPO} />
+                            </label>
+                            {errors.precio && <p className="text-red-500 text-sm mt-1">{errors.precio.message}</p>}
+                        </div>
+                        <label className={ETIQUETA}>
+                            Moneda
+                            <select {...register('moneda')} className={CAMPO}>
+                                <option value="UF">UF</option>
+                                <option value="CLP">CLP</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <div>
+                        <label className={ETIQUETA}>
+                            {esCasa ? 'Gastos comunes mensuales en $ (si es condominio)' : 'Gastos comunes mensuales en $ (opcional)'}
+                            <input {...register('gastosComunes')} type="number" min="0" step="1" className={CAMPO} />
+                        </label>
+                        {errors.gastosComunes && <p className="text-red-500 text-sm mt-1">{errors.gastosComunes.message}</p>}
+                    </div>
+
+                    <div className="flex flex-wrap gap-4 text-sm" role="group" aria-label="Apto para subsidio">
+                        <span>Apto para subsidio:</span>
                         {SUBSIDIOS.map((s) => (
                             <label key={s} className="flex items-center gap-2">
                                 <input type="checkbox" value={s} {...register('subsidios')} />
@@ -307,29 +402,20 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                             </label>
                         ))}
                     </div>
-                    <input {...register('bono')} maxLength={150} placeholder="Bono o promoción (opcional), ej.: Bono pie 10%"
-                        aria-label="Bono" className="w-full border rounded-lg px-3 py-2" />
-                    {errors.bono && <p className="text-red-500 text-sm mt-1">{errors.bono.message}</p>}
-                </div>
 
-                <div>
-                    <p className="text-sm font-medium mb-2">Características</p>
-                    <div className="grid grid-cols-2 gap-1">
-                        {caracteristica.map((c) => (
-                            <label key={c.id} className="flex items-center gap-2 text-sm">
-                                <input
-                                    type="checkbox"
-                                    checked={caracteristicaSeleccionadas.includes(c.id)}
-                                    onChange={() => mostrarCaracteristicas(c.id)}
-                                />
-                                {c.nombre}
-                            </label>
-                        ))}
+                    <div>
+                        <label className={ETIQUETA}>
+                            Bono o promoción (opcional)
+                            <input {...register('bono')} maxLength={150} placeholder="Ej.: Bono pie 10%" className={CAMPO} />
+                        </label>
+                        {errors.bono && <p className="text-red-500 text-sm mt-1">{errors.bono.message}</p>}
                     </div>
-                </div>
+                </fieldset>
 
+                <fieldset className={SECCION}>
+                <legend className={TITULO_SECCION}>Archivos</legend>
                 <div>
-                    <p className="text-sm font-medium mb-2">Imagen principal{modelo && ' (elige una solo si quieres reemplazarla)'}</p>
+                    <p className="text-sm mb-2">Imagen principal{modelo && ' (elige una solo si quieres reemplazarla)'}</p>
                     {modelo?.imgPrincipal && !archivoImagen && (
                         <img src={modelo.imgPrincipal} alt="Imagen actual" className="w-32 h-24 object-cover rounded-lg border mb-2" />
                     )}
@@ -338,7 +424,7 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                 </div>
 
                 <div>
-                    <p className="text-sm font-medium mb-2">Modelo 3D (.glb o .gltf, opcional)</p>
+                    <p className="text-sm mb-2">Modelo 3D (.glb o .gltf, opcional)</p>
                     {modelo?.modelo3dUrl && (
                         <label className="flex items-center gap-2 text-sm mb-2">
                             <input type="checkbox" {...register('quitarModelo3d')} />
@@ -352,7 +438,7 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                 </div>
 
                 <div>
-                    <p className="text-sm font-medium mb-2">Plano de planta (imagen, opcional)</p>
+                    <p className="text-sm mb-2">Plano de planta (imagen, opcional)</p>
                     {modelo?.planoUrl && (
                         <>
                             {!archivoPlano && !quitarPlano && <img src={modelo.planoUrl} alt="Plano actual" className="w-32 h-24 object-contain rounded-lg border mb-2" />}
@@ -366,7 +452,10 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                         <SubidaImagen archivoSeleccionado={setArchivoPlano} progreso={progresoPlano} subiendo={subiendoPlano} />
                     )}
                 </div>
+                </fieldset>
 
+                <fieldset className={SECCION}>
+                <legend className={TITULO_SECCION}>Publicación</legend>
                 <div className="grid grid-cols-2 gap-2 items-center">
                     <label className="text-sm">
                         Unidades (casas de este modelo)
@@ -383,6 +472,7 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                     El estado (disponible, reservado o vendido) se calcula con las reservas.
                     Sin publicar queda como borrador: solo se ve en este panel.
                 </p>
+                </fieldset>
 
                 {error && <p className="text-red-500 text-sm">{error}</p>}
 

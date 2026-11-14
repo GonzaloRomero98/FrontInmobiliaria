@@ -5,6 +5,9 @@ import { useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Visor3D from "./Visor3D";
 
+// Proporción 4:3 en el celular y 500 px como máximo en pantallas grandes.
+const ALTO = 'min(500px, 75vw)';
+
 interface GaleriaModeloProps {
     idModelo: string;
     titulo: string;
@@ -12,10 +15,10 @@ interface GaleriaModeloProps {
     imagenes: string[];
 }
 
-// Recorrido 3D y fotos van en pestañas separadas: dentro de un carrusel, arrastrar para girar
-// el modelo chocaría con deslizar para cambiar de foto.
+// El 3D y las fotos van en pestañas separadas porque arrastrar para girar el modelo chocaría con deslizar entre fotos.
 export default function GaleriaModelo({ idModelo, titulo, modelo3dUrl, imagenes }: GaleriaModeloProps) {
-    const [vista, setVista] = useState<'3d' | 'fotos'>(modelo3dUrl ? '3d' : 'fotos');
+    // Parte en las fotos porque en el celular el 3D se ve como una maqueta blanca.
+    const [vista, setVista] = useState<'3d' | 'fotos'>(imagenes.length > 0 || !modelo3dUrl ? 'fotos' : '3d');
     const [actual, setActual] = useState(0);
     const pista = useRef<HTMLDivElement>(null);
     const total = imagenes.length;
@@ -29,7 +32,7 @@ export default function GaleriaModelo({ idModelo, titulo, modelo3dUrl, imagenes 
         el.scrollTo({ left: Math.max(0, Math.min(total - 1, i)) * el.clientWidth, behavior: suave ? 'smooth' : 'auto' });
     }
 
-    // La foto actual sale del scroll, así cubre flechas, miniaturas, teclado y deslizar con el dedo
+    // La foto actual se calcula desde el scroll, así funciona igual con flechas, miniaturas, teclado y dedo.
     function alDesplazar() {
         const el = pista.current;
         if (el) setActual(Math.round(el.scrollLeft / el.clientWidth));
@@ -37,7 +40,7 @@ export default function GaleriaModelo({ idModelo, titulo, modelo3dUrl, imagenes 
 
     const pestana = (valor: '3d' | 'fotos', texto: string) => (
         <button type="button" onClick={() => setVista(valor)} aria-pressed={vista === valor}
-            className={`text-sm font-medium px-4 py-2 rounded-lg border ${vista === valor ? 'bg-marca text-white border-marca' : 'hover:bg-gray-50'}`}>
+            className={`text-sm font-medium px-4 py-3 rounded-lg border ${vista === valor ? 'bg-marca text-white border-marca' : 'hover:bg-gray-50'}`}>
             {texto}
         </button>
     );
@@ -47,13 +50,13 @@ export default function GaleriaModelo({ idModelo, titulo, modelo3dUrl, imagenes 
         <div className="flex flex-col gap-3">
             {modelo3dUrl && total > 0 && (
                 <div className="flex gap-2">
-                    {pestana('3d', 'Recorrido 3D')}
                     {pestana('fotos', `Fotos (${total})`)}
+                    {pestana('3d', 'Recorrido 3D')}
                 </div>
             )}
 
             {vista === '3d' && modelo3dUrl ? (
-                <Visor3D idModelo={idModelo} modeloUrl={modelo3dUrl} titulo={titulo} />
+                <Visor3D idModelo={idModelo} modeloUrl={modelo3dUrl} titulo={titulo} altura={ALTO} />
             ) : (
                 <>
                     <div className="relative">
@@ -65,7 +68,7 @@ export default function GaleriaModelo({ idModelo, titulo, modelo3dUrl, imagenes 
                             }}
                             className="flex overflow-x-auto snap-x snap-mandatory rounded-xl bg-gray-100 [scrollbar-width:none]">
                             {imagenes.map((url, i) => (
-                                <div key={url} className="relative w-full h-[500px] shrink-0 snap-center">
+                                <div key={url} className="relative w-full shrink-0 snap-center" style={{ height: ALTO }}>
                                     <Image src={url} alt={`${titulo}, foto ${i + 1} de ${total}`} fill priority={i === 0}
                                         sizes="(min-width: 1024px) 66vw, 100vw" className="object-cover" />
                                 </div>

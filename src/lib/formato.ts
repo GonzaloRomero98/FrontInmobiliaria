@@ -23,14 +23,13 @@ export function formatearDistancia(metros: number): string {
     return metros < 1000 ? `${Math.round(metros / 10) * 10} m` : `${formatearNumero(metros / 1000, 1)} km`;
 }
 
-// Equivalencia del precio en la otra moneda, si se conoce el valor de la UF
 export function equivalencia(precio: number, moneda: Moneda, valorUF: number | null): string | null {
     if (!valorUF) return null;
     return moneda === 'UF' ? formatearCLP(precio * valorUF) : formatearUF(precio / valorUF);
 }
 
-// Precio "desde" de un proyecto, en UF: el menor de sus modelos en venta que no estén vendidos.
-// Los modelos en CLP se convierten con la UF del día; sin ese valor se omiten.
+// Precio desde en UF: el menor de los modelos en venta que no están vendidos.
+// Los precios en pesos se convierten con la UF del día; sin ese valor se omiten.
 export function precioDesdeUF(modelos: Pick<ModeloCasa, 'tipoOperacion' | 'estado' | 'precio' | 'moneda'>[], valorUF: number | null): number | null {
     const precios = modelos
         .filter((m) => m.tipoOperacion === 'VENTA' && m.estado !== 'VENDIDO')
@@ -39,7 +38,6 @@ export function precioDesdeUF(modelos: Pick<ModeloCasa, 'tipoOperacion' | 'estad
     return precios.length ? Math.min(...precios) : null;
 }
 
-// Fecha y hora de Chile en formato 24 h, p. ej. "10-11-2026, 15:30"
 export function formatearFechaHora(iso: string): string {
     return new Date(iso).toLocaleString('es-CL', { timeZone: 'America/Santiago', dateStyle: 'medium', timeStyle: 'short', hourCycle: 'h23' });
 }
@@ -48,7 +46,7 @@ export function plural(cantidad: number, singular: string, plural: string): stri
     return `${cantidad} ${cantidad === 1 ? singular : plural}`;
 }
 
-// Misma regla que el backend (CrearSolicitudDto): móvil chileno, guardado como +569XXXXXXXX
+// Misma regla que el backend: celular chileno guardado como +569XXXXXXXX.
 export const CELULAR_VALIDO = /^\+569\d{8}$/;
 export function normalizarCelular(valor: string): string {
     const digitos = valor.replace(/\D/g, '');
@@ -57,13 +55,13 @@ export function normalizarCelular(valor: string): string {
     return valor.trim();
 }
 
-// Misma regla que el backend (modules/reserva/rut.ts): "12.345.678-k" -> "12345678-K"
+// Misma regla que el backend (modules/reserva/rut.ts).
 export function normalizarRut(valor: string): string {
     const limpio = valor.replace(/[.\s-]/g, '').toUpperCase();
     return limpio.length < 2 ? limpio : `${limpio.slice(0, -1)}-${limpio.slice(-1)}`;
 }
 
-// Recibe un RUT normalizado; valida el dígito verificador (módulo 11)
+// Valida el dígito verificador con módulo 11.
 export function rutValido(rut: string): boolean {
     const partes = /^(\d{7,8})-([\dK])$/.exec(rut);
     if (!partes) return false;
@@ -83,20 +81,17 @@ export function unidadesDisponibles(m: Unidades): number {
     return m.unidades - m.unidadesReservadas - m.unidadesVendidas;
 }
 
-// "Queda 1 casa", "Quedan 12 departamentos"
 export function textoQuedan(m: Unidades & Pick<ModeloCasa, 'tipoVivienda'>): string {
     const n = unidadesDisponibles(m);
     const texto = m.tipoVivienda === 'DEPARTAMENTO' ? plural(n, 'departamento', 'departamentos') : plural(n, 'casa', 'casas');
     return `${n === 1 ? 'Queda' : 'Quedan'} ${texto}`;
 }
 
-// Número para wa.me: solo dígitos y con código de Chile si el celular viene sin él (9XXXXXXXX)
 export function numeroWhatsApp(celular: string): string {
     const digitos = celular.replace(/\D/g, '');
     return /^9\d{8}$/.test(digitos) ? `56${digitos}` : digitos;
 }
 
-// Enlace wa.me con un saludo que nombra el modelo consultado y, si la pidió, la visita a la sala de ventas
 export function enlaceWhatsApp(c: { nombre: string; celular: string; modelo?: string | null; proyecto?: string | null; visitaPreferida?: string | null }): string {
     const modelo = c.modelo ? ` por el modelo ${c.modelo} del proyecto ${c.proyecto}` : '';
     const visita = c.visitaPreferida ? ` Pediste visitar la sala de ventas el ${formatearFechaHora(c.visitaPreferida)}.` : '';

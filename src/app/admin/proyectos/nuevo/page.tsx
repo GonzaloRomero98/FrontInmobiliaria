@@ -23,7 +23,7 @@ const esquemaProyecto = z.object({
     direccion: z.string().max(200).optional(),
     etapa: z.string().optional(),
     fechaEntrega: z.string().optional(),
-    imagenPortada: z.string().optional() // se completa recién tras subir a S3 en el submit
+    imagenPortada: z.string().optional()
 });
 
 type FormValues = z.infer<typeof esquemaProyecto>;
@@ -47,14 +47,14 @@ export default function NuevoProyecto() {
         handleSubmit,
         watch,
         setValue,
-        setError: setFormError, // renombrado para no chocar con el useState "error" de arriba
+        setError: setFormError, // se renombra para no chocar con el estado "error" de más arriba
         formState: { errors, isSubmitting },
     } = useForm<FormValues>({ resolver: zodResolver(esquemaProyecto) });
 
     const idRegionSeleccionada = watch('id_region');
 
     useEffect(() => {
-        gerRegiones().then(setRegiones).catch(() => setError('No se pudo cargar las regiones'));
+        gerRegiones().then(setRegiones).catch(() => setError('No se pudieron cargar las regiones'));
     }, []);
 
     useEffect(() => {
@@ -74,7 +74,7 @@ export default function NuevoProyecto() {
             return;
         }
 
-        // Se pregunta antes de subir la imagen: si el admin se arrepiente, no queda una foto huérfana en S3
+        // Se pregunta antes de subir la imagen, para no dejar archivos sin usar en S3 si el admin cancela.
         if (!(await confirmarSiDuplicado(cercanos))) return;
         const yaConfirmado = cercanos.some((p) => p.distancia < DISTANCIA_DUPLICADO_M);
 
@@ -115,46 +115,49 @@ export default function NuevoProyecto() {
             <h1 className="text-2xl font-bold mb-6">Crear proyecto</h1>
             <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
                 <div>
-                    <input
-                        {...register('nombre')}
-                        placeholder="Nombre del proyecto"
-                        className="w-full border rounded-lg px-3 py-2"
-                    />
+                    <label className="flex flex-col gap-1 text-sm">
+                        Nombre del proyecto
+                        <input {...register('nombre')} className="w-full border rounded-lg px-3 py-2" />
+                    </label>
                     {errors.nombre && <p className="text-red-500 text-sm mt-1">{errors.nombre.message}</p>}
                 </div>
 
-                <div>
-                    <select {...register('id_region')} className="w-full border rounded-lg px-3 py-2">
-                        <option value="">Selecciona una región</option>
-                        {regiones.map((r) => (
-                            <option key={r.id} value={r.id}>{r.nombre}</option>
-                        ))}
-                    </select>
-                    {errors.id_region && <p className="text-red-500 text-sm mt-1">{errors.id_region.message}</p>}
+                <div className="flex flex-col gap-4">
+                    <div>
+                        <label className="flex flex-col gap-1 text-sm">
+                            Región
+                            <select {...register('id_region')} className="w-full border rounded-lg px-3 py-2">
+                                <option value="">Selecciona una región</option>
+                                {regiones.map((r) => (
+                                    <option key={r.id} value={r.id}>{r.nombre}</option>
+                                ))}
+                            </select>
+                        </label>
+                        {errors.id_region && <p className="text-red-500 text-sm mt-1">{errors.id_region.message}</p>}
+                    </div>
+
+                    <div>
+                        <label className="flex flex-col gap-1 text-sm">
+                            Comuna
+                            <select
+                                {...register('id_ciudad')}
+                                className="w-full border rounded-lg px-3 py-2"
+                                disabled={!idRegionSeleccionada}
+                            >
+                                <option value="">{idRegionSeleccionada ? 'Selecciona una comuna' : 'Primero elige la región'}</option>
+                                {ciudades.map((c) => (
+                                    <option key={c.id} value={c.id}>{c.nombre}</option>
+                                ))}
+                            </select>
+                        </label>
+                        {errors.id_ciudad && <p className="text-red-500 text-sm mt-1">{errors.id_ciudad.message}</p>}
+                    </div>
                 </div>
 
-                <div>
-                    <select
-                        {...register('id_ciudad')}
-                        className="w-full border rounded-lg px-3 py-2"
-                        disabled={!idRegionSeleccionada}
-                    >
-                        <option value="">Selecciona una ciudad</option>
-                        {ciudades.map((c) => (
-                            <option key={c.id} value={c.id}>{c.nombre}</option>
-                        ))}
-                    </select>
-                    {errors.id_ciudad && <p className="text-red-500 text-sm mt-1">{errors.id_ciudad.message}</p>}
-                </div>
-
-                <div>
-                    <textarea
-                        {...register('descripcion')}
-                        placeholder="Descripción (opcional)"
-                        className="w-full border rounded-lg px-3 py-2"
-                        rows={3}
-                    />
-                </div>
+                <label className="flex flex-col gap-1 text-sm">
+                    Descripción (opcional)
+                    <textarea {...register('descripcion')} className="w-full border rounded-lg px-3 py-2" rows={3} />
+                </label>
 
                 <div className="grid grid-cols-2 gap-2">
                     <label className="flex flex-col gap-1 text-sm">
@@ -173,11 +176,10 @@ export default function NuevoProyecto() {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                    <input
-                        {...register('direccion')}
-                        placeholder="Dirección (opcional)"
-                        className="w-full border rounded-lg px-3 py-2"
-                    />
+                    <label className="flex flex-col gap-1 text-sm">
+                        Dirección (opcional)
+                        <input {...register('direccion')} placeholder="Ej.: 1 Sur 1234" className="w-full border rounded-lg px-3 py-2" />
+                    </label>
                     <p className="text-sm text-gray-500">
                         Ubicación en el mapa (opcional): haz clic donde está el proyecto.
                         {latitud !== null && longitud !== null && <> Seleccionado: {latitud}, {longitud}</>}
@@ -189,6 +191,7 @@ export default function NuevoProyecto() {
                 </div>
 
                 <div>
+                    <p className="text-sm mb-2">Imagen de portada</p>
                     <SubidaImagen
                         archivoSeleccionado={setArchivoImagen}
                         progreso={progreso}

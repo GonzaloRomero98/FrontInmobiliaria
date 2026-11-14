@@ -14,7 +14,7 @@ export const ETIQUETA_TIPO_VIVIENDA: Record<TipoVivienda, string> = {
 
 export const SUBSIDIOS: Subsidio[] = ['DS1', 'DS19'];
 
-// Foto principal primero y luego la galería en su orden, sin repetir la principal
+// Primero la foto principal y luego la galería en orden, sin repetir la principal.
 export function imagenesModelo(modelo: Pick<ModeloCasa, 'imgPrincipal' | 'fotos'>): string[] {
     return [...new Set([modelo.imgPrincipal, ...(modelo.fotos ?? []).map((f) => f.urlImagen)].filter(Boolean))];
 }
@@ -41,23 +41,19 @@ export interface ModeloCasa{
     mascotas:boolean;
     tipoVivienda:TipoVivienda;
     superficieConstruida:number;
-    // null en departamentos
     superficieTerreno:number | null;
     precio:number;
     moneda:Moneda;
-    // Monto mensual en CLP; null = no aplica
     gastosComunes:number | null;
     modelo3dUrl:string | null;
     planoUrl:string | null;
     subsidios:Subsidio[];
     bono:string | null;
     imgPrincipal: string;
-    // Calculado por la API desde las unidades y las reservas
     estado:EstadoModelo;
     unidades:number;
     unidadesReservadas:number;
     unidadesVendidas:number;
-    // false = borrador (no se ve en el catálogo)
     activo:boolean;
     creadoEn:string;
     proyecto: Proyecto;
@@ -90,7 +86,6 @@ export interface ModeloCasaInput{
 }
 export type OrdenBusqueda = 'precio_asc' | 'precio_desc' | 'superficie_desc' | 'recientes';
 
-// Parámetros de GET /modeloCasa (todos opcionales)
 export interface FiltrosBusqueda{
     tipoOperacion?:Operacion;
     id_region?:string;

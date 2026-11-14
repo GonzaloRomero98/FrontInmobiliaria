@@ -7,18 +7,17 @@ interface Visor3DProps {
     idModelo:string;
     modeloUrl:string;
     titulo:string;
-    // px, o cualquier alto CSS (p. ej. '70vh')
     altura?:number | string;
     rotarAutomatico?:boolean;
     botonArGrande?:boolean;
-    // Si viene, el botón de RA llama a esto en vez de abrir la RA de model-viewer
+    // Si se pasa, el botón de RA llama a esta función en vez de abrir la RA de model-viewer.
     alEntrarAr?:() => void;
 }
 
 export default function Visor3D({idModelo, modeloUrl, titulo, altura = 500, rotarAutomatico = true, botonArGrande = false, alEntrarAr}:Visor3DProps){
     const visor = useRef<HTMLElement>(null);
     const [error, setError] = useState(false);
-    // model-viewer guarda en caché el fallo por URL: el reintento pide la misma URL con otro parámetro (S3 lo ignora)
+    // model-viewer guarda el error en caché por URL, así que el reintento agrega un parámetro que S3 ignora.
     const [intento, setIntento] = useState(0);
     const src = intento ? `${modeloUrl}${modeloUrl.includes('?') ? '&' : '?'}reintento=${intento}` : modeloUrl;
 
@@ -53,7 +52,6 @@ export default function Visor3D({idModelo, modeloUrl, titulo, altura = 500, rota
         loading={typeof altura === 'number' && altura < 500 ? 'lazy' : 'eager'}
         reveal="auto"
         style={{
-            // relativo: el botón AR (position absolute) se ubica dentro del visor y no en la página
             position: 'relative',
             display: 'block',
             width: '100%',
@@ -62,8 +60,6 @@ export default function Visor3D({idModelo, modeloUrl, titulo, altura = 500, rota
             borderRadius: '12px',
         }}
         >
-        {/* model-viewer solo muestra este botón si el dispositivo puede abrir la RA; con alEntrarAr
-            queda fuera del slot y siempre visible (quien lo pasa ya comprobó que hay RA) */}
         <button
             slot={alEntrarAr ? undefined : 'ar-button'}
             onClick={() => { registrarEventoModelo(idModelo, 'AR_INICIADA'); alEntrarAr?.(); }}
@@ -76,7 +72,7 @@ export default function Visor3D({idModelo, modeloUrl, titulo, altura = 500, rota
                 top: '16px', right: '16px', padding: '10px 16px', fontWeight: 600, boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
             }}
         >
-            Ver en tu espacio (AR)
+            Ver en tu espacio (RA)
         </button>
         </model-viewer>
         {error && (

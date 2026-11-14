@@ -8,7 +8,6 @@ interface EntornoProyectoProps {
     latitud: number;
     longitud: number;
     datos: Datos | null;
-    // Contenido junto al mapa en escritorio (p. ej. la sala de ventas); debajo en móvil
     lateral?: ReactNode;
 }
 

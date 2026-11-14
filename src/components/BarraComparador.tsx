@@ -12,8 +12,11 @@ export default function BarraComparador() {
         return null;
     }
 
+    // En la ficha de un modelo, en el celular, sube para no tapar la barra de contacto.
+    const sobreBarraContacto = /^\/modelosCasa\/[^/]+$/.test(ruta);
+
     return (
-        <div className="fixed bottom-4 inset-x-0 z-50 px-4 pointer-events-none">
+        <div className={`fixed inset-x-0 z-50 px-4 pointer-events-none ${sobreBarraContacto ? 'bottom-24 lg:bottom-4' : 'bottom-4'}`}>
             <div className="pointer-events-auto max-w-md mx-auto flex items-center justify-between gap-3 bg-marca text-white rounded-full pl-5 pr-2 py-2 shadow-xl">
                 <span className="text-sm">
                     {ids.length} de {MAXIMO_COMPARAR} modelos para comparar

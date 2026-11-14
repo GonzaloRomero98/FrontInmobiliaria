@@ -19,7 +19,7 @@ function escribir(ids: string[]) {
     try {
         localStorage.setItem(CLAVE, JSON.stringify(ids));
     } catch {
-        // sin almacenamiento disponible (modo privado): la selección solo dura en esta página
+        // En modo privado puede no haber almacenamiento; la selección dura solo mientras la página esté abierta.
     }
     window.dispatchEvent(new Event(EVENTO));
 }
@@ -42,7 +42,7 @@ function parsear(crudo: string): string[] {
     }
 }
 
-// Selección de modelos para comparar, guardada en el navegador y sincronizada entre pestañas
+// Modelos elegidos para comparar. Se guardan en el navegador y se sincronizan entre pestañas.
 export function useComparador() {
     const crudo = useSyncExternalStore(suscribir, leer, () => '[]');
     const ids = useMemo(() => parsear(crudo), [crudo]);

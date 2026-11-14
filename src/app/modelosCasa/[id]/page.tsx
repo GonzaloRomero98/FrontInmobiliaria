@@ -14,12 +14,13 @@ import { URL_SITIO } from "@/lib/sitio";
 import { ETIQUETA_ESTADO, ETIQUETA_TIPO_VIVIENDA, imagenesModelo } from "@/types/modeloCasa";
 import EtapaEntrega from "@/components/EtapaEntrega";
 import SalaVentas from "@/components/SalaVentas";
+import BarraContactoMovil from "@/components/BarraContactoMovil";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
 export const revalidate = 60;
-// Igual que en /proyectos/[id]: cachea la página 60 s (ISR) en vez de llamar a la API en cada visita
+// Con la lista vacía cada ficha se genera en la primera visita y queda en caché 60 segundos (ISR).
 export async function generateStaticParams() { return []; }
 
 const obtenerModelo = cache(async (id: string) => {
@@ -69,7 +70,8 @@ export default async function DetallePropiedadID({params}:{params:Promise<{id:st
     ];
 
    return (
-        <main className="max-w-6xl mx-auto px-4 py-8 sm:py-10 flex flex-col gap-6">
+        // pb-28 deja espacio en el celular para la barra fija de contacto.
+        <main className="max-w-6xl mx-auto px-4 pt-8 pb-28 sm:pt-10 lg:pb-10 flex flex-col gap-6">
             <header>
                 <Link href={`/proyectos/${modelo.proyecto.id}`} className="inline-flex items-center gap-1 text-sm font-medium text-acento hover:underline">
                     <ChevronLeft size={16} aria-hidden="true" />{modelo.proyecto.nombre}
@@ -86,7 +88,7 @@ export default async function DetallePropiedadID({params}:{params:Promise<{id:st
                 <EtapaEntrega etapa={modelo.proyecto.etapa} fechaEntrega={modelo.proyecto.fechaEntrega} />
             </header>
 
-            {/* Orden del DOM = orden en móvil: galería, precio, detalles, contacto. En escritorio, precio y contacto van a la derecha */}
+            {/* El orden del HTML es el orden en el celular. En escritorio el precio y el contacto pasan a la derecha. */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-x-8 gap-y-10 items-start">
                 <div className="lg:col-span-2">
                     <GaleriaModelo idModelo={modelo.id} titulo={modelo.nombreModelo} modelo3dUrl={modelo.modelo3dUrl} imagenes={imagenesModelo(modelo)} />
@@ -103,7 +105,7 @@ export default async function DetallePropiedadID({params}:{params:Promise<{id:st
                             <p className="text-sm text-gray-600">Gastos comunes {formatearCLP(modelo.gastosComunes)} al mes</p>
                         )}
                     </div>
-                    {/* unidades falta si la API aún no tiene la migración de reservas */}
+                    {/* unidades no viene si la API todavía no tiene la migración de reservas. */}
                     {modelo.estado === 'DISPONIBLE' && modelo.unidades != null && (
                         <p className="text-sm font-medium text-gray-900">{textoQuedan(modelo)}</p>
                     )}
@@ -122,7 +124,7 @@ export default async function DetallePropiedadID({params}:{params:Promise<{id:st
                         <BotonWhatsApp mensaje={`Hola, me interesa el modelo ${modelo.nombreModelo} del proyecto ${modelo.proyecto.nombre} (${urlActual}).`} />
                         <BotonComparar idModelo={modelo.id} variante="completo" />
                     </div>
-                    {/* En el celular el QR no sirve: el visor ya trae su botón de RA */}
+                    {/* El QR solo sirve en PC. En el celular el visor ya tiene su botón de RA. */}
                     {modelo.modelo3dUrl && (
                         <div className="hidden lg:block border-t pt-4">
                             <QrAr urlPropiedad={`${urlActual}/ar?src=qr`} />
@@ -177,11 +179,14 @@ export default async function DetallePropiedadID({params}:{params:Promise<{id:st
 
                 <div className="flex flex-col gap-4 lg:col-start-3 lg:row-start-2 lg:sticky lg:top-6">
                     <section id="contacto" className="border rounded-2xl p-5 scroll-mt-6" aria-label="Formulario de contacto">
-                        <FormularioContacto idModeloCasa={modelo.id} conVisita={!!modelo.proyecto.salaDireccion} />
+                        <FormularioContacto idModeloCasa={modelo.id} conVisita={!!modelo.proyecto.salaDireccion}
+                            sala={modelo.proyecto.salaDireccion ? { direccion: modelo.proyecto.salaDireccion, horario: modelo.proyecto.salaHorario } : null} />
                     </section>
                     <SalaVentas proyecto={modelo.proyecto} />
                 </div>
             </div>
+            <BarraContactoMovil precio={formatearPrecio(precio, modelo.moneda)}
+                detalle={`${modelo.nombreModelo} · ${modelo.tipoOperacion === 'VENTA' ? 'Venta' : 'Arriendo mensual'}`} />
         </main>
     );
 }

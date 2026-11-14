@@ -14,11 +14,11 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 
 export const revalidate = 60;
-// Sin esto Next 16 arma la página en cada visita (4 llamadas a la API desde la IP del servidor, que comparten el
-// límite de 100/min por IP): con lista vacía cada proyecto se genera al primer pedido y se cachea 60 s (ISR)
+// Sin esto Next 16 genera la página en cada visita, con 4 llamadas a la API desde la IP del servidor.
+// Con la lista vacía cada proyecto se genera en la primera visita y queda en caché 60 segundos (ISR).
 export async function generateStaticParams() { return []; }
 
-// generateMetadata y la página piden el mismo proyecto: cache() evita la doble llamada a la API
+// generateMetadata y la página piden el mismo proyecto. cache() evita llamar dos veces a la API.
 const obtenerProyecto = cache(async (id: string) => {
     try {
         return await getProyectoPorId(id);
@@ -50,7 +50,7 @@ export default async function ProyectoDetalle({ params }: { params: Promise<{ id
     if (!proyecto) notFound();
 
     const tieneUbicacion = proyecto.latitud !== null && proyecto.longitud !== null;
-    // Normativa y entorno son opcionales: si fallan, la ficha se muestra sin esas secciones
+    // La normativa y el entorno son opcionales. Si fallan, la ficha se muestra sin esas secciones.
     const [modelos, normativa, entorno, uf] = await Promise.all([
         getModeloCasa(id),
         getNormativa(id).catch(() => null),
@@ -104,7 +104,7 @@ export default async function ProyectoDetalle({ params }: { params: Promise<{ id
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {modelos.map((modelo) => (
-                            <ModeloCasaCard key={modelo.id} modelo={modelo} />
+                            <ModeloCasaCard key={modelo.id} modelo={modelo} valorUF={uf?.valor ?? null} />
                         ))}
                     </div>
                 )}

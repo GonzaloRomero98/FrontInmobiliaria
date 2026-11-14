@@ -7,9 +7,8 @@ import { Accion, Esqueleto, hace, Informativa, numero, ProximasVisitas, Tarjeta,
 import { getMetricas, Metricas } from "@/services/metricas.service";
 import { getAuditoria, RegistroAuditoria, VerificacionAuditoria, verificarAuditoria } from "@/services/auditoria.service";
 
-// Paleta del inventario validada para daltonismo y contraste (validate_palette.js, modo claro: todos los checks PASS)
+// Colores revisados para contraste y daltonismo.
 const COLOR_INVENTARIO = { disponibles: '#008c9e', reservados: '#c4842a', vendidos: '#5b67c0' } as const;
-// Semanas anteriores en gris azulado (3:1 sobre blanco); la actual en el color de marca
 const COLOR_SEMANA = '#7d93ab';
 
 const porcentaje = (parte: number, total: number) => total ? Math.round((parte / total) * 100) : 0;
@@ -35,7 +34,6 @@ function Inventario({ m }: { m: Metricas['modelos'] }) {
     if (m.unidades === 0) return <p className="text-sm text-slate-600">Todavía no hay unidades en modelos publicados.</p>;
     return (
         <>
-            {/* 2px de separación entre segmentos y extremos redondeados; la leyenda con cifras evita depender del color */}
             <div className="flex gap-0.5 h-5 mb-4" role="img"
                 aria-label={partes.map((p) => `${p.valor} ${p.etiqueta.toLowerCase()}`).join(', ') + ` de ${m.unidades}`}>
                 {partes.filter((p) => p.valor > 0).map((p) => (
@@ -69,7 +67,6 @@ function SolicitudesPorSemana({ semanas }: { semanas: Metricas['solicitudes']['p
                 {semanas.map((s, i) => {
                     const actual = i === semanas.length - 1;
                     return (
-                        // Zona de hover de toda la columna (más grande que la barra); title muestra el valor
                         <div key={s.semana} className="flex-1 h-full flex flex-col justify-end items-center group" title={`Semana del ${etiqueta(s.semana)}: ${s.solicitudes}`}>
                             <span className={`text-xs font-semibold text-marca tabular-nums mb-1 ${actual ? '' : 'opacity-0 group-hover:opacity-100'}`}>{s.solicitudes}</span>
                             <span className="w-full rounded-t" style={{ height: `${(s.solicitudes / maximo) * 100}%`, minHeight: s.solicitudes ? 4 : 0, background: actual ? 'var(--color-marca)' : COLOR_SEMANA }} />
@@ -84,7 +81,6 @@ function SolicitudesPorSemana({ semanas }: { semanas: Metricas['solicitudes']['p
                     </span>
                 ))}
             </div>
-            {/* Versión en texto del gráfico para lectores de pantalla */}
             <figcaption className="sr-only">
                 Solicitudes por semana: {semanas.map((s) => `semana del ${etiqueta(s.semana)}, ${s.solicitudes}`).join('; ')}.
             </figcaption>
@@ -144,7 +140,8 @@ export default function AdminDashboard() {
     useEffect(() => {
         getMetricas().then(setMetricas).catch(() => setError(true));
         getAuditoria(1, {}, 5).then((r) => setActividad(r.registros)).catch(() => setActividad([]));
-        // shortcut: recorre la cadena completa en cada visita al inicio; si la auditoría crece a cientos de miles de filas, cachear el resultado o verificar en el cron diario
+        // Mejora pendiente: se revisa toda la cadena de auditoría en cada visita al inicio.
+        // Con muchos registros convendría guardar el resultado o hacerlo en el cron diario.
         verificarAuditoria().then(setVerificacion).catch(() => {});
     }, []);
 

@@ -11,7 +11,6 @@ import { NOMBRE_SITIO } from "@/lib/sitio";
 import { EVENTO_PERFIL_ACTUALIZADO, getMiPerfil, Usuario } from "@/services/usuario.service";
 import { EVENTO_SOLICITUDES_ACTUALIZADAS, getResumenSolicitudes } from "@/services/solicitud.service";
 
-// Lo que el panel ya cargó y las páginas pueden reutilizar (p. ej. el saludo del inicio)
 const PanelContext = createContext<{ perfil: Usuario | null }>({ perfil: null });
 export const usePanel = () => useContext(PanelContext);
 
@@ -83,8 +82,7 @@ function Navegacion({ esAdmin, pendientes, perfil, ruta }: { esAdmin: boolean; p
     );
 }
 
-// Marco de las páginas del panel (admin y secretario): barra lateral fija en escritorio y menú desplegable en móvil.
-// `rol` viene del servidor (cookie) para no mostrar primero el menú equivocado.
+// El rol viene del servidor para que no aparezca primero el menú equivocado.
 export default function PanelLayout({ rol, children }: { rol: string | undefined; children: ReactNode }) {
     const ruta = usePathname();
     const esAdmin = rol === 'ADMIN';
@@ -93,6 +91,7 @@ export default function PanelLayout({ rol, children }: { rol: string | undefined
     const [menuAbierto, setMenuAbierto] = useState(false);
     const botonMenu = useRef<HTMLButtonElement>(null);
     const botonCerrar = useRef<HTMLButtonElement>(null);
+    const panelMenu = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const cargar = () => { getMiPerfil().then(setPerfil).catch(() => setPerfil(null)); };
@@ -101,7 +100,6 @@ export default function PanelLayout({ rol, children }: { rol: string | undefined
         return () => window.removeEventListener(EVENTO_PERFIL_ACTUALIZADO, cargar);
     }, []);
 
-    // Contador de solicitudes sin contactar: al entrar, al navegar y cuando la bandeja marca una como contactada
     useEffect(() => {
         const cargar = () => { getResumenSolicitudes().then((r) => setPendientes(r.pendientes)).catch(() => {}); };
         cargar();
@@ -109,7 +107,7 @@ export default function PanelLayout({ rol, children }: { rol: string | undefined
         return () => window.removeEventListener(EVENTO_SOLICITUDES_ACTUALIZADAS, cargar);
     }, [ruta]);
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- al navegar se cierra el menú móvil
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- el menú móvil se cierra al cambiar de página
     useEffect(() => { setMenuAbierto(false); }, [ruta]);
 
     useEffect(() => {
@@ -119,6 +117,14 @@ export default function PanelLayout({ rol, children }: { rol: string | undefined
             if (e.key === 'Escape') {
                 setMenuAbierto(false);
                 botonMenu.current?.focus();
+            }
+            // El menú es un diálogo modal, así que Tab da la vuelta dentro de él.
+            if (e.key === 'Tab' && panelMenu.current) {
+                const enfocables = panelMenu.current.querySelectorAll<HTMLElement>('a[href], button:not([disabled])');
+                const primero = enfocables[0], ultimo = enfocables[enfocables.length - 1];
+                const dentro = panelMenu.current.contains(document.activeElement);
+                if (e.shiftKey && (document.activeElement === primero || !dentro)) { e.preventDefault(); ultimo?.focus(); }
+                else if (!e.shiftKey && (document.activeElement === ultimo || !dentro)) { e.preventDefault(); primero?.focus(); }
             }
         };
         document.addEventListener('keydown', alTecla);
@@ -148,7 +154,7 @@ export default function PanelLayout({ rol, children }: { rol: string | undefined
                 {menuAbierto && (
                     <div className="lg:hidden print:hidden fixed inset-0 z-50">
                         <div className="absolute inset-0 bg-black/40" onClick={() => setMenuAbierto(false)} aria-hidden />
-                        <div id="menu-panel" role="dialog" aria-modal="true" aria-label="Menú del panel"
+                        <div ref={panelMenu} id="menu-panel" role="dialog" aria-modal="true" aria-label="Menú del panel"
                             className="absolute inset-y-0 left-0 w-72 max-w-[85vw] flex flex-col overflow-y-auto bg-marca text-slate-300 px-4 py-5">
                             <button ref={botonCerrar} type="button" onClick={() => { setMenuAbierto(false); botonMenu.current?.focus(); }}
                                 className="self-end -mt-1 mb-2 text-white rounded-lg p-1.5 hover:bg-white/10">

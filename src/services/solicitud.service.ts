@@ -28,30 +28,26 @@ export type FiltroSolicitud = 'pendientes' | 'contactados' | 'visita' | 'todas';
 
 export interface PaginaSolicitudes {
     solicitudes: Solicitud[];
-    // Total que calza con el filtro (para las páginas)
     total: number;
-    // Total sin contactar, sin importar el filtro (contador de la pestaña)
     pendientes: number;
     pagina: number;
     limite: number;
 }
 
-// buscar: nombre, apellido, correo o celular (vacío = sin búsqueda)
 export async function getSolicitudes(pagina:number, limite:number, filtro:FiltroSolicitud, buscar = ''):Promise<PaginaSolicitudes> {
     const {data} = await api.get('/solicitudes', {params:{pagina, limite, filtro, ...(buscar && {buscar})}});
     return data;
 }
 
-// Se emite al marcar una solicitud como contactada: el menú del panel actualiza su contador
+// Avisa al menú del panel que actualice el contador de pendientes.
 export const EVENTO_SOLICITUDES_ACTUALIZADAS = 'solicitudes-actualizadas';
 
-// Solo el número de pendientes (no se audita: no trae datos personales)
+// Solo trae el número de pendientes, por eso no se audita.
 export async function getResumenSolicitudes(): Promise<{pendientes:number}> {
     const {data} = await api.get('/solicitudes/resumen');
     return data;
 }
 
-// Ficha del cliente: incluye sus notas y cotizaciones (más recientes primero)
 export type FichaSolicitud = Solicitud & { notas: NotaSolicitud[]; cotizaciones: CotizacionEmitida[] };
 
 export async function getSolicitud(id: string): Promise<FichaSolicitud> {
@@ -59,7 +55,6 @@ export async function getSolicitud(id: string): Promise<FichaSolicitud> {
     return data;
 }
 
-// El backend arma el CSV (y audita la descarga); aquí solo se guarda el archivo
 export async function descargarSolicitudesCsv(): Promise<void> {
     const {data} = await api.get('/solicitudes/exportar', {responseType: 'blob'});
     const url = URL.createObjectURL(data);
@@ -79,7 +74,6 @@ export async function agregarNota(id: string, texto: string): Promise<void> {
     await api.post(`/solicitudes/${id}/notas`, {texto});
 }
 
-// fecha (ISO) = agendar o reagendar; estado = confirmar o marcar asistencia
 export async function actualizarVisita(id: string, cambios: {fecha?: string; estado?: EstadoVisita}): Promise<void> {
     await api.patch(`/solicitudes/${id}/visita`, cambios);
 }
@@ -89,6 +83,19 @@ export type CondicionesCotizacion = Pick<CotizacionEmitida['datos'], 'pie' | 'ta
 export async function emitirCotizacion(id: string, condiciones: CondicionesCotizacion): Promise<CotizacionEmitida> {
     const {data} = await api.post(`/solicitudes/${id}/cotizaciones`, condiciones);
     return data;
+}
+
+export type DatosContacto = Pick<Solicitud, 'nombre' | 'apellido' | 'correo' | 'celular'>;
+
+// Derecho de rectificación: la API deja una nota con los campos corregidos.
+export async function corregirDatosSolicitud(id: string, datos: Partial<DatosContacto>): Promise<void> {
+    await api.patch(`/solicitudes/${id}`, datos);
+}
+
+// Derecho de supresión: borra todas las solicitudes de ese correo. Solo ADMIN.
+export async function eliminarDatosPersona(correo: string): Promise<number> {
+    const {data} = await api.delete('/solicitudes', {params: {correo}});
+    return data.eliminadas;
 }
 
 export async function marcarContactado(id:string) :Promise<Solicitud>{

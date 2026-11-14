@@ -15,7 +15,7 @@ interface FilaProyecto {
 function leerFilas(): Promise<FilaProyecto[]> {
     return getProyectosAdmin().then((proyectos) => Promise.all(proyectos.map(async (proyecto) => ({
         proyecto,
-        // La API no entrega la normativa de un despublicado; para ellos no se consulta
+        // La API no entrega la normativa de un proyecto despublicado, así que no se consulta.
         tieneNormativa: proyecto.activo && (await getNormativa(proyecto.id).catch(() => null)) !== null,
     }))));
 }
@@ -32,15 +32,16 @@ export default function ListadoProyectos() {
     const [filas, setFilas] = useState<FilaProyecto[]>([]);
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [busqueda, setBusqueda] = useState('');
 
     useEffect(() => {
         leerFilas()
             .then(setFilas)
-            .catch(() => setError('No se pudo cargar los proyectos'))
+            .catch(() => setError('No se pudieron cargar los proyectos'))
             .finally(() => setCargando(false));
     }, []);
 
-    // Despublicar es reversible: se hace sin preguntar y se ofrece deshacer
+    // Despublicar se puede revertir, por eso no se pide confirmación y se ofrece Deshacer.
     async function despublicar(proyecto: Proyecto) {
         try {
             await despublicarProyecto(proyecto.id);
@@ -91,18 +92,28 @@ export default function ListadoProyectos() {
         return <main className="max-w-3xl mx-auto px-4 py-10">Cargando...</main>;
     }
 
+    const termino = busqueda.trim().toLocaleLowerCase('es');
+    const visibles = termino ? filas.filter(({ proyecto }) => proyecto.nombre.toLocaleLowerCase('es').includes(termino)) : filas;
+
     return (
         <main className="max-w-3xl mx-auto px-4 py-10">
             <div className="flex items-center justify-between mb-6">
                 <h1 className="text-2xl font-bold">Proyectos</h1>
-                <Link href="/admin/proyectos/nuevo" className="text-sm text-acento underline">Crear proyecto</Link>
+                <Link href="/admin/proyectos/nuevo" className="bg-marca text-white text-sm rounded-lg px-4 py-2 font-medium hover:bg-marca/90">Crear proyecto</Link>
             </div>
-            {error && <p className="text-red-500">{error}</p>}
+            {error && <p className="text-red-700">{error}</p>}
+            {filas.length > 0 && (
+                <input type="search" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} maxLength={100}
+                    placeholder="Buscar por nombre" aria-label="Buscar proyectos por nombre"
+                    className="w-full border rounded-lg px-3 py-2 mb-4" />
+            )}
             {filas.length === 0 && !error ? (
                 <p className="text-gray-500">No hay proyectos todavía.</p>
+            ) : visibles.length === 0 && termino ? (
+                <p className="text-gray-500">Ningún proyecto coincide con «{busqueda.trim()}».</p>
             ) : (
                 <div className="flex flex-col divide-y border rounded-xl">
-                    {filas.map(({ proyecto, tieneNormativa }) => (
+                    {visibles.map(({ proyecto, tieneNormativa }) => (
                         <div key={proyecto.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
                             <div className="flex flex-col gap-1">
                                 <p className={`font-medium ${proyecto.activo ? '' : 'text-gray-500'}`}>{proyecto.nombre}</p>
@@ -129,7 +140,7 @@ export default function ListadoProyectos() {
                                         </button>
                                     </>
                                 ) : (
-                                    // Para editarlo hay que publicarlo primero: la API no expone los despublicados
+                                    // Para editar un proyecto despublicado primero hay que publicarlo, porque la API no lo entrega.
                                     <button type="button" onClick={() => publicar(proyecto)} className="text-sm border border-green-200 text-green-700 rounded-lg px-3 py-1.5 hover:bg-green-50">
                                         Volver a publicar
                                     </button>

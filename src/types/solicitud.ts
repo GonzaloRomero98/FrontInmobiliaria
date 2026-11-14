@@ -7,11 +7,13 @@ export interface CrearSolicitudInput{
     celular:string;
     mensaje?:string;
     id_modelo_casa:string;
-    // ISO 8601 (UTC)
     visitaPreferida?:string;
     aceptaPrivacidad:boolean;
 }
 export type OrigenSolicitud = 'WEB' | 'SALA_VENTAS' | 'TELEFONO' | 'WHATSAPP';
+// Última vista de la bandeja, para volver a ella desde la ficha.
+export const CLAVE_ULTIMA_BANDEJA = 'inmocap:ultima-bandeja';
+
 export const ETIQUETA_ORIGEN: Record<OrigenSolicitud, string> = {
     WEB: 'Web', SALA_VENTAS: 'Sala de ventas', TELEFONO: 'Teléfono', WHATSAPP: 'WhatsApp',
 };
@@ -21,7 +23,6 @@ export const ETIQUETA_VISITA: Record<EstadoVisita, string> = {
     POR_CONFIRMAR: 'Por confirmar', CONFIRMADA: 'Confirmada', ASISTIO: 'Asistió', NO_ASISTIO: 'No asistió',
 };
 
-// Cliente registrado por la secretaria: en vez de aceptar la política, declara que se la informó
 export type CrearSolicitudPanelInput = Omit<CrearSolicitudInput, 'aceptaPrivacidad'> & {
     origen: Exclude<OrigenSolicitud, 'WEB'>;
     clienteInformado: boolean;
@@ -34,7 +35,7 @@ export interface NotaSolicitud {
     usuario: { id: string; nombre: string } | null;
 }
 
-// Valores congelados al emitir (los pone el servidor salvo las condiciones)
+// Valores guardados al emitir la cotización.
 export interface DatosCotizacion {
     nombreModelo: string;
     precio: number;

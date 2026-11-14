@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { MAXIMO_COMPARAR, useComparador } from "@/lib/comparador";
 
-// /comparar sin ids en la URL: si hay una selección guardada, se abre; si no, se explica cómo usarlo
 export default function ComparadorSinSeleccion() {
     const { ids } = useComparador();
     const router = useRouter();

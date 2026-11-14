@@ -11,9 +11,8 @@ import { EVENTO_PERFIL_ACTUALIZADO, getMiPerfil, Usuario } from "@/services/usua
 
 const ESTILO_OPCION = "block w-full text-left px-4 py-2 text-sm hover:bg-gray-50";
 
-// Sin sesión muestra "Ingresar"; con sesión, la foto y el nombre con un menú (panel, perfil, cerrar sesión).
-// La cookie se lee en el navegador y no en el servidor, para no quitarle la caché (ISR) a las páginas públicas.
-// Se mira `rol_usuario` porque la del token es HttpOnly y JavaScript no puede verla.
+// La cookie se lee en el navegador para no quitarle la caché (ISR) a las páginas públicas.
+// Se usa rol_usuario porque la cookie del token es HttpOnly y JavaScript no la puede leer.
 export default function MenuUsuario(){
     const pathname = usePathname();
     const [rolCookie, setRolCookie] = useState<string | null>(null);
@@ -22,16 +21,15 @@ export default function MenuUsuario(){
     const contenedor = useRef<HTMLDivElement>(null);
     const boton = useRef<HTMLButtonElement>(null);
 
-    // Se revisa en cada navegación: así el menú aparece tras el login y desaparece al cerrar sesión
     useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- la cookie solo existe en el navegador
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- la cookie solo se puede leer en el navegador
         setRolCookie(Cookies.get('rol_usuario') ?? null);
         setAbierto(false);
     }, [pathname]);
 
     useEffect(() => {
         if(!rolCookie){
-            // eslint-disable-next-line react-hooks/set-state-in-effect -- limpia el perfil al cerrar sesión
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- se limpia el perfil al cerrar sesión
             setPerfil(null);
             return;
         }
@@ -41,7 +39,6 @@ export default function MenuUsuario(){
         return () => window.removeEventListener(EVENTO_PERFIL_ACTUALIZADO, cargar);
     }, [rolCookie]);
 
-    // Cierra con clic afuera o con Escape (devolviendo el foco al botón)
     useEffect(() => {
         if(!abierto) return;
         const alClic = (e:MouseEvent) => {
@@ -62,7 +59,7 @@ export default function MenuUsuario(){
     }, [abierto]);
 
     if(!rolCookie){
-        return <Link href="/login" className="text-gray-500 hover:underline">Ingresar</Link>;
+        return <Link href="/login" className="inline-flex items-center min-h-11 text-gray-600 hover:underline">Ingresar</Link>;
     }
 
     const nombre = perfil?.nombre ?? 'Mi cuenta';

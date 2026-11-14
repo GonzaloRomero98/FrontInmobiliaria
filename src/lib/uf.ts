@@ -3,7 +3,7 @@ export interface ValorUF {
     fecha: string;
 }
 
-// Último valor obtenido en este servidor: si mindicador.cl falla se usa este (la UF cambia una vez al día)
+// Si mindicador.cl falla se usa el último valor obtenido, ya que la UF cambia una vez al día.
 let ultimoConocido: ValorUF | null = null;
 
 async function consultar(): Promise<ValorUF | null> {
@@ -17,8 +17,7 @@ async function consultar(): Promise<ValorUF | null> {
     return ultimo && ultimo.valor > 0 ? { valor: ultimo.valor, fecha: ultimo.fecha } : null;
 }
 
-// Valor de la UF desde mindicador.cl (datos del Banco Central), cacheado 1 hora y con un reintento.
-// Devuelve null solo si nunca se ha podido obtener: la página se muestra igual, sin la equivalencia.
+// UF desde mindicador.cl, con caché de 1 hora y un reintento. Devuelve null solo si nunca se pudo obtener.
 export async function obtenerValorUF(): Promise<ValorUF | null> {
     for (let intento = 0; intento < 2; intento++) {
         try {
@@ -28,7 +27,7 @@ export async function obtenerValorUF(): Promise<ValorUF | null> {
                 return valor;
             }
         } catch {
-            // timeout o red: se reintenta una vez y luego se usa el último valor conocido
+            // Si se agota el tiempo o falla la red se reintenta una vez y luego se usa el último valor conocido.
         }
     }
     return ultimoConocido;

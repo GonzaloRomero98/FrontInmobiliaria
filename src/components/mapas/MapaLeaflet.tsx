@@ -15,11 +15,9 @@ export interface PuntoProyecto {
     comuna: string;
     latitud: number;
     longitud: number;
-    // Qué vende el proyecto (null = sin modelos publicados), p. ej. "2 modelos de casa" y "Desde 2.000 UF"
     tipo?: Exclude<TipoPunto, 'SALA'> | null;
     resumen?: string;
     desde?: string | null;
-    // Color propio del proyecto (lo comparte con su sala de ventas)
     color: ColorPunto;
 }
 
@@ -39,7 +37,7 @@ const CENTRO_CHILE: [number, number] = [-33.45, -70.66];
 const ATRIBUCION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 const TESELAS = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 
-// Pin dibujado con CSS (evita las imágenes de marcador de Leaflet, que se rompen con bundlers)
+// El pin se dibuja con CSS porque las imágenes de marcador de Leaflet se rompen al empaquetar la app.
 const pin = L.divIcon({
     className: '',
     html: '<div style="width:22px;height:22px;background:#111827;border:3px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>',
@@ -101,10 +99,9 @@ export function MapaProyectosLeaflet({ proyectos, salas = [], altura = 420 }: { 
     );
 }
 
-// Radio del entorno en el color de acento de la marca: borde punteado (se lee como zona, no como calle) y relleno suave
 const COLOR_RADIO = '#1e727d';
 
-// Encuadra el mapa para que el círculo completo quepa en cualquier pantalla (un zoom fijo lo cortaba)
+// Ajusta el zoom para que el círculo completo quepa en cualquier pantalla.
 function EncuadrarRadio({ latitud, longitud, radio }: { latitud: number; longitud: number; radio: number }) {
     const mapa = useMap();
     useEffect(() => {
@@ -113,7 +110,6 @@ function EncuadrarRadio({ latitud, longitud, radio }: { latitud: number; longitu
     return null;
 }
 
-// Etiqueta con la distancia, centrada sobre el borde norte del círculo
 function etiquetaRadio(radio: number): L.DivIcon {
     return L.divIcon({
         className: '',
@@ -126,7 +122,6 @@ export function MapaEntornoLeaflet({ latitud, longitud, nombre, lugares, radio }
     latitud: number; longitud: number; nombre: string; lugares: LugarCercano[]; radio: number;
 }) {
     const etiqueta = useMemo(() => etiquetaRadio(radio), [radio]);
-    // zoomSnap 0.25: el encuadre puede quedar entre niveles enteros y el círculo ocupa casi todo el alto
     return (
         <MapContainer center={[latitud, longitud]} zoom={15} zoomSnap={0.25} scrollWheelZoom={false} style={estiloMapa(420)}>
             <TileLayer attribution={ATRIBUCION} url={TESELAS} />
@@ -134,7 +129,7 @@ export function MapaEntornoLeaflet({ latitud, longitud, nombre, lugares, radio }
             <ScaleControl imperial={false} position="bottomleft" />
             <Circle center={[latitud, longitud]} radius={radio} interactive={false}
                 pathOptions={{ color: COLOR_RADIO, weight: 2.5, dashArray: '8 6', fillColor: COLOR_RADIO, fillOpacity: 0.07 }} />
-            {/* 1 grado de latitud ≈ 111.320 m: así la etiqueta queda justo sobre el borde norte */}
+            {/* Un grado de latitud mide unos 111.320 m, así la etiqueta queda sobre el borde norte del círculo. */}
             <Marker position={[latitud + radio / 111_320, longitud]} icon={etiqueta} interactive={false} keyboard={false} />
             {lugares.map((l) => {
                 const categoria = CATEGORIAS_ENTORNO[l.categoria];
@@ -152,7 +147,6 @@ export function MapaEntornoLeaflet({ latitud, longitud, nombre, lugares, radio }
     );
 }
 
-// Si el punto cambia y queda fuera de la vista (p. ej. al escribir las coordenadas a mano), el mapa lo sigue
 function SeguirPunto({ posicion }: { posicion: [number, number] | null }) {
     const mapa = useMap();
     const [lat, lng] = posicion ?? [null, null];
@@ -172,13 +166,11 @@ function CapturarClick({ onCambio }: { onCambio: (lat: number, lng: number) => v
     return null;
 }
 
-// Otro proyecto ya registrado, dibujado en el selector como referencia
 export interface ProyectoReferencia { id: string; nombre: string; activo: boolean; latitud: number; longitud: number }
 const COLOR_OTROS = '#64748b';
 
 export function SelectorUbicacionLeaflet({ latitud, longitud, onCambio, otros = [], radioOtros = 1000 }: {
     latitud: number | null; longitud: number | null; onCambio: (lat: number, lng: number) => void;
-    // Proyectos existentes con su radio de entorno, para no ubicar uno nuevo encima sin darse cuenta
     otros?: ProyectoReferencia[]; radioOtros?: number;
 }) {
     const posicion: [number, number] | null = latitud !== null && longitud !== null ? [latitud, longitud] : null;
@@ -187,10 +179,8 @@ export function SelectorUbicacionLeaflet({ latitud, longitud, onCambio, otros = 
         <MapContainer center={posicion ?? CENTRO_CHILE} zoom={posicion ? 15 : 5} style={estiloMapa(320)}>
             <TileLayer attribution={ATRIBUCION} url={TESELAS} />
             <CapturarClick onCambio={onCambio} />
-            {/* Sin punto elegido, se parte mirando los proyectos que ya existen (no todo Chile) */}
             {!posicion && <AjustarVista puntos={puntosOtros} />}
             <SeguirPunto posicion={posicion} />
-            {/* No interactivos: un clic dentro de un círculo igual elige el punto */}
             {otros.map((p) => (
                 <Circle key={`radio-${p.id}`} center={[p.latitud, p.longitud]} radius={radioOtros} interactive={false}
                     pathOptions={{ color: COLOR_OTROS, weight: 1.5, dashArray: '5 5', fillColor: COLOR_OTROS, fillOpacity: 0.06 }} />

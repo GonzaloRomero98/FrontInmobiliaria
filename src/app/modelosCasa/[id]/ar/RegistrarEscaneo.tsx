@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { registrarEventoModelo } from "@/services/metricas.service";
 
 export default function RegistrarEscaneo({ idModelo }: { idModelo: string }) {
-    // Una vez por visita, aunque React ejecute el efecto dos veces (StrictMode en desarrollo)
+    // Evita contar el escaneo dos veces cuando React ejecuta el efecto doble en desarrollo.
     const registrado = useRef(false);
     useEffect(() => {
         if (registrado.current) return;

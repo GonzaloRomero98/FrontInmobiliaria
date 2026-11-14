@@ -16,7 +16,7 @@ export default async function Comparar({ searchParams }: { searchParams: Promise
     const { ids = '' } = await searchParams;
     const solicitados = [...new Set(ids.split(',').map((id) => id.trim()).filter((id) => UUID.test(id)))].slice(0, MAXIMO_COMPARAR);
 
-    // Los modelos que ya no existen o no están publicados simplemente no se muestran
+    // Los modelos que ya no existen o no están publicados se omiten.
     const resultados = await Promise.allSettled(solicitados.map((id) => getModeloCasaById(id)));
     const modelos = resultados
         .filter((r): r is PromiseFulfilledResult<ModeloCasa> => r.status === 'fulfilled')

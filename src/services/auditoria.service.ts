@@ -4,7 +4,6 @@ export interface RegistroAuditoria{
     id:string;
     fecha:string;
     accion:string;
-    // Texto legible ("Despublicó el proyecto «X»"); null si la API no conoce la acción
     descripcion:string | null;
     metodo:string | null;
     ruta:string | null;
@@ -32,7 +31,6 @@ export interface FiltrosAuditoria{
     correo?:string;
     modulo?:string;
     soloRechazados?:boolean;
-    // Instantes ISO: desde incluido, hasta excluido
     desde?:string;
     hasta?:string;
 }

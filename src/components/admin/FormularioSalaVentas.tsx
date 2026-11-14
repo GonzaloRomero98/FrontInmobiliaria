@@ -29,7 +29,7 @@ export default function FormularioSalaVentas({ proyecto, onGuardado }: { proyect
     }
 
     function guardarSala() {
-        // Sin dirección no hay sala: el formulario público solo ofrece agendar visita si existe
+        // Sin dirección no hay sala, y el formulario público deja de ofrecer agendar visita.
         if (!direccion.trim()) {
             setMensaje({ tipo: 'error', texto: 'La dirección es obligatoria' });
             return;

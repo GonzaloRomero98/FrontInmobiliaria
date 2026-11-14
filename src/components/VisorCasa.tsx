@@ -5,12 +5,11 @@ import { useEffect, useState, type ComponentProps } from "react";
 import Visor3D from "./Visor3D";
 import { avisar } from "./Dialogos";
 
-// three.js solo se descarga si la persona entra al recorrido
+// three.js solo se descarga si la persona entra al recorrido.
 const RecorridoInterior = dynamic(() => import("./RecorridoInterior"), { ssr: false });
 
-// Vista exterior (model-viewer, con su botón de RA) o recorrido interior en primera persona.
-// Donde hay WebXR (Android con Chrome) el botón de RA abre la casa a tu alrededor, parado en la entrada;
-// en iPhone no existe WebXR y sigue la RA exterior de Quick Look.
+// Donde hay WebXR (Android con Chrome) el botón de RA muestra la casa alrededor de la persona.
+// En iPhone no hay WebXR, así que se mantiene la RA exterior de Quick Look.
 export default function VisorCasa(props: ComponentProps<typeof Visor3D>) {
     const [interior, setInterior] = useState(false);
     const [soportaAr, setSoportaAr] = useState(false);
@@ -21,7 +20,7 @@ export default function VisorCasa(props: ComponentProps<typeof Visor3D>) {
         navigator.xr?.isSessionSupported('immersive-ar').then(setSoportaAr, () => {});
     }, []);
 
-    // Se pide la sesión en el mismo toque: el navegador no abre la cámara sin un gesto reciente
+    // La sesión se pide en el mismo toque porque el navegador no abre la cámara sin un gesto reciente.
     async function entrarAr() {
         try {
             const sesion = await navigator.xr!.requestSession('immersive-ar', {
@@ -29,7 +28,7 @@ export default function VisorCasa(props: ComponentProps<typeof Visor3D>) {
                 optionalFeatures: ['dom-overlay', 'anchors'],
                 domOverlay: { root: capaAr! },
             });
-            // Al salir se queda en el recorrido (mismo lienzo); volver a model-viewer en ese instante tumbaba la pestaña
+            // Al salir se queda en el recorrido. Volver a model-viewer en ese momento hacía caer la pestaña.
             sesion.addEventListener('end', () => { setSesionAr(null); setInterior(true); });
             setSesionAr(sesion);
         } catch {
@@ -51,7 +50,7 @@ export default function VisorCasa(props: ComponentProps<typeof Visor3D>) {
                 ? <RecorridoInterior modeloUrl={props.modeloUrl} titulo={props.titulo} altura={props.altura}
                     sesionAr={sesionAr} capaAr={capaAr} />
                 : <Visor3D {...props} alEntrarAr={soportaAr ? entrarAr : undefined} />}
-            {/* Durante la RA el navegador muestra esta capa a pantalla completa sobre la cámara */}
+            {/* Durante la RA el navegador muestra esta capa sobre la cámara. */}
             <div ref={setCapaAr} />
         </div>
     );

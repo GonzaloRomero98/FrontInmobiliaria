@@ -2,7 +2,6 @@
 
 import { actualizarUsuario, crearUsuario, getUsuarios, Rol, Usuario } from "@/services/usuario.service";
 import { FormEvent, useEffect, useState } from "react";
-// Muestra el mensaje de validación del backend (política de contraseña, correo duplicado...)
 import { mensajeError } from "@/lib/errores";
 import { confirmar } from "@/components/Dialogos";
 
@@ -19,7 +18,7 @@ export default function Usuarios() {
     const [contrasenaNueva, setContrasenaNueva] = useState('');
 
     useEffect(() => {
-        getUsuarios().then(setUsuarios).catch(() => setError('No se pudo cargar los usuarios')).finally(() => setCargando(false));
+        getUsuarios().then(setUsuarios).catch(() => setError('No se pudieron cargar los usuarios')).finally(() => setCargando(false));
     }, []);
 
     async function crear(e: FormEvent) {
@@ -40,7 +39,7 @@ export default function Usuarios() {
     }
 
     async function alternarActivo(usuario: Usuario) {
-        // Se puede reactivar, pero la sesión que se cierra no vuelve: por eso se pregunta
+        // Se pide confirmación porque la cuenta se puede reactivar, pero la sesión que se cierra no vuelve.
         if (usuario.activo && await confirmar({
             titulo: `Desactivar a ${usuario.nombre}`,
             mensaje: 'No podrá iniciar sesión y su sesión actual se cierra de inmediato. Puedes reactivarlo cuando quieras.',

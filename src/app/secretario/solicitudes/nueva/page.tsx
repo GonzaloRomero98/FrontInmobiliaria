@@ -12,7 +12,7 @@ import { mensajeError } from "@/lib/errores";
 const ORIGENES = ['SALA_VENTAS', 'TELEFONO', 'WHATSAPP'] as const;
 const VACIO = { nombre: '', apellido: '', correo: '', celular: '', mensaje: '', id_modelo_casa: '', visita: '' };
 
-// Cliente que llega a la sala, llama o escribe: queda contactado y, si se agenda, con la visita confirmada
+// Para clientes que llegan a la sala, llaman o escriben. Queda como contactado y, si se agenda visita, confirmada.
 export default function NuevaSolicitud() {
     const router = useRouter();
     const [modelos, setModelos] = useState<ModeloCasa[]>([]);
@@ -22,9 +22,8 @@ export default function NuevaSolicitud() {
     const [error, setError] = useState<string | null>(null);
     const [guardando, setGuardando] = useState(false);
 
-    // Solo modelos publicados de proyectos publicados: la API no acepta solicitudes de borradores
     useEffect(() => {
-        getModeloCasa().then(setModelos).catch(() => setError('No se pudo cargar los modelos'));
+        getModeloCasa().then(setModelos).catch(() => setError('No se pudieron cargar los modelos'));
     }, []);
 
     const modelo = modelos.find((m) => m.id === datos.id_modelo_casa);
@@ -44,7 +43,7 @@ export default function NuevaSolicitud() {
                 nombre: datos.nombre.trim(), apellido: datos.apellido.trim(), correo: datos.correo.trim(), celular: datos.celular,
                 id_modelo_casa: datos.id_modelo_casa, origen, clienteInformado: informado,
                 ...(datos.mensaje.trim() && { mensaje: datos.mensaje.trim() }),
-                // datetime-local viene en la hora del navegador; la API la recibe en UTC
+                // datetime-local entrega la hora local del navegador y la API la recibe en UTC.
                 ...(conSala && datos.visita && { visitaPreferida: new Date(datos.visita).toISOString() }),
             });
             router.push(`/secretario/solicitudes/${solicitud.id}`);
@@ -108,7 +107,7 @@ export default function NuevaSolicitud() {
                     </label>
                 )}
 
-                {/* Ley 21.719: los datos se registran solo después de informar la política de privacidad */}
+                {/* Ley 21.719: los datos se registran solo después de informar la política de privacidad. */}
                 <label className="flex items-start gap-2 text-sm">
                     <input type="checkbox" checked={informado} onChange={(e) => setInformado(e.target.checked)} required className="mt-1" />
                     <span>

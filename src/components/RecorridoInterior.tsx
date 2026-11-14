@@ -7,15 +7,16 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 
-const ALTURA_OJOS = 1.6;      // m sobre el piso
-const RADIO = 0.3;            // distancia mínima a un muro, m
-const ESCALON = 0.4;          // lo más alto que se sube de un paso (escaleras), m
-const VELOCIDAD = 1.4;        // m/s, paso normal de una persona
-const SENSIBILIDAD = 0.005;   // rad por px arrastrado
-const RECORRIDO_PERILLA = 40; // px que se mueve la perilla del joystick
-// Los mismos decodificadores Draco que usa <model-viewer>; la CSP ya permite gstatic
+// Medidas en metros, igual que el modelo GLB.
+const ALTURA_OJOS = 1.6;
+const RADIO = 0.3;
+const ESCALON = 0.4;
+const VELOCIDAD = 1.4;
+const SENSIBILIDAD = 0.005;
+const RECORRIDO_PERILLA = 40;
+// Mismos decodificadores Draco que usa model-viewer. La CSP ya permite gstatic.
 const DRACO = 'https://www.gstatic.com/draco/versioned/decoders/1.5.6/';
-const TECLAS: Record<string, [number, number]> = { // [adelante, lado]
+const TECLAS: Record<string, [number, number]> = { // cada tecla da [adelante, lado]
     KeyW: [1, 0], ArrowUp: [1, 0], KeyS: [-1, 0], ArrowDown: [-1, 0],
     KeyD: [0, 1], ArrowRight: [0, 1], KeyA: [0, -1], ArrowLeft: [0, -1],
 };
@@ -26,14 +27,13 @@ interface RecorridoInteriorProps {
     modeloUrl: string;
     titulo: string;
     altura?: number | string;
-    // RA "desde adentro": la sesión WebXR ya abierta (la pide VisorCasa en el toque) y su capa DOM
     sesionAr?: XRSession | null;
     capaAr?: HTMLElement | null;
 }
 
-// Primera persona dentro del GLB (en metros, igual que la RA). Parte en el nodo "Entrada" si el modelo lo trae
-// (un Empty de Blender en la puerta, con su eje Y verde mirando hacia adentro); si no, en el centro de la planta.
-// Con sesionAr la casa se dibuja a escala real sobre la cámara, con la Entrada donde está parada la persona.
+// Recorrido en primera persona dentro del GLB. Parte en el nodo "Entrada" si el modelo lo tiene
+// (un Empty de Blender en la puerta); si no, en el centro de la planta.
+// Con sesionAr la casa se muestra a escala real sobre la cámara, con la entrada donde está la persona.
 export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, sesionAr, capaAr }: RecorridoInteriorProps) {
     const contenedor = useRef<HTMLDivElement>(null);
     const lienzo = useRef<HTMLDivElement>(null);
@@ -46,7 +46,6 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
 
     useEffect(() => {
         const div = contenedor.current!;
-        // alpha: en RA el fondo queda transparente para ver la cámara; fuera de ella lo tapa escena.background
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
         renderer.toneMapping = THREE.NeutralToneMapping;
@@ -72,7 +71,7 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
         ajustarTamano();
 
         let modelo: THREE.Object3D | null = null;
-        const pies = new THREE.Vector3(); // posición de la persona a nivel del piso
+        const pies = new THREE.Vector3();
         let yaw = 0, pitch = 0;
         const rayo = new THREE.Raycaster();
         const origen = new THREE.Vector3(), dir = new THREE.Vector3(), mov = new THREE.Vector3();
@@ -82,7 +81,7 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
             rayo.far = distancia;
             return rayo.intersectObject(modelo!, true)[0];
         };
-        // Rodillas y pecho: así un mueble bajo o una ventana también frenan
+        // Se revisa a la altura de las rodillas y del pecho, así también frenan un mueble bajo o una ventana.
         const choca = (direccion: THREE.Vector3, distancia: number) =>
             !!(toca(0.5, direccion, distancia) || toca(1.5, direccion, distancia));
         const ajustarPiso = () => {
@@ -95,8 +94,7 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
         new GLTFLoader().setDRACOLoader(draco).load(modeloUrl, (gltf) => {
             if (cancelado) return;
             modelo = gltf.scene;
-            // Los muros suelen exportarse con una sola cara (la exterior): sin esto se ven transparentes
-            // desde adentro y los rayos de colisión los atraviesan
+            // Los muros suelen exportarse con una sola cara. Sin DoubleSide se ven transparentes desde adentro y los rayos de colisión los atraviesan.
             modelo.traverse((o) => {
                 const malla = o as THREE.Mesh;
                 if (malla.isMesh) for (const m of [malla.material].flat()) m.side = THREE.DoubleSide;
@@ -118,7 +116,7 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
             setEstado('listo');
         }, undefined, () => { if (!cancelado) setEstado('error'); });
 
-        // Teclado: solo con el visor enfocado, para no robarle las flechas al resto de la página
+        // El teclado solo funciona con el visor enfocado, para no quitarle las flechas al resto de la página.
         const teclas = new Set<string>();
         const alTeclear = (e: KeyboardEvent) => {
             if (!TECLAS[e.code]) return;
@@ -131,7 +129,6 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
         div.addEventListener('keyup', alTeclear);
         div.addEventListener('blur', alDesenfocar);
 
-        // Arrastrar (dedo o mouse) para mirar; el joystick tiene sus propios eventos y no llega aquí
         let arrastre: number | null = null, px = 0, py = 0;
         canvas.addEventListener('pointerdown', (e) => {
             if (arrastre !== null) return;
@@ -149,15 +146,14 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
         canvas.addEventListener('pointerup', soltar);
         canvas.addEventListener('pointercancel', soltar);
 
-        // RA: se apunta al suelo (hit-test desde el centro de la pantalla) y con el primer punto se coloca la
-        // casa una sola vez, con la Entrada bajo los pies y mirando hacia donde mira el celular. El ancla
-        // compensa la deriva del seguimiento (la casa "subiéndose" al caminar).
+        // En RA se apunta al suelo y con el primer punto se ubica la casa, con la entrada bajo los pies.
+        // El ancla corrige la deriva del seguimiento, que hacía que la casa se moviera al caminar.
         let fuenteHit: XRHitTestSource | undefined;
         let ancla: XRAnchor | undefined;
         let enSuelo = false, enAr = false;
         const anclaInicial = new THREE.Vector3(), baseModelo = new THREE.Vector3();
-        // La sesión se conecta a este mismo renderer y al salir se sigue en el recorrido con joystick:
-        // destruir el contexto WebGL (y montar model-viewer) justo al cerrar la RA tumbaba la pestaña en Android
+        // La RA usa este mismo renderer y al salir se vuelve al recorrido con joystick.
+        // Destruir el contexto WebGL justo al cerrar la sesión hacía caer la pestaña en Android.
         iniciarAr.current = (sesion) => {
             if (enAr) return;
             enAr = true;
@@ -165,7 +161,7 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
             escena.background = null;
             sesion.addEventListener('end', () => {
                 enAr = false;
-                fuenteHit = undefined; // el navegador ya los invalidó al cerrar la sesión
+                fuenteHit = undefined;
                 ancla = undefined;
                 renderer.xr.enabled = false;
                 escena.background = fondo;
@@ -185,7 +181,7 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
             const ojos = frame.getViewerPose(ref)?.transform;
             const hit = frame.getHitTestResults(fuenteHit!)[0];
             const suelo = hit?.getPose(ref)?.transform.position;
-            // Más de medio metro bajo los ojos: es el suelo y no una mesa
+            // Si el punto está a menos de medio metro bajo los ojos, probablemente es una mesa y no el suelo.
             if (!ojos || !suelo || ojos.position.y - suelo.y < 0.5) return;
             const { x, y, z, w } = ojos.orientation;
             const frente = new THREE.Vector3(0, 0, -1).applyQuaternion(new THREE.Quaternion(x, y, z, w));
@@ -212,13 +208,13 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
             if (enAr) {
                 if (modelo && frame && fuenteHit) colocarEnElSuelo(frame);
                 if (modelo && frame && ancla) seguirAncla(frame);
-                // Sin colocar no se dibuja la casa: aparecería alrededor de la cabeza y no en el suelo
+                // Mientras no esté ubicada, la casa no se dibuja porque aparecería alrededor de la cabeza.
                 if (modelo) modelo.visible = enSuelo;
             } else if (modelo) {
                 let adelante = -joystick.current.y, lado = joystick.current.x;
                 for (const t of teclas) { adelante += TECLAS[t][0]; lado += TECLAS[t][1]; }
                 mov.set(lado, 0, -adelante).clampLength(0, 1).multiplyScalar(VELOCIDAD * dt).applyAxisAngle(EJE_Y, yaw);
-                // Cada eje por separado: si choca de frente con un muro en diagonal, se desliza por él
+                // Cada eje se mueve por separado para deslizarse por un muro en vez de quedar pegado.
                 for (const eje of ['x', 'z'] as const) {
                     if (!mov[eje]) continue;
                     dir.set(0, 0, 0)[eje] = Math.sign(mov[eje]);
@@ -226,7 +222,6 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
                 }
                 if (mov.lengthSq()) ajustarPiso();
             }
-            // En RA la cámara la mueve el celular (three la pisa con la pose de WebXR)
             camara.position.set(pies.x, pies.y + ALTURA_OJOS, pies.z);
             camara.rotation.set(pitch, yaw, 0);
             renderer.render(escena, camara);
@@ -236,7 +231,7 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
             cancelado = true;
             iniciarAr.current = null;
             renderer.setAnimationLoop(null);
-            // La sesión no se cierra aquí: React monta dos veces en desarrollo; la cierran Salir o el botón atrás
+            // La sesión no se cierra aquí porque React monta dos veces en desarrollo. La cierran el botón Salir o el botón atrás.
             if (enAr) { fuenteHit?.cancel(); ancla?.delete(); }
             setColocada(false);
             observador.disconnect();
@@ -301,7 +296,6 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
                 </div>
             )}
 
-            {/* Joystick solo en pantallas táctiles; en PC se camina con el teclado */}
             <div aria-hidden className="absolute bottom-5 left-5 size-28 rounded-full bg-black/25 hidden [@media(pointer:coarse)]:block"
                 onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); moverJoystick(e); }}
                 onPointerMove={(e) => { if (e.currentTarget.hasPointerCapture(e.pointerId)) moverJoystick(e); }}
@@ -310,7 +304,6 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
                 <div ref={perilla} className="absolute left-1/2 top-1/2 size-12 -ml-6 -mt-6 rounded-full bg-white/90 shadow pointer-events-none" />
             </div>
 
-            {/* En RA esto va sobre la cámara (capa DOM de WebXR); se camina con el cuerpo, sin joystick */}
             {sesionAr && capaAr && createPortal(
                 <div className="flex h-full flex-col items-center justify-between p-5 text-center">
                     <button type="button" onClick={() => sesionAr.end().catch(() => {})}

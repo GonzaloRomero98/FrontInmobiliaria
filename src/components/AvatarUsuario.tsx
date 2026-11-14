@@ -1,6 +1,5 @@
 import Image from "next/image";
 
-// Foto de perfil o, si no hay, las iniciales del primer nombre y el último apellido ("Ana María Pérez" -> "AP")
 export default function AvatarUsuario({nombre, fotoUrl, tamano = 32}:{nombre:string; fotoUrl?:string | null; tamano?:number}){
     const partes = nombre.trim().split(/\s+/).filter(Boolean);
     const extremos = partes.length > 1 ? [partes[0], partes[partes.length - 1]] : partes;

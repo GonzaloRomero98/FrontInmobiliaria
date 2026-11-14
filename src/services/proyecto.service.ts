@@ -25,7 +25,6 @@ export async function actualizarProyecto(id:string, cambios:ActualizarProyectoIn
     return data;
 }
 
-// null si el proyecto aún no tiene ficha (404)
 async function getOpcional<T>(url:string):Promise<T | null> {
     try {
         const {data} = await api.get(url);
@@ -54,12 +53,10 @@ export async function actualizarEntorno(id:string):Promise<EntornoProyecto> {
     return data;
 }
 
-// Borrado lógico en el backend: el proyecto y sus modelos dejan de verse en el catálogo
 export async function despublicarProyecto(id:string):Promise<void> {
     await api.delete(`/proyectos/${id}`);
 }
 
-// Borrado definitivo junto con sus modelos; la API responde 409 si algún modelo tiene solicitudes
 export async function eliminarProyecto(id:string):Promise<void> {
     await api.delete(`/proyectos/${id}/definitivo`);
 }
@@ -68,7 +65,6 @@ export async function publicarProyecto(id:string):Promise<void> {
     await api.patch(`/proyectos/${id}/publicar`);
 }
 
-// Solo ADMIN: incluye los despublicados
 export async function getProyectosAdmin():Promise<Proyecto[]>{
     const {data} = await api.get('/proyectos/admin');
     return data;

@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 
-// Leaflet necesita `window`: los mapas se cargan solo en el navegador
+// Leaflet necesita window, por eso los mapas se cargan solo en el navegador.
 function Cargando({ altura }: { altura: number }) {
     return <div style={{ height: altura }} className="w-full rounded-xl bg-gray-100 animate-pulse" aria-label="Cargando mapa" />;
 }

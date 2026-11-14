@@ -2,17 +2,15 @@
 
 import { useEffect, useId, useRef, useState, useSyncExternalStore, type FormEvent, type ReactNode } from "react";
 
-// Reemplazo de confirm()/prompt()/alert() con el estilo del sitio. Se monta una vez en el layout raíz y
-// se usa desde cualquier página con `await confirmar({...})` y `avisar(...)`.
-
+// Reemplaza confirm(), prompt() y alert() con el estilo del sitio.
+// Se monta una vez en el layout y se usa con await confirmar({...}) y avisar(...).
 interface OpcionesConfirmar {
     titulo: string;
     mensaje?: ReactNode;
     boton: string;
     peligroso?: boolean;
-    // Con campo, el diálogo pide un texto (prellenado con `inicial`) y lo devuelve
     campo?: { etiqueta: string; inicial?: string };
-    // Se ejecuta al confirmar, con el diálogo abierto: si devuelve un texto, se muestra como error y el diálogo sigue abierto
+    // Se ejecuta con el diálogo abierto. Si devuelve un texto, se muestra como error y el diálogo no se cierra.
     accion?: (valor: string) => Promise<string | void> | string | void;
 }
 
@@ -39,7 +37,6 @@ function suscribir(oyente: () => void) {
     return () => { oyentes.delete(oyente); };
 }
 
-// Devuelve el texto del campo ('' sin campo) si se confirmó, o null si se canceló
 export function confirmar(opciones: OpcionesConfirmar): Promise<string | null> {
     estado.dialogo?.resolver(null);
     return new Promise((resolver) => actualizar({ dialogo: { ...opciones, id: siguienteId++, resolver } }));
@@ -50,7 +47,6 @@ function cerrarDialogo(valor: string | null) {
     actualizar({ dialogo: null });
 }
 
-// Los errores quedan hasta que se cierran; el resto desaparece solo
 export function avisar(texto: string, opciones: { error?: boolean; accion?: Aviso['accion'] } = {}) {
     actualizar({ avisos: [...estado.avisos, { id: siguienteId++, texto, ...opciones }] });
 }
@@ -64,7 +60,8 @@ export default function Dialogos() {
     return (
         <>
             {dialogo && <VentanaDialogo key={dialogo.id} dialogo={dialogo} />}
-            <div className="fixed bottom-4 inset-x-4 sm:left-auto sm:w-96 z-50 flex flex-col gap-2" aria-live="polite">
+            {/* En el celular los avisos van arriba para no chocar con las barras fijas de abajo. */}
+            <div className="fixed top-4 inset-x-4 sm:top-auto sm:bottom-4 sm:left-auto sm:w-96 z-50 flex flex-col gap-2" aria-live="polite">
                 {avisos.map((aviso) => <TarjetaAviso key={aviso.id} aviso={aviso} />)}
             </div>
         </>
@@ -97,7 +94,6 @@ function VentanaDialogo({ dialogo }: { dialogo: Dialogo }) {
     }
 
     return (
-        // Esc dispara "cancel": se cancela salvo que la acción esté en curso
         <dialog ref={ref} aria-labelledby={idTitulo} onCancel={(e) => { e.preventDefault(); if (!ocupado) cerrarDialogo(null); }}
             className="m-auto w-[min(28rem,calc(100%-2rem))] rounded-xl p-0 shadow-xl backdrop:bg-black/40">
             <form onSubmit={enviar} className="flex flex-col gap-4 p-5">
@@ -111,7 +107,7 @@ function VentanaDialogo({ dialogo }: { dialogo: Dialogo }) {
                     </label>
                 )}
                 {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
-                {/* Cancelar va primero: es el foco inicial cuando no hay campo, así Enter no confirma por accidente */}
+                {/* Cancelar va primero porque recibe el foco inicial, así un Enter no confirma por accidente. */}
                 <div className="flex justify-end gap-2">
                     <button type="button" onClick={() => cerrarDialogo(null)} disabled={ocupado}
                         className="border rounded-lg px-4 py-2 font-medium hover:bg-gray-50 disabled:opacity-50">
@@ -128,14 +124,18 @@ function VentanaDialogo({ dialogo }: { dialogo: Dialogo }) {
 }
 
 function TarjetaAviso({ aviso }: { aviso: Aviso }) {
+    // El aviso no se cierra mientras el puntero o el foco están encima, para alcanzar a leerlo y usar Deshacer (WCAG 2.2.1).
+    const [pausado, setPausado] = useState(false);
     useEffect(() => {
-        if (aviso.error) return;
-        const temporizador = setTimeout(() => quitarAviso(aviso.id), 6000);
+        if (aviso.error || pausado) return;
+        const temporizador = setTimeout(() => quitarAviso(aviso.id), 10000);
         return () => clearTimeout(temporizador);
-    }, [aviso]);
+    }, [aviso, pausado]);
 
     return (
         <div role={aviso.error ? 'alert' : 'status'}
+            onMouseEnter={() => setPausado(true)} onMouseLeave={() => setPausado(false)}
+            onFocus={() => setPausado(true)} onBlur={() => setPausado(false)}
             className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm shadow-lg ${aviso.error ? 'bg-red-700 text-white' : 'bg-gray-900 text-white'}`}>
             <p className="flex-1">{aviso.texto}</p>
             {aviso.accion && (

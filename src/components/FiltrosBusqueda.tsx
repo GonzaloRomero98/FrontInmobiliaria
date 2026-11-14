@@ -8,7 +8,10 @@ import { FiltrosBusqueda as Filtros, Operacion } from "@/types/modeloCasa";
 
 const MINIMOS = ['1', '2', '3', '4'];
 
-// Cada operación se publica en su moneda habitual: venta en UF y arriendo en pesos
+// Filtros secundarios. En el celular quedan plegados en "Más filtros".
+const EXTRAS = ['orden', 'dormitorios', 'banos', 'superficieMin', 'mascotas'] as const;
+
+// La venta se publica en UF y el arriendo en pesos.
 const MONEDA_POR_OPERACION: Record<Operacion, 'UF' | 'CLP'> = { VENTA: 'UF', ARRIENDO: 'CLP' };
 
 export default function FiltrosBusqueda({ iniciales }: { iniciales: Filtros }) {
@@ -16,6 +19,8 @@ export default function FiltrosBusqueda({ iniciales }: { iniciales: Filtros }) {
     const [filtros, setFiltros] = useState<Filtros>(iniciales);
     const [regiones, setRegiones] = useState<Region[]>([]);
     const [ciudades, setCiudades] = useState<Ciudad[]>([]);
+    const extrasActivos = EXTRAS.filter((clave) => filtros[clave]).length;
+    const [masFiltros, setMasFiltros] = useState(() => EXTRAS.some((clave) => iniciales[clave]));
 
     useEffect(() => {
         gerRegiones().then(setRegiones).catch(() => setRegiones([]));
@@ -26,7 +31,6 @@ export default function FiltrosBusqueda({ iniciales }: { iniciales: Filtros }) {
         getCiudades(Number(filtros.id_region)).then(setCiudades).catch(() => setCiudades([]));
     }, [filtros.id_region]);
 
-    // Sin región elegida no se ofrecen comunas (las cargadas antes quedan de otra región)
     const ciudadesDeRegion = filtros.id_region ? ciudades : [];
 
     function cambiar<K extends keyof Filtros>(clave: K, valor: Filtros[K] | '') {
@@ -34,7 +38,7 @@ export default function FiltrosBusqueda({ iniciales }: { iniciales: Filtros }) {
             const siguiente = { ...actual, [clave]: valor || undefined };
             if (clave === 'id_region') siguiente.id_ciudad = undefined;
             if (clave === 'tipoOperacion') {
-                // Al cambiar de operación, el rango de precio deja de tener sentido (cambia la moneda)
+                // Al cambiar de operación cambia la moneda, así que se limpia el rango de precio.
                 siguiente.precioMin = undefined;
                 siguiente.precioMax = undefined;
             }
@@ -53,7 +57,8 @@ export default function FiltrosBusqueda({ iniciales }: { iniciales: Filtros }) {
     }
 
     const moneda = filtros.tipoOperacion ? MONEDA_POR_OPERACION[filtros.tipoOperacion] : null;
-    const campo = "w-full border rounded-lg px-3 py-2 bg-white";
+    // text-base porque con letra menor a 16 px el iPhone hace zoom al tocar el campo.
+    const campo = "w-full min-h-11 border rounded-lg px-3 py-2 bg-white text-base";
 
     return (
         <form onSubmit={buscar} className="grid grid-cols-2 lg:grid-cols-4 gap-3 p-4 border rounded-xl bg-gray-50">
@@ -83,17 +88,6 @@ export default function FiltrosBusqueda({ iniciales }: { iniciales: Filtros }) {
             </label>
 
             <label className="flex flex-col gap-1 text-sm">
-                Ordenar por
-                <select value={filtros.orden ?? ''} onChange={(e) => cambiar('orden', e.target.value as Filtros['orden'])} className={campo}>
-                    <option value="">Nombre</option>
-                    <option value="precio_asc">Menor precio</option>
-                    <option value="precio_desc">Mayor precio</option>
-                    <option value="superficie_desc">Mayor superficie</option>
-                    <option value="recientes">Más recientes</option>
-                </select>
-            </label>
-
-            <label className="flex flex-col gap-1 text-sm">
                 Precio desde {moneda && `(${moneda})`}
                 <input type="number" min={0} inputMode="numeric" value={filtros.precioMin ?? ''} disabled={!moneda}
                     onChange={(e) => cambiar('precioMin', e.target.value)} placeholder={moneda ? 'Mínimo' : 'Elige operación'} className={campo} />
@@ -105,35 +99,53 @@ export default function FiltrosBusqueda({ iniciales }: { iniciales: Filtros }) {
                     onChange={(e) => cambiar('precioMax', e.target.value)} placeholder={moneda ? 'Máximo' : 'Elige operación'} className={campo} />
             </label>
 
-            <label className="flex flex-col gap-1 text-sm">
-                Dormitorios
-                <select value={filtros.dormitorios ?? ''} onChange={(e) => cambiar('dormitorios', e.target.value)} className={campo}>
-                    <option value="">Cualquiera</option>
-                    {MINIMOS.map((n) => <option key={n} value={n}>{n}+</option>)}
-                </select>
-            </label>
+            <button type="button" onClick={() => setMasFiltros((v) => !v)} aria-expanded={masFiltros} aria-controls="mas-filtros"
+                className="lg:hidden col-span-2 min-h-11 border rounded-lg bg-white text-sm font-medium">
+                {masFiltros ? 'Menos filtros' : `Más filtros${extrasActivos ? ` (${extrasActivos})` : ''}`}
+            </button>
 
-            <label className="flex flex-col gap-1 text-sm">
-                Baños
-                <select value={filtros.banos ?? ''} onChange={(e) => cambiar('banos', e.target.value)} className={campo}>
-                    <option value="">Cualquiera</option>
-                    {MINIMOS.slice(0, 3).map((n) => <option key={n} value={n}>{n}+</option>)}
-                </select>
-            </label>
+            <div id="mas-filtros" className={masFiltros ? 'contents' : 'hidden lg:contents'}>
+                <label className="flex flex-col gap-1 text-sm">
+                    Ordenar por
+                    <select value={filtros.orden ?? ''} onChange={(e) => cambiar('orden', e.target.value as Filtros['orden'])} className={campo}>
+                        <option value="">Nombre</option>
+                        <option value="precio_asc">Menor precio</option>
+                        <option value="precio_desc">Mayor precio</option>
+                        <option value="superficie_desc">Mayor superficie</option>
+                        <option value="recientes">Más recientes</option>
+                    </select>
+                </label>
 
-            <label className="flex flex-col gap-1 text-sm">
-                Superficie mínima (m²)
-                <input type="number" min={0} inputMode="numeric" value={filtros.superficieMin ?? ''}
-                    onChange={(e) => cambiar('superficieMin', e.target.value)} placeholder="Ej: 70" className={campo} />
-            </label>
+                <label className="flex flex-col gap-1 text-sm">
+                    Dormitorios
+                    <select value={filtros.dormitorios ?? ''} onChange={(e) => cambiar('dormitorios', e.target.value)} className={campo}>
+                        <option value="">Cualquiera</option>
+                        {MINIMOS.map((n) => <option key={n} value={n}>{n}+</option>)}
+                    </select>
+                </label>
 
-            <label className="flex items-center gap-2 text-sm self-end pb-2">
-                <input type="checkbox" checked={filtros.mascotas === 'true'} onChange={(e) => cambiar('mascotas', e.target.checked ? 'true' : '')} />
-                Acepta mascotas
-            </label>
+                <label className="flex flex-col gap-1 text-sm">
+                    Baños
+                    <select value={filtros.banos ?? ''} onChange={(e) => cambiar('banos', e.target.value)} className={campo}>
+                        <option value="">Cualquiera</option>
+                        {MINIMOS.slice(0, 3).map((n) => <option key={n} value={n}>{n}+</option>)}
+                    </select>
+                </label>
+
+                <label className="flex flex-col gap-1 text-sm">
+                    Superficie mínima (m²)
+                    <input type="number" min={0} inputMode="numeric" value={filtros.superficieMin ?? ''}
+                        onChange={(e) => cambiar('superficieMin', e.target.value)} placeholder="Ej: 70" className={campo} />
+                </label>
+
+                <label className="flex items-center gap-2 text-sm self-end min-h-11">
+                    <input type="checkbox" className="w-5 h-5" checked={filtros.mascotas === 'true'} onChange={(e) => cambiar('mascotas', e.target.checked ? 'true' : '')} />
+                    Acepta mascotas
+                </label>
+            </div>
 
             <div className="col-span-2 flex gap-2 self-end">
-                <button type="submit" className="flex-1 bg-marca text-white rounded-lg py-2.5 font-medium">Buscar</button>
+                <button type="submit" className="flex-1 bg-marca text-white rounded-lg py-3 font-medium">Buscar</button>
                 <button type="button" onClick={() => { setFiltros({}); router.push('/buscar'); }} className="px-4 border rounded-lg bg-white">
                     Limpiar
                 </button>

@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 
-// Cualquier página que no pudo cargar (p. ej. la API no responde): aviso y reintento, sin perder el encabezado
+// Se muestra cuando una página no pudo cargar, por ejemplo si la API no responde. Mantiene el encabezado y permite reintentar.
 export default function Error({ error, retry }: { error: unknown; retry: () => void }) {
     useEffect(() => {
         console.error(error);

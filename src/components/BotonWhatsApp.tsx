@@ -5,7 +5,7 @@ interface BotonWhatsAppProps {
     className?: string;
 }
 
-// Abre WhatsApp con un mensaje prellenado. No se muestra si NEXT_PUBLIC_WHATSAPP_NUMERO no está configurado.
+// No se muestra si NEXT_PUBLIC_WHATSAPP_NUMERO no está configurado.
 export default function BotonWhatsApp({ mensaje, className = '' }: BotonWhatsAppProps) {
     if (!WHATSAPP_NUMERO) return null;
     const url = `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(mensaje)}`;

@@ -1,14 +1,13 @@
 'use client'
 
-import { enlaceWhatsApp, formatearFechaHora, normalizarRut, rutValido } from "@/lib/formato";
+import { enlaceWhatsApp, formatearFechaHora } from "@/lib/formato";
 import { descargarSolicitudesCsv, EVENTO_SOLICITUDES_ACTUALIZADAS, FiltroSolicitud, getSolicitudes, marcarContactado, Solicitud } from "@/services/solicitud.service";
-import { cambiarEstadoReserva, crearReserva } from "@/services/reserva.service";
 import { Reserva } from "@/types/reserva";
-import { ETIQUETA_ORIGEN, ETIQUETA_VISITA } from "@/types/solicitud";
-import { mensajeError } from "@/lib/errores";
-import { avisar, confirmar } from "@/components/Dialogos";
+import { CLAVE_ULTIMA_BANDEJA, ETIQUETA_ORIGEN, ETIQUETA_VISITA } from "@/types/solicitud";
+import { avisar } from "@/components/Dialogos";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 
 type Filtro = FiltroSolicitud;
 
@@ -27,28 +26,56 @@ function reservaActiva(soli: Solicitud): Reserva | undefined {
     return soli.reservas?.find((r) => r.estado !== 'ANULADA');
 }
 
-export default function BandejaSolicitudes() {
+// useSearchParams necesita un Suspense por encima (documentación de Next 16).
+export default function PaginaSolicitudes() {
+    return (
+        <Suspense fallback={<main className="max-w-6xl mx-auto px-4 py-10 text-gray-500">Cargando...</main>}>
+            <BandejaSolicitudes />
+        </Suspense>
+    );
+}
+
+function BandejaSolicitudes() {
+    const router = useRouter();
+    const ruta = usePathname();
+    const params = useSearchParams();
+    // El filtro, la página y la búsqueda se guardan en la URL para que la bandeja quede igual al volver de una ficha.
+    const filtroUrl = params.get('filtro') as Filtro | null;
+    const [filtro, setFiltro] = useState<Filtro>(FILTROS.some((f) => f.valor === filtroUrl) ? filtroUrl! : 'pendientes');
+    const [pagina, setPagina] = useState(() => Math.max(1, Number(params.get('pagina')) || 1));
+    // texto es lo que se escribe y buscar lo que se consulta. La API se llama 300 ms después de la última tecla.
+    const [texto, setTexto] = useState(() => params.get('q') ?? '');
+    const [buscar, setBuscar] = useState(() => (params.get('q') ?? '').trim());
+
     const [solicitudes, setSolicitudes] = useState<Solicitud[]>([]);
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [filtro, setFiltro] = useState<Filtro>('pendientes');
     const [exportando, setExportando] = useState(false);
-    const [pagina, setPagina] = useState(1);
     const [total, setTotal] = useState(0);
     const [pendientes, setPendientes] = useState(0);
-    // Se incrementa para volver a pedir la página actual (p. ej. tras marcar contactado)
     const [recarga, setRecarga] = useState(0);
-    // Lo que se escribe y lo que se consulta: la API se llama 300 ms después de la última tecla
-    const [texto, setTexto] = useState('');
-    const [buscar, setBuscar] = useState('');
 
     useEffect(() => {
         const temporizador = setTimeout(() => {
-            setBuscar(texto.trim());
-            setPagina(1);
+            const nuevo = texto.trim();
+            if (nuevo !== buscar) {
+                setBuscar(nuevo);
+                setPagina(1);
+            }
         }, 300);
         return () => clearTimeout(temporizador);
-    }, [texto]);
+    }, [texto, buscar]);
+
+    useEffect(() => {
+        const siguiente = new URLSearchParams();
+        if (filtro !== 'pendientes') siguiente.set('filtro', filtro);
+        if (pagina > 1) siguiente.set('pagina', String(pagina));
+        if (buscar) siguiente.set('q', buscar);
+        const url = siguiente.size ? `${ruta}?${siguiente}` : ruta;
+        // Se usa replace para que cambiar de filtro no llene el historial del botón atrás.
+        router.replace(url, { scroll: false });
+        try { sessionStorage.setItem(CLAVE_ULTIMA_BANDEJA, url); } catch { /* Sin almacenamiento, la ficha vuelve a la bandeja por defecto. */ }
+    }, [filtro, pagina, buscar, ruta, router]);
 
     useEffect(() => {
         let cancelado = false;
@@ -58,7 +85,7 @@ export default function BandejaSolicitudes() {
             try {
                 const data = await getSolicitudes(pagina, POR_PAGINA, filtro, buscar);
                 if (cancelado) return;
-                // La última fila de la última página dejó de calzar con el filtro: se retrocede una página
+                // Si la última fila de la última página ya no calza con el filtro, se retrocede una página.
                 if (data.solicitudes.length === 0 && pagina > 1) {
                     setPagina(pagina - 1);
                     return;
@@ -84,7 +111,6 @@ export default function BandejaSolicitudes() {
     async function handleMarcarContactado(id: string) {
         try {
             await marcarContactado(id);
-            // Se pide de nuevo la página: la fila puede salir del filtro y el contador de pendientes cambia
             setRecarga((n) => n + 1);
             window.dispatchEvent(new Event(EVENTO_SOLICITUDES_ACTUALIZADAS));
         } catch {
@@ -92,91 +118,22 @@ export default function BandejaSolicitudes() {
         }
     }
 
-    // Formulario de reserva abierto en una sola fila a la vez
-    const [reservandoId, setReservandoId] = useState<string | null>(null);
-    const [rut, setRut] = useState('');
-    const [lote, setLote] = useState('');
-    const [errorRut, setErrorRut] = useState<string | null>(null);
-    // Error de la API al guardar (p. ej. sin unidades disponibles): se muestra en el mismo formulario, que sigue abierto
-    const [errorReserva, setErrorReserva] = useState<string | null>(null);
-    const [guardandoReserva, setGuardandoReserva] = useState(false);
-    // Evita un segundo clic mientras la petición de vender o anular sigue en curso
-    const [cambiandoId, setCambiandoId] = useState<string | null>(null);
-
-    function abrirReserva(id: string) {
-        setReservandoId(id);
-        setRut('');
-        setLote('');
-        setErrorRut(null);
-        setErrorReserva(null);
-    }
-
-    function reemplazarReserva(idSolicitud: string, reserva: Reserva) {
-        setSolicitudes((lista) => lista.map((s) => s.id !== idSolicitud ? s : {
-            ...s, reservas: [...(s.reservas ?? []).filter((r) => r.id !== reserva.id), reserva],
-        }));
-    }
-
-    async function handleReservar(e: React.FormEvent, idSolicitud: string) {
-        e.preventDefault();
-        const rutNormalizado = normalizarRut(rut);
-        if (!rutValido(rutNormalizado)) {
-            setErrorRut('RUT inválido, ej: 12.345.678-5');
-            return;
-        }
-        setGuardandoReserva(true);
-        setErrorReserva(null);
-        try {
-            const reserva = await crearReserva({ id_solicitud: idSolicitud, rut: rutNormalizado, lote: lote.trim() || undefined });
-            reemplazarReserva(idSolicitud, reserva);
-            setReservandoId(null);
-        } catch (err) {
-            setErrorReserva(mensajeError(err, 'No se pudo registrar la reserva'));
-        } finally {
-            setGuardandoReserva(false);
-        }
-    }
-
-    async function handleCambiarReserva(idSolicitud: string, reserva: Reserva, estado: 'VENDIDA' | 'ANULADA') {
-        const vender = estado === 'VENDIDA';
-        // Ninguna de las dos admite deshacer: vendida no se anula desde aquí y anular libera la unidad para otro cliente
-        await confirmar({
-            titulo: vender ? 'Marcar la reserva como vendida' : 'Anular la reserva',
-            mensaje: vender ? 'Ya no se podrá anular desde aquí.' : 'La unidad vuelve a quedar disponible para otro cliente.',
-            boton: vender ? 'Marcar vendida' : 'Anular reserva',
-            peligroso: !vender,
-            // Con el diálogo abierto: si la API falla, el error se ve ahí y se puede reintentar
-            accion: async () => {
-                setCambiandoId(reserva.id);
-                try {
-                    reemplazarReserva(idSolicitud, await cambiarEstadoReserva(reserva.id, estado));
-                } catch (err) {
-                    return mensajeError(err, 'No se pudo actualizar la reserva');
-                } finally {
-                    setCambiandoId(null);
-                }
-            },
-        });
-    }
-
     async function handleExportar() {
         setExportando(true);
         try {
             await descargarSolicitudesCsv();
         } catch {
-            avisar('No se pudo exportar las solicitudes', { error: true });
+            avisar('No se pudieron exportar las solicitudes', { error: true });
         } finally {
             setExportando(false);
         }
     }
 
-    // El filtro ya viene aplicado desde la API
     const visibles = solicitudes;
     const paginas = Math.max(1, Math.ceil(total / POR_PAGINA));
 
     return (
         <main className="max-w-6xl mx-auto px-4 py-10">
-            {/* Navegación, perfil y cierre de sesión están en el menú lateral del panel */}
             <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
                 <h1 className="text-2xl font-bold">Solicitudes de contacto</h1>
                 <Link href="/secretario/solicitudes/nueva" className="bg-marca text-white text-sm rounded-lg px-4 py-2 font-medium hover:bg-marca/90">
@@ -189,29 +146,27 @@ export default function BandejaSolicitudes() {
                 className="w-full sm:max-w-sm border rounded-lg px-3 py-2 mb-3" />
 
             <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-            <div className="flex gap-2" role="tablist" aria-label="Filtrar solicitudes">
-                {FILTROS.map(({ valor, etiqueta }) => (
-                    <button
-                        key={valor}
-                        type="button"
-                        role="tab"
-                        aria-selected={filtro === valor}
-                        onClick={() => cambiarFiltro(valor)}
-                        className={`text-sm px-3 py-1.5 rounded-full border ${filtro === valor ? 'bg-marca text-white border-marca' : 'hover:bg-gray-50'}`}
-                    >
-                        {etiqueta}{valor === 'pendientes' && ` (${pendientes})`}
-                    </button>
-                ))}
-            </div>
+                <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar solicitudes">
+                    {FILTROS.map(({ valor, etiqueta }) => (
+                        <button
+                            key={valor}
+                            type="button"
+                            aria-pressed={filtro === valor}
+                            onClick={() => cambiarFiltro(valor)}
+                            className={`text-sm px-3 py-1.5 rounded-full border ${filtro === valor ? 'bg-marca text-white border-marca' : 'hover:bg-gray-50'}`}
+                        >
+                            {etiqueta}{valor === 'pendientes' && ` (${pendientes})`}
+                        </button>
+                    ))}
+                </div>
                 <button type="button" onClick={handleExportar} disabled={exportando}
                     className="text-sm border rounded-lg px-3 py-1.5 hover:bg-gray-50 disabled:opacity-50">
-                    {exportando ? 'Exportando...' : 'Exportar a Excel (todas)'}
+                    {exportando ? 'Exportando…' : 'Descargar CSV para Excel (todas)'}
                 </button>
             </div>
 
-            {/* Al cambiar de página se mantiene la tabla anterior (atenuada) en vez de un salto a "Cargando..." */}
             {cargando && visibles.length === 0 && <p className="text-gray-500">Cargando...</p>}
-            {error && <p className="text-red-500">{error}</p>}
+            {error && <p className="text-red-700">{error}</p>}
 
             {!cargando && !error && visibles.length === 0 && (
                 <p className="text-gray-500">
@@ -226,13 +181,11 @@ export default function BandejaSolicitudes() {
                         <thead>
                             <tr className="text-left border-b text-sm text-gray-500">
                                 <th className="py-2 pr-4">Fecha</th>
-                                <th className="py-2 pr-4">Nombre</th>
-                                <th className="py-2 pr-4">Contacto</th>
+                                <th className="py-2 pr-4">Cliente</th>
                                 <th className="py-2 pr-4">Modelo</th>
-                                <th className="py-2 pr-4">Mensaje</th>
                                 <th className="py-2 pr-4">Visita</th>
                                 <th className="py-2 pr-4">Estado</th>
-                                <th className="py-2 pr-4">Acción</th>
+                                <th className="py-2 pr-4"><span className="sr-only">Acción</span></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -241,15 +194,13 @@ export default function BandejaSolicitudes() {
                                 return (
                                 <tr key={soli.id} className="border-b text-sm align-top">
                                     <td className="py-3 pr-4 whitespace-nowrap text-gray-500">{new Date(soli.creadoEn).toLocaleDateString('es-CL')}</td>
-                                    <td className="py-3 pr-4 font-medium">
-                                        <Link href={`/secretario/solicitudes/${soli.id}`} className="text-marca underline underline-offset-2 hover:no-underline">
+                                    <td className="py-3 pr-4">
+                                        <Link href={`/secretario/solicitudes/${soli.id}`} className="font-medium text-marca underline underline-offset-2 hover:no-underline">
                                             {soli.nombre} {soli.apellido}
                                         </Link>
-                                        {soli.origen !== 'WEB' && <span className="block text-xs font-normal text-gray-500">{ETIQUETA_ORIGEN[soli.origen]}</span>}
-                                    </td>
-                                    <td className="py-3 pr-4">
-                                        <div className="flex flex-col gap-1">
-                                            <a href={`mailto:${soli.correo}`} className="underline">{soli.correo}</a>
+                                        {soli.origen !== 'WEB' && <span className="text-xs text-gray-500"> · {ETIQUETA_ORIGEN[soli.origen]}</span>}
+                                        <div className="flex flex-col gap-0.5 mt-1">
+                                            <a href={`mailto:${soli.correo}`} className="text-gray-700 underline break-all">{soli.correo}</a>
                                             <a
                                                 href={enlaceWhatsApp({ ...soli, modelo: soli.modeloCasa?.nombreModelo, proyecto: soli.modeloCasa?.proyecto.nombre })}
                                                 target="_blank"
@@ -261,18 +212,17 @@ export default function BandejaSolicitudes() {
                                         </div>
                                     </td>
                                     <td className="py-3 pr-4">
-                                        {soli.modeloCasa ? `${soli.modeloCasa.proyecto.nombre} — ${soli.modeloCasa.nombreModelo}` : '-'}
+                                        {soli.modeloCasa ? <>{soli.modeloCasa.nombreModelo}<span className="block text-xs text-gray-500">{soli.modeloCasa.proyecto.nombre}</span></> : '-'}
                                     </td>
-                                    <td className="py-3 pr-4 max-w-xs">{soli.mensaje ?? '-'}</td>
                                     <td className="py-3 pr-4 whitespace-nowrap">
                                         {soli.visitaPreferida ? formatearFechaHora(soli.visitaPreferida) : '-'}
                                         {soli.visitaEstado && <span className="block text-xs text-gray-500">{ETIQUETA_VISITA[soli.visitaEstado]}</span>}
                                     </td>
                                     <td className="py-3 pr-4 font-medium">
                                         {soli.contactado ? (
-                                            <span className="text-green-600 font-medium">Contactado</span>
+                                            <span className="text-green-700">Contactado</span>
                                         ) : (
-                                            <span className="text-yellow-600 font-medium">Pendiente</span>
+                                            <span className="text-amber-800">Pendiente</span>
                                         )}
                                         {reserva && (
                                             <span className={`block mt-1 text-xs font-semibold ${reserva.estado === 'VENDIDA' ? 'text-gray-600' : 'text-amber-700'}`}>
@@ -281,62 +231,17 @@ export default function BandejaSolicitudes() {
                                         )}
                                     </td>
                                     <td className="py-3 pr-4">
-                                        <div className="flex flex-col items-start gap-2">
-                                            {!soli.contactado && (
-                                                <button
-                                                    onClick={() => handleMarcarContactado(soli.id)}
-                                                    className="text-sm bg-marca text-white px-3 py-1 rounded-lg whitespace-nowrap"
-                                                >
-                                                    Marcar contactado
-                                                </button>
-                                            )}
-                                            <Link href={`/secretario/cotizacion/${soli.id}`} target="_blank"
-                                                className="text-sm border px-3 py-1 rounded-lg whitespace-nowrap hover:bg-gray-50">
-                                                Generar cotización
+                                        {soli.contactado ? (
+                                            <Link href={`/secretario/solicitudes/${soli.id}`}
+                                                className="inline-block text-sm border px-3 py-1.5 rounded-lg whitespace-nowrap hover:bg-gray-50">
+                                                Abrir ficha
                                             </Link>
-                                            {!reserva && reservandoId !== soli.id && (
-                                                <button type="button" onClick={() => abrirReserva(soli.id)}
-                                                    className="text-sm border px-3 py-1 rounded-lg whitespace-nowrap hover:bg-gray-50">
-                                                    Reservar
-                                                </button>
-                                            )}
-                                            {!reserva && reservandoId === soli.id && (
-                                                <form onSubmit={(e) => handleReservar(e, soli.id)} className="flex flex-col gap-1 w-44">
-                                                    <input value={rut} onChange={(e) => { setRut(e.target.value); setErrorRut(null); }}
-                                                        placeholder="RUT 12.345.678-5" aria-label="RUT del comprador" required maxLength={12}
-                                                        className="border rounded-lg px-2 py-1" />
-                                                    {errorRut && <span className="text-red-500 text-xs">{errorRut}</span>}
-                                                    <input value={lote} onChange={(e) => setLote(e.target.value)}
-                                                        placeholder="Lote (opcional)" aria-label="Lote" maxLength={50}
-                                                        className="border rounded-lg px-2 py-1" />
-                                                    <div className="flex gap-1">
-                                                        <button type="submit" disabled={guardandoReserva}
-                                                            className="text-sm bg-marca text-white px-3 py-1 rounded-lg disabled:opacity-50">
-                                                            {guardandoReserva ? 'Guardando...' : 'Guardar'}
-                                                        </button>
-                                                        <button type="button" onClick={() => setReservandoId(null)}
-                                                            className="text-sm border px-3 py-1 rounded-lg hover:bg-gray-50">
-                                                            Cancelar
-                                                        </button>
-                                                    </div>
-                                                    {errorReserva && <p role="alert" className="text-red-500 text-xs">{errorReserva}</p>}
-                                                </form>
-                                            )}
-                                            {reserva?.estado === 'RESERVADA' && (
-                                                <>
-                                                    <button type="button" onClick={() => handleCambiarReserva(soli.id, reserva, 'VENDIDA')}
-                                                        disabled={cambiandoId === reserva.id}
-                                                        className="text-sm border px-3 py-1 rounded-lg whitespace-nowrap hover:bg-gray-50 disabled:opacity-50">
-                                                        Marcar vendida
-                                                    </button>
-                                                    <button type="button" onClick={() => handleCambiarReserva(soli.id, reserva, 'ANULADA')}
-                                                        disabled={cambiandoId === reserva.id}
-                                                        className="text-sm text-red-700 border border-red-200 px-3 py-1 rounded-lg whitespace-nowrap hover:bg-red-50 disabled:opacity-50">
-                                                        Anular reserva
-                                                    </button>
-                                                </>
-                                            )}
-                                        </div>
+                                        ) : (
+                                            <button type="button" onClick={() => handleMarcarContactado(soli.id)}
+                                                className="text-sm bg-marca text-white px-3 py-1.5 rounded-lg whitespace-nowrap hover:bg-marca/90">
+                                                Marcar contactado
+                                            </button>
+                                        )}
                                     </td>
                                 </tr>
                                 );
