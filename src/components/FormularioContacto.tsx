@@ -5,7 +5,7 @@ import Link from "next/link";
 import { crearSolicitud } from "@/services/solicitud.service";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useId, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import z from "zod";
 import { CELULAR_VALIDO, normalizarCelular } from "@/lib/formato";
 
@@ -22,7 +22,9 @@ const esquemFormulario = z.object({
 
 type FormValues = z.input<typeof esquemFormulario>;
 
-const ETIQUETA = "flex flex-col gap-1 text-sm font-medium text-gray-700";
+// Mismo tope que el backend (CrearSolicitudDto).
+const MAX_MENSAJE = 2000;
+const ETIQUETA ="flex flex-col gap-1 text-sm font-medium text-gray-700";
 // text-base porque con letra menor a 16 px el iPhone hace zoom al tocar el campo.
 const CAMPO = "w-full min-h-11 border rounded-lg px-3 py-2 text-base font-normal text-gray-900";
 
@@ -44,11 +46,13 @@ export default function FormularioContacto({ idModeloCasa, conVisita = false, sa
         register,
         handleSubmit,
         reset,
+        control,
         formState: { errors, isSubmitting },
     } = useForm<FormValues>({
         resolver: zodResolver(esquemFormulario),
         defaultValues: { aceptaPrivacidad: false },
     });
+    const mensaje = useWatch({ control, name: 'mensaje' }) ?? '';
     const id = useId();
     // Liga cada campo con su mensaje de error para los lectores de pantalla.
     const conError = (campo: keyof typeof errors) =>
@@ -138,7 +142,8 @@ export default function FormularioContacto({ idModeloCasa, conVisita = false, sa
 
             <label className={ETIQUETA}>
                 Mensaje (opcional)
-                <textarea {...register('mensaje')} rows={3} maxLength={2000} className={CAMPO} />
+                <textarea {...register('mensaje')} rows={3} maxLength={MAX_MENSAJE} className={CAMPO} />
+                <span className="self-end text-xs font-normal text-gray-500">{mensaje.length}/{MAX_MENSAJE}</span>
             </label>
 
             {conVisita && (

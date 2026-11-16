@@ -194,7 +194,7 @@ export default function FichaCliente() {
                             </div>
                         </form>
                     )}
-                    {ficha.mensaje && <p className="text-sm text-gray-700 border-l-4 border-gray-200 pl-3 whitespace-pre-line">{ficha.mensaje}</p>}
+                    {ficha.mensaje && <p className="text-sm text-gray-700 border-l-4 border-gray-200 pl-3 whitespace-pre-line wrap-anywhere">{ficha.mensaje}</p>}
                 </Seccion>
 
                 <Seccion titulo="Visita a la sala de ventas">
@@ -269,7 +269,7 @@ export default function FichaCliente() {
                     <ol className="flex flex-col gap-3">
                         {ficha.notas.map((n) => (
                             <li key={n.id} className="text-sm border-l-4 border-marca/30 pl-3">
-                                <p className="whitespace-pre-line">{n.texto}</p>
+                                <p className="whitespace-pre-line wrap-anywhere">{n.texto}</p>
                                 <p className="text-xs text-gray-500 mt-0.5">{n.usuario?.nombre ?? 'Usuario eliminado'} · {formatearFechaHora(n.creadoEn)}</p>
                             </li>
                         ))}

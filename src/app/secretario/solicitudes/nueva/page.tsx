@@ -10,7 +10,9 @@ import { CrearSolicitudPanelInput, ETIQUETA_ORIGEN } from "@/types/solicitud";
 import { mensajeError } from "@/lib/errores";
 
 const ORIGENES = ['SALA_VENTAS', 'TELEFONO', 'WHATSAPP'] as const;
-const VACIO = { nombre: '', apellido: '', correo: '', celular: '', mensaje: '', id_modelo_casa: '', visita: '' };
+// Mismo tope que el backend (CrearSolicitudDto).
+const MAX_MENSAJE = 2000;
+const VACIO ={ nombre: '', apellido: '', correo: '', celular: '', mensaje: '', id_modelo_casa: '', visita: '' };
 
 // Para clientes que llegan a la sala, llaman o escriben. Queda como contactado y, si se agenda visita, confirmada.
 export default function NuevaSolicitud() {
@@ -97,7 +99,8 @@ export default function NuevaSolicitud() {
 
                 <label className="flex flex-col gap-1 text-sm font-medium">
                     Comentario (opcional)
-                    <textarea {...campo('mensaje')} rows={3} maxLength={2000} className={entrada} />
+                    <textarea {...campo('mensaje')} rows={3} maxLength={MAX_MENSAJE} className={entrada} />
+                    <span className="self-end text-xs font-normal text-gray-500">{datos.mensaje.length}/{MAX_MENSAJE}</span>
                 </label>
 
                 {conSala && (
