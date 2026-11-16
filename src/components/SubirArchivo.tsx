@@ -1,6 +1,8 @@
 'use client'
 
-import { useState } from "react"
+import { useRef, useState } from "react"
+import { Box } from "lucide-react";
+import ZonaSubida, { FilaArchivo, MensajeError } from "./ZonaSubida";
 
 const tamañoMaximo = 100*1024*1024;
 
@@ -11,54 +13,78 @@ interface SubidaModelo3dProps{
 }
 
 export default function SubidaModelo3d({archivoSeleccionado, progreso = 0, subiendo = false}:SubidaModelo3dProps){
-    const [nombreArchivo, setNombreArchivo] = useState<string | null>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
+    const [archivo, setArchivo] = useState<File | null>(null);
     const [error, setError] = useState<string | null>(null);
 
-    const manejarCambio = (e: React.ChangeEvent<HTMLInputElement>)=>{
-        const archivo = e.target.files?.[0] ?? null;
+    const quitar = () => {
+        setArchivo(null);
+        archivoSeleccionado(null);
+    };
+
+    const elegir = (nuevo: File) => {
         setError(null);
 
-        if(!archivo){
-            setNombreArchivo(null);
-            archivoSeleccionado(null);
-            return;
-        }
+        const extension = nuevo.name.split('.').pop()?.toLowerCase();
 
-        const extension = archivo.name.split('.').pop()?.toLowerCase();
-        
         if(extension !== 'glb' && extension !== 'gltf'){
-            setError('El archivo debe ser .glb o gltf');
-            archivoSeleccionado(null);
-            e.target.value = '';
+            setError(`El archivo debe ser .glb o .gltf${extension && extension !== nuevo.name.toLowerCase() ? ` (elegiste un .${extension})` : ''}`);
+            quitar();
             return;
         }
 
-        if(archivo.size > tamañoMaximo){
-            setError('El modelo 3D no debe superar los 100MB')
-            archivoSeleccionado(null)
-            e.target.value = '';
+        if(nuevo.size > tamañoMaximo){
+            setError('El modelo 3D no debe superar los 100 MB');
+            quitar();
             return;
         }
 
-        setNombreArchivo(archivo.name);
-        archivoSeleccionado(archivo);
+        setArchivo(nuevo);
+        archivoSeleccionado(nuevo);
     };
 
     return(
         <div className="flex flex-col gap-2">
-            <input type="file"
-            accept=".glb, .gltf"
-            onChange={manejarCambio}
-            disabled={subiendo}
-            className="text-sm"
+            <input
+                ref={inputRef}
+                type="file"
+                accept=".glb,.gltf"
+                onChange={(e) => {
+                    const nuevo = e.target.files?.[0];
+                    e.target.value = '';
+                    if (nuevo) elegir(nuevo);
+                }}
+                disabled={subiendo}
+                className="hidden"
             />
-            {nombreArchivo && <p className="text-sm text-gray-600">Archivo:{nombreArchivo}</p>}
-            {error && <p className="text-red-500 text-sm">{error}</p>}
-            {subiendo &&(
-                <div className="w-full bg-gray-100 rounded-full h-2">
-                    <div className="bg-marca h-2 rounded-full transition-all" style={{width:`${progreso}%`}}></div>
+            {archivo ? (
+                <div className="border border-gray-200 rounded-xl bg-white">
+                    <FilaArchivo archivo={archivo} deshabilitado={subiendo} onCambiar={() => inputRef.current?.click()} onQuitar={quitar}>
+                        <span className="size-12 shrink-0 rounded-lg bg-marca/10 text-marca flex items-center justify-center">
+                            <Box className="size-6" aria-hidden />
+                        </span>
+                    </FilaArchivo>
+                    {subiendo && (
+                        <div className="px-3 pb-3 flex flex-col gap-1.5">
+                            <span className="text-xs font-medium text-marca">Subiendo modelo 3D… {Math.round(progreso)} %</span>
+                            <div className="w-full h-1.5 rounded-full bg-marca/10">
+                                <div className="h-1.5 rounded-full bg-marca transition-all" style={{width:`${progreso}%`}} />
+                            </div>
+                        </div>
+                    )}
                 </div>
+            ) : (
+                <ZonaSubida
+                    icono={Box}
+                    queSubir="el modelo 3D"
+                    ayuda="GLB o GLTF · máx. 100 MB"
+                    error={error !== null}
+                    deshabilitado={subiendo}
+                    onElegir={() => inputRef.current?.click()}
+                    onSoltar={elegir}
+                />
             )}
+            {error && <MensajeError>{error}</MensajeError>}
         </div>
     )
 }
