@@ -29,6 +29,8 @@ const csp = [
 ].join('; ');
 
 const nextConfig: NextConfig = {
+  // Se quita la cabecera X-Powered-By para no anunciar qué framework usa el sitio.
+  poweredByHeader: false,
   async headers() {
     return [{
       source: '/:path*',
