@@ -42,28 +42,8 @@ const nextConfig: NextConfig = {
     }];
   },
   images:{
+    // Solo el bucket actual. Se revisó en la BD (2026-11-16) que todas las URLs guardadas apuntan a él.
     remotePatterns:[
-      // shortcut: picsum, unsplash, gstatic, adobe y el bucket antiguo siguen permitidos porque URLs ya guardadas
-      // en la BD podrían usarlos; quitarlos cuando una consulta a la BD confirme que ninguna los usa (A.8.32)
-      {
-        protocol: 'https',
-        hostname: 'picsum.photos'
-      },
-      { protocol: 'https', hostname: 'images.unsplash.com' },
-      {
-        protocol: 'https',
-        hostname: 'encrypted-tbn0.gstatic.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'inmobiliaria-modelos-3d-inacap2026.s3.us-east-1.amazonaws.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'www.adobe.com',
-      },
       { protocol: 'https', hostname: HOST_S3, pathname: '/**' },
     ]
   }

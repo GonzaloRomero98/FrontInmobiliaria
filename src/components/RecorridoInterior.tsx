@@ -34,6 +34,9 @@ interface RecorridoInteriorProps {
 // Recorrido en primera persona dentro del GLB. Parte en el nodo "Entrada" si el modelo lo tiene
 // (un Empty de Blender en la puerta); si no, en el centro de la planta.
 // Con sesionAr la casa se muestra a escala real sobre la cámara, con la entrada donde está la persona.
+// En RA no se puede subir una escalera de verdad. Si el modelo tiene el nodo "Piso2" (un Empty en el suelo
+// del segundo piso, al final de la escalera, orientado igual que "Entrada"), aparece un botón que mueve
+// la casa para dejar ese punto bajo los pies de la persona.
 export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, sesionAr, capaAr }: RecorridoInteriorProps) {
     const contenedor = useRef<HTMLDivElement>(null);
     const lienzo = useRef<HTMLDivElement>(null);
@@ -42,6 +45,10 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
     const [estado, setEstado] = useState<'cargando' | 'listo' | 'error'>('cargando');
     const [intento, setIntento] = useState(0);
     const [colocada, setColocada] = useState(false);
+    const [hayPiso2, setHayPiso2] = useState(false);
+    const [piso, setPiso] = useState<1 | 2>(1);
+    // El botón solo deja el pedido; el cambio se hace en el siguiente cuadro, que es donde está la pose de la cámara.
+    const pisoPedido = useRef<1 | 2 | null>(null);
     const iniciarAr = useRef<((sesion: XRSession) => void) | null>(null);
 
     useEffect(() => {
@@ -73,6 +80,13 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
         let modelo: THREE.Object3D | null = null;
         const pies = new THREE.Vector3();
         let yaw = 0, pitch = 0;
+        // Puntos donde puede quedar la persona en RA: posición dentro del modelo y hacia dónde mira.
+        type Punto = { pos: THREE.Vector3; yaw: number };
+        let entrada: Punto | null = null, piso2: Punto | null = null;
+        const yawDe = (q: THREE.Quaternion) => {
+            const frente = new THREE.Vector3(0, 0, -1).applyQuaternion(q);
+            return Math.atan2(-frente.x, -frente.z);
+        };
         const rayo = new THREE.Raycaster();
         const origen = new THREE.Vector3(), dir = new THREE.Vector3(), mov = new THREE.Vector3();
 
@@ -102,17 +116,25 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
             escena.add(modelo);
             modelo.updateMatrixWorld(true);
 
-            const entrada = modelo.getObjectByName('Entrada');
-            if (entrada) {
-                entrada.getWorldPosition(pies);
-                const frente = new THREE.Vector3(0, 0, -1).applyQuaternion(entrada.getWorldQuaternion(new THREE.Quaternion()));
-                yaw = Math.atan2(-frente.x, -frente.z);
+            const nodoEntrada = modelo.getObjectByName('Entrada');
+            if (nodoEntrada) {
+                nodoEntrada.getWorldPosition(pies);
+                yaw = yawDe(nodoEntrada.getWorldQuaternion(new THREE.Quaternion()));
             } else {
                 const caja = new THREE.Box3().setFromObject(modelo);
                 caja.getCenter(pies);
                 pies.y = caja.min.y;
             }
             ajustarPiso();
+            entrada = { pos: pies.clone(), yaw };
+            const nodoPiso2 = modelo.getObjectByName('Piso2');
+            if (nodoPiso2) {
+                piso2 = {
+                    pos: nodoPiso2.getWorldPosition(new THREE.Vector3()),
+                    yaw: yawDe(nodoPiso2.getWorldQuaternion(new THREE.Quaternion())),
+                };
+            }
+            setHayPiso2(!!piso2);
             setEstado('listo');
         }, undefined, () => { if (!cancelado) setEstado('error'); });
 
@@ -151,7 +173,8 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
         let fuenteHit: XRHitTestSource | undefined;
         let ancla: XRAnchor | undefined;
         let enSuelo = false, enAr = false;
-        const anclaInicial = new THREE.Vector3(), baseModelo = new THREE.Vector3();
+        // deriva = cuánto se ha corrido el ancla desde que se colocó la casa.
+        const anclaInicial = new THREE.Vector3(), baseModelo = new THREE.Vector3(), deriva = new THREE.Vector3();
         // La RA usa este mismo renderer y al salir se vuelve al recorrido con joystick.
         // Destruir el contexto WebGL justo al cerrar la sesión hacía caer la pestaña en Android.
         iniciarAr.current = (sesion) => {
@@ -166,7 +189,9 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
                 renderer.xr.enabled = false;
                 escena.background = fondo;
                 if (modelo) { modelo.position.set(0, 0, 0); modelo.rotation.y = 0; modelo.visible = true; }
+                pisoPedido.current = null;
                 setColocada(false);
+                setPiso(1);
             });
             renderer.xr.enabled = true;
             renderer.xr.setReferenceSpaceType('local');
@@ -176,6 +201,16 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
                 .then((f) => { if (cancelado) f?.cancel(); else fuenteHit = f; })
                 .catch(() => sesion.end().catch(() => {}));
         };
+        // Gira y mueve la casa para que el punto quede bajo los pies de la persona, mirando hacia donde ella mira.
+        // La altura es la del suelo real anclado al colocar la casa, así que sirve para cualquier piso.
+        const ubicarEn = (ojos: XRRigidTransform, punto: Punto) => {
+            const { x, y, z, w } = ojos.orientation;
+            const giro = yawDe(new THREE.Quaternion(x, y, z, w)) - punto.yaw;
+            modelo!.rotation.y = giro;
+            baseModelo.set(ojos.position.x - deriva.x, anclaInicial.y, ojos.position.z - deriva.z)
+                .sub(punto.pos.clone().applyAxisAngle(EJE_Y, giro));
+            modelo!.position.copy(baseModelo).add(deriva);
+        };
         const colocarEnElSuelo = (frame: XRFrame) => {
             const ref = renderer.xr.getReferenceSpace()!;
             const ojos = frame.getViewerPose(ref)?.transform;
@@ -183,13 +218,9 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
             const suelo = hit?.getPose(ref)?.transform.position;
             // Si el punto está a menos de medio metro bajo los ojos, probablemente es una mesa y no el suelo.
             if (!ojos || !suelo || ojos.position.y - suelo.y < 0.5) return;
-            const { x, y, z, w } = ojos.orientation;
-            const frente = new THREE.Vector3(0, 0, -1).applyQuaternion(new THREE.Quaternion(x, y, z, w));
-            const giro = Math.atan2(-frente.x, -frente.z) - yaw;
-            modelo!.rotation.y = giro;
-            modelo!.position.set(ojos.position.x, suelo.y, ojos.position.z).sub(pies.clone().applyAxisAngle(EJE_Y, giro));
-            baseModelo.copy(modelo!.position);
             anclaInicial.set(suelo.x, suelo.y, suelo.z);
+            deriva.set(0, 0, 0);
+            ubicarEn(ojos, entrada!);
             hit.createAnchor?.()?.then((a) => { if (cancelado) a.delete(); else ancla = a; }, () => {});
             fuenteHit!.cancel();
             fuenteHit = undefined;
@@ -198,7 +229,15 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
         };
         const seguirAncla = (frame: XRFrame) => {
             const p = frame.getPose(ancla!.anchorSpace, renderer.xr.getReferenceSpace()!)?.transform.position;
-            if (p) modelo!.position.set(p.x, p.y, p.z).sub(anclaInicial).add(baseModelo);
+            if (!p) return;
+            deriva.set(p.x, p.y, p.z).sub(anclaInicial);
+            modelo!.position.copy(baseModelo).add(deriva);
+        };
+        const cambiarPiso = (frame: XRFrame) => {
+            const ojos = frame.getViewerPose(renderer.xr.getReferenceSpace()!)?.transform;
+            if (!ojos) return;
+            ubicarEn(ojos, pisoPedido.current === 2 ? piso2! : entrada!);
+            pisoPedido.current = null;
         };
 
         let anterior = 0;
@@ -208,6 +247,7 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
             if (enAr) {
                 if (modelo && frame && fuenteHit) colocarEnElSuelo(frame);
                 if (modelo && frame && ancla) seguirAncla(frame);
+                if (modelo && frame && enSuelo && pisoPedido.current) cambiarPiso(frame);
                 // Mientras no esté ubicada, la casa no se dibuja porque aparecería alrededor de la cabeza.
                 if (modelo) modelo.visible = enSuelo;
             } else if (modelo) {
@@ -316,6 +356,12 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
                                 : estado === 'cargando' ? 'Cargando la casa…'
                                 : 'Apunta el celular al suelo, cerca de tus pies. La casa aparecerá a tu alrededor, desde la entrada.'}
                         </p>
+                    )}
+                    {colocada && hayPiso2 && (
+                        <button type="button" onClick={() => { const otro = piso === 1 ? 2 : 1; pisoPedido.current = otro; setPiso(otro); }}
+                            className="rounded-full bg-white px-6 py-3 font-semibold text-gray-900 shadow">
+                            {piso === 1 ? 'Subir al 2° piso' : 'Bajar al 1er piso'}
+                        </button>
                     )}
                 </div>,
                 capaAr,

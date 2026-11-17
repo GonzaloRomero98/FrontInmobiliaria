@@ -90,6 +90,7 @@ export interface FiltrosBusqueda{
     tipoOperacion?:Operacion;
     id_region?:string;
     id_ciudad?:string;
+    tipoVivienda?:TipoVivienda;
     moneda?:Moneda;
     precioMin?:string;
     precioMax?:string;

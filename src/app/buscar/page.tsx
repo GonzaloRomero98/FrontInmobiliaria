@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 const CLAVES: (keyof Filtros)[] = [
-    'tipoOperacion', 'id_region', 'id_ciudad', 'moneda', 'precioMin', 'precioMax',
+    'tipoOperacion', 'id_region', 'id_ciudad', 'tipoVivienda', 'moneda', 'precioMin', 'precioMax',
     'dormitorios', 'banos', 'superficieMin', 'mascotas', 'orden',
 ];
 

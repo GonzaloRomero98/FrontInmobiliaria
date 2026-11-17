@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { gerRegiones, getCiudades } from "@/services/ubicacion.service";
 import { Ciudad, Region } from "@/types/ubicacion";
-import { FiltrosBusqueda as Filtros, Operacion } from "@/types/modeloCasa";
+import { ETIQUETA_TIPO_VIVIENDA, FiltrosBusqueda as Filtros, Operacion, TipoVivienda } from "@/types/modeloCasa";
 
 const MINIMOS = ['1', '2', '3', '4'];
 
@@ -84,6 +84,14 @@ export default function FiltrosBusqueda({ iniciales }: { iniciales: Filtros }) {
                 <select value={filtros.id_ciudad ?? ''} onChange={(e) => cambiar('id_ciudad', e.target.value)} className={campo} disabled={!filtros.id_region}>
                     <option value="">Todas</option>
                     {ciudadesDeRegion.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+                </select>
+            </label>
+
+            <label className="flex flex-col gap-1 text-sm">
+                Tipo de propiedad
+                <select value={filtros.tipoVivienda ?? ''} onChange={(e) => cambiar('tipoVivienda', e.target.value as TipoVivienda)} className={campo}>
+                    <option value="">Casa o departamento</option>
+                    {(Object.keys(ETIQUETA_TIPO_VIVIENDA) as TipoVivienda[]).map((t) => <option key={t} value={t}>{ETIQUETA_TIPO_VIVIENDA[t]}</option>)}
                 </select>
             </label>
 
