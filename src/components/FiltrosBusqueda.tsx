@@ -5,8 +5,19 @@ import { useRouter } from "next/navigation";
 import { gerRegiones, getCiudades } from "@/services/ubicacion.service";
 import { Ciudad, Region } from "@/types/ubicacion";
 import { ETIQUETA_TIPO_VIVIENDA, FiltrosBusqueda as Filtros, Operacion, TipoVivienda } from "@/types/modeloCasa";
+import Desplegable from "./Desplegable";
 
-const MINIMOS = ['1', '2', '3', '4'];
+const MINIMOS = ['1', '2', '3', '4'].map((n) => ({ valor: n, texto: `${n}+` }));
+const TODAS = { valor: '', texto: 'Todas' };
+const CUALQUIERA = { valor: '', texto: 'Cualquiera' };
+const OPCIONES_TIPO = (Object.keys(ETIQUETA_TIPO_VIVIENDA) as TipoVivienda[]).map((t) => ({ valor: t, texto: ETIQUETA_TIPO_VIVIENDA[t] }));
+const ORDENES = [
+    { valor: '', texto: 'Nombre' },
+    { valor: 'precio_asc', texto: 'Menor precio' },
+    { valor: 'precio_desc', texto: 'Mayor precio' },
+    { valor: 'superficie_desc', texto: 'Mayor superficie' },
+    { valor: 'recientes', texto: 'Más recientes' },
+];
 
 // Filtros secundarios. En el celular quedan plegados en "Más filtros".
 const EXTRAS = ['orden', 'dormitorios', 'banos', 'superficieMin', 'mascotas'] as const;
@@ -64,35 +75,26 @@ export default function FiltrosBusqueda({ iniciales }: { iniciales: Filtros }) {
         <form onSubmit={buscar} className="grid grid-cols-2 lg:grid-cols-4 gap-3 p-4 border rounded-xl bg-gray-50">
             <label className="flex flex-col gap-1 text-sm col-span-2 lg:col-span-1">
                 Operación
-                <select value={filtros.tipoOperacion ?? ''} onChange={(e) => cambiar('tipoOperacion', e.target.value as Operacion)} className={campo}>
-                    <option value="">Venta o arriendo</option>
-                    <option value="VENTA">Venta</option>
-                    <option value="ARRIENDO">Arriendo</option>
-                </select>
+                <Desplegable etiqueta="Operación" valor={filtros.tipoOperacion ?? ''} onChange={(v) => cambiar('tipoOperacion', v as Operacion)} className={campo}
+                    opciones={[{ valor: '', texto: 'Venta o arriendo' }, { valor: 'VENTA', texto: 'Venta' }, { valor: 'ARRIENDO', texto: 'Arriendo' }]} />
             </label>
 
             <label className="flex flex-col gap-1 text-sm">
                 Región
-                <select value={filtros.id_region ?? ''} onChange={(e) => cambiar('id_region', e.target.value)} className={campo}>
-                    <option value="">Todas</option>
-                    {regiones.map((r) => <option key={r.id} value={r.id}>{r.nombre}</option>)}
-                </select>
+                <Desplegable etiqueta="Región" valor={filtros.id_region ?? ''} onChange={(v) => cambiar('id_region', v)} className={campo}
+                    opciones={[TODAS, ...regiones.map((r) => ({ valor: String(r.id), texto: r.nombre }))]} />
             </label>
 
             <label className="flex flex-col gap-1 text-sm">
                 Comuna
-                <select value={filtros.id_ciudad ?? ''} onChange={(e) => cambiar('id_ciudad', e.target.value)} className={campo} disabled={!filtros.id_region}>
-                    <option value="">Todas</option>
-                    {ciudadesDeRegion.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-                </select>
+                <Desplegable etiqueta="Comuna" valor={filtros.id_ciudad ?? ''} onChange={(v) => cambiar('id_ciudad', v)} className={campo} disabled={!filtros.id_region}
+                    opciones={[TODAS, ...ciudadesDeRegion.map((c) => ({ valor: String(c.id), texto: c.nombre }))]} />
             </label>
 
             <label className="flex flex-col gap-1 text-sm">
                 Tipo de propiedad
-                <select value={filtros.tipoVivienda ?? ''} onChange={(e) => cambiar('tipoVivienda', e.target.value as TipoVivienda)} className={campo}>
-                    <option value="">Casa o departamento</option>
-                    {(Object.keys(ETIQUETA_TIPO_VIVIENDA) as TipoVivienda[]).map((t) => <option key={t} value={t}>{ETIQUETA_TIPO_VIVIENDA[t]}</option>)}
-                </select>
+                <Desplegable etiqueta="Tipo de propiedad" valor={filtros.tipoVivienda ?? ''} onChange={(v) => cambiar('tipoVivienda', v as TipoVivienda)} className={campo}
+                    opciones={[{ valor: '', texto: 'Casa o departamento' }, ...OPCIONES_TIPO]} />
             </label>
 
             <label className="flex flex-col gap-1 text-sm">
@@ -115,29 +117,20 @@ export default function FiltrosBusqueda({ iniciales }: { iniciales: Filtros }) {
             <div id="mas-filtros" className={masFiltros ? 'contents' : 'hidden lg:contents'}>
                 <label className="flex flex-col gap-1 text-sm">
                     Ordenar por
-                    <select value={filtros.orden ?? ''} onChange={(e) => cambiar('orden', e.target.value as Filtros['orden'])} className={campo}>
-                        <option value="">Nombre</option>
-                        <option value="precio_asc">Menor precio</option>
-                        <option value="precio_desc">Mayor precio</option>
-                        <option value="superficie_desc">Mayor superficie</option>
-                        <option value="recientes">Más recientes</option>
-                    </select>
+                    <Desplegable etiqueta="Ordenar por" valor={filtros.orden ?? ''} onChange={(v) => cambiar('orden', v as Filtros['orden'])} className={campo}
+                        opciones={ORDENES} />
                 </label>
 
                 <label className="flex flex-col gap-1 text-sm">
                     Dormitorios
-                    <select value={filtros.dormitorios ?? ''} onChange={(e) => cambiar('dormitorios', e.target.value)} className={campo}>
-                        <option value="">Cualquiera</option>
-                        {MINIMOS.map((n) => <option key={n} value={n}>{n}+</option>)}
-                    </select>
+                    <Desplegable etiqueta="Dormitorios" valor={filtros.dormitorios ?? ''} onChange={(v) => cambiar('dormitorios', v)} className={campo}
+                        opciones={[CUALQUIERA, ...MINIMOS]} />
                 </label>
 
                 <label className="flex flex-col gap-1 text-sm">
                     Baños
-                    <select value={filtros.banos ?? ''} onChange={(e) => cambiar('banos', e.target.value)} className={campo}>
-                        <option value="">Cualquiera</option>
-                        {MINIMOS.slice(0, 3).map((n) => <option key={n} value={n}>{n}+</option>)}
-                    </select>
+                    <Desplegable etiqueta="Baños" valor={filtros.banos ?? ''} onChange={(v) => cambiar('banos', v)} className={campo}
+                        opciones={[CUALQUIERA, ...MINIMOS.slice(0, 3)]} />
                 </label>
 
                 <label className="flex flex-col gap-1 text-sm">

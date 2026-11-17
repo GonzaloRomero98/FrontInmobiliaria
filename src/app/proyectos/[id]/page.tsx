@@ -77,7 +77,7 @@ export default async function ProyectoDetalle({ params }: { params: Promise<{ id
                         </div>
                     )}
                     {proyecto.descripcion && <p className="text-gray-700 leading-relaxed max-w-prose">{proyecto.descripcion}</p>}
-                    <div className="flex flex-wrap gap-3">
+                    <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 text-center">
                         {modelos.length > 0 && (
                             <a href="#modelos" className="bg-marca text-white rounded-lg px-5 py-3 font-medium hover:bg-marca/90 transition-colors">
                                 Ver {plural(modelos.length, 'modelo', 'modelos')}

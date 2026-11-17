@@ -43,12 +43,15 @@ export default function SimuladorDividendo({ precio, moneda, valorUF }: Simulado
 
             <div className="grid grid-cols-2 gap-3">
                 <label className="flex flex-col gap-1 text-sm">
-                    Tasa anual (%)
-                    <input
-                        type="number" min={0} max={20} step={0.1} value={tasa}
-                        onChange={(e) => setTasa(Math.min(20, Math.max(0, Number(e.target.value) || 0)))}
-                        className="border rounded-lg px-3 py-2"
-                    />
+                    Tasa anual
+                    <span className="relative">
+                        <input
+                            type="number" min={0} max={20} step={0.1} value={tasa}
+                            onChange={(e) => setTasa(Math.min(20, Math.max(0, Number(e.target.value) || 0)))}
+                            className="border rounded-lg pl-3 pr-8 py-2 w-full"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">%</span>
+                    </span>
                 </label>
                 <label className="flex flex-col gap-1 text-sm">
                     Plazo

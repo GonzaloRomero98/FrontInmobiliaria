@@ -1,10 +1,13 @@
 'use client'
 
-import { ChevronDown, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ETIQUETA_TIPO_VIVIENDA, Operacion, TipoVivienda } from "@/types/modeloCasa";
 import { Ciudad } from "@/types/ubicacion";
+import Desplegable from "./Desplegable";
+
+const OPCIONES_TIPO = (Object.keys(ETIQUETA_TIPO_VIVIENDA) as TipoVivienda[]).map((t) => ({ valor: t, texto: ETIQUETA_TIPO_VIVIENDA[t] }));
 
 const OPERACIONES: { valor: Operacion; texto: string; moneda: 'UF' | 'CLP' }[] = [
     { valor: 'VENTA', texto: 'Comprar', moneda: 'UF' },
@@ -40,11 +43,10 @@ export default function BuscadorInicio({ comunas }: { comunas: Ciudad[] }) {
 
 
     // text-base porque con letra menor a 16 px el iPhone hace zoom al tocar el campo.
-    // appearance-none quita el borde y la flecha nativos; la flecha se dibuja con un ícono.
-    const campo = "w-full appearance-none bg-transparent border-0 p-0 pr-7 text-base font-medium text-gray-900 truncate cursor-pointer focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]";
+    const campo = "w-full appearance-none bg-transparent border-0 p-0 pr-7 text-base font-medium text-gray-900 truncate focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]";
+    const campoDesplegable = "bg-transparent text-base font-medium text-gray-900 focus:outline-none";
     const caja = "relative flex flex-col gap-1 px-5 py-3 rounded-xl hover:bg-gray-50 focus-within:bg-gray-50 focus-within:ring-2 focus-within:ring-acento/40 transition-colors";
     const etiqueta = "text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap";
-    const flecha = <ChevronDown className="pointer-events-none absolute right-5 bottom-3.5 w-4 h-4 text-gray-400" aria-hidden="true" />;
 
     return (
         <div className="flex flex-col">
@@ -62,20 +64,14 @@ export default function BuscadorInicio({ comunas }: { comunas: Ciudad[] }) {
                 className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto] items-center gap-1 lg:gap-0 p-2 rounded-2xl rounded-tl-none bg-white shadow-lg shadow-slate-900/8 ring-1 ring-gray-100">
                 <label className={caja}>
                     <span className={etiqueta}>Comuna</span>
-                    <select value={comuna} onChange={(e) => setComuna(e.target.value)} className={campo}>
-                        <option value="">Todas las comunas</option>
-                        {comunas.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-                    </select>
-                    {flecha}
+                    <Desplegable etiqueta="Comuna" valor={comuna} onChange={setComuna} className={campoDesplegable}
+                        opciones={[{ valor: '', texto: 'Todas las comunas' }, ...comunas.map((c) => ({ valor: String(c.id), texto: c.nombre }))]} />
                 </label>
 
                 <label className={`${caja} lg:before:absolute lg:before:left-0 lg:before:inset-y-3 lg:before:w-px lg:before:bg-gray-200`}>
                     <span className={etiqueta}>Tipo de propiedad</span>
-                    <select value={tipo} onChange={(e) => setTipo(e.target.value as TipoVivienda | '')} className={campo}>
-                        <option value="">Casa o departamento</option>
-                        {(Object.keys(ETIQUETA_TIPO_VIVIENDA) as TipoVivienda[]).map((t) => <option key={t} value={t}>{ETIQUETA_TIPO_VIVIENDA[t]}</option>)}
-                    </select>
-                    {flecha}
+                    <Desplegable etiqueta="Tipo de propiedad" valor={tipo} onChange={(v) => setTipo(v as TipoVivienda | '')} className={campoDesplegable}
+                        opciones={[{ valor: '', texto: 'Casa o departamento' }, ...OPCIONES_TIPO]} />
                 </label>
 
                 <label className={`${caja} sm:col-span-2 lg:col-span-1 lg:before:absolute lg:before:left-0 lg:before:inset-y-3 lg:before:w-px lg:before:bg-gray-200`}>

@@ -28,12 +28,12 @@ export default function ModeloCasaCard({modelo, valorUF = null}:{modelo:ModeloCa
                     )}
                 </div>
 
-                <div className="p-4">
+                <div className="p-4 pb-5">
                     <h3 className="font-semibold text-lg truncate">{modelo.nombreModelo}</h3>
                     <p className="text-gray-500 text-sm">{modelo.proyecto.nombre} · {modelo.proyecto.ciudad.nombre}</p>
                     <p className="font-titulo text-xl font-bold mt-2 text-acento">{formatearPrecio(modelo.precio, modelo.moneda)}</p>
                     {otraMoneda && <p className="text-sm text-gray-600">≈ {otraMoneda}</p>}
-                    <div className="flex gap-3 text-sm text-gray-600 mt-1">
+                    <div className="flex gap-3 text-sm text-gray-600 mt-3">
                         <span>{modelo.dormitorios} dorm.</span>
                         <span>{plural(modelo.banos, 'baño', 'baños')}</span>
                         <span>{formatearNumero(modelo.superficieConstruida)} m²</span>
