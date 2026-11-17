@@ -99,44 +99,46 @@ export default async function Home() {
     return (
         <main className="flex flex-col gap-20 sm:gap-24">
             <section className="bg-gradient-to-b from-acento-suave to-white">
-                <div className={`max-w-6xl mx-auto px-4 pt-12 pb-4 sm:pt-16 grid grid-cols-1 gap-12 items-center ${destacado ? 'lg:grid-cols-[1.15fr_1fr]' : ''}`}>
-                    <div className="flex flex-col gap-6 min-w-0">
-                        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-balance">
-                            Encuentra tu nueva casa o departamento
-                        </h1>
-                        <p className="text-lg text-gray-600 max-w-xl">
-                            Recorre cada proyecto en 3D, revisa precios transparentes en UF y agenda tu visita
-                            a la sala de ventas cuando te acomode.
-                        </p>
-                        <BuscadorInicio comunas={comunas} />
-                    </div>
-
-                    {destacado && (
-                        <Link href={`/proyectos/${destacado.id}`}
-                            className="group block rounded-3xl overflow-hidden bg-white border border-gray-100 shadow-xl shadow-slate-900/10">
-                            <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
-                                <Image src={destacado.imagenPortada!} alt={destacado.nombre} fill priority
-                                    sizes="(min-width: 1024px) 520px, 100vw"
-                                    className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03] motion-reduce:transition-none" />
-                                <span className="absolute top-4 left-4 rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-marca shadow-sm">
-                                    Proyecto destacado
-                                </span>
-                                <span className="absolute bottom-4 left-4 inline-flex items-center gap-1.5 rounded-full bg-marca/85 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">
-                                    <MapPin className="w-3.5 h-3.5" aria-hidden="true" />
-                                    {destacado.ciudad.nombre}
-                                </span>
-                            </div>
-                            <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2 p-5">
-                                <div className="min-w-0">
-                                    <p className="font-titulo text-xl font-bold text-marca group-hover:underline">{destacado.nombre}</p>
-                                    {resumenDestacado?.resumen && <p className="text-sm text-gray-600">{resumenDestacado.resumen}</p>}
+                <div className="max-w-6xl mx-auto px-4 pt-12 sm:pt-16 flex flex-col gap-10 lg:gap-12">
+                    <div className={`grid grid-cols-1 gap-10 lg:gap-12 items-center ${destacado ? 'lg:grid-cols-[1.1fr_1fr]' : ''}`}>
+                        <div className="flex flex-col gap-6 min-w-0">
+                            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-balance">
+                                Encuentra tu nueva casa o departamento
+                            </h1>
+                            <p className="text-lg text-gray-600 max-w-xl">
+                                Recorre cada proyecto en 3D, revisa precios transparentes en UF y agenda tu visita
+                                a la sala de ventas cuando te acomode.
+                            </p>
+                        </div>
+    
+                        {destacado && (
+                            <Link href={`/proyectos/${destacado.id}`}
+                                className="group block rounded-3xl overflow-hidden bg-white border border-gray-100 shadow-xl shadow-slate-900/10">
+                                <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+                                    <Image src={destacado.imagenPortada!} alt={destacado.nombre} fill priority
+                                        sizes="(min-width: 1024px) 520px, 100vw"
+                                        className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03] motion-reduce:transition-none" />
+                                    <span className="absolute top-4 left-4 rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-marca shadow-sm">
+                                        Proyecto destacado
+                                    </span>
+                                    <span className="absolute bottom-4 left-4 inline-flex items-center gap-1.5 rounded-full bg-marca/85 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">
+                                        <MapPin className="w-3.5 h-3.5" aria-hidden="true" />
+                                        {destacado.ciudad.nombre}
+                                    </span>
                                 </div>
-                                {resumenDestacado?.desde && (
-                                    <p className="font-titulo text-2xl font-bold text-acento">{resumenDestacado.desde}</p>
-                                )}
-                            </div>
-                        </Link>
-                    )}
+                                <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2 p-5">
+                                    <div className="min-w-0">
+                                        <p className="font-titulo text-xl font-bold text-marca group-hover:underline">{destacado.nombre}</p>
+                                        {resumenDestacado?.resumen && <p className="text-sm text-gray-600">{resumenDestacado.resumen}</p>}
+                                    </div>
+                                    {resumenDestacado?.desde && (
+                                        <p className="font-titulo text-2xl font-bold text-acento">{resumenDestacado.desde}</p>
+                                    )}
+                                </div>
+                            </Link>
+                        )}
+                    </div>
+                    <BuscadorInicio comunas={comunas} />
                 </div>
             </section>
 
