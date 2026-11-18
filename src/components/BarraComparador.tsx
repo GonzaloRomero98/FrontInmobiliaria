@@ -17,21 +17,24 @@ export default function BarraComparador() {
 
     return (
         <div className={`fixed inset-x-0 z-50 px-4 pointer-events-none ${sobreBarraContacto ? 'bottom-24 lg:bottom-4' : 'bottom-4'}`}>
-            <div className="pointer-events-auto max-w-md mx-auto flex items-center justify-between gap-3 bg-marca text-white rounded-full pl-5 pr-2 py-2 shadow-xl">
-                <span className="text-sm">
+            <div className="pointer-events-auto max-w-md mx-auto flex items-center justify-between gap-3 bg-marca text-white rounded-full pl-5 pr-2 py-1 shadow-xl">
+                <span role="status" className="text-sm">
                     {ids.length} de {MAXIMO_COMPARAR} modelos para comparar
                 </span>
                 <div className="flex items-center gap-1">
-                    <button type="button" onClick={() => reemplazar([])} className="text-xs text-gray-300 hover:text-white px-2">
+                    <button type="button" onClick={() => reemplazar([])} className="min-h-11 px-3 text-sm text-gray-300 hover:text-white">
                         Limpiar
                     </button>
-                    <Link
-                        href={`/comparar?ids=${ids.join(',')}`}
-                        className={`text-sm font-medium rounded-full px-4 py-1.5 ${ids.length < 2 ? 'bg-gray-600 pointer-events-none' : 'bg-white text-marca'}`}
-                        aria-disabled={ids.length < 2}
-                    >
-                        Comparar
-                    </Link>
+                    {ids.length < 2 ? (
+                        // Con menos de 2 modelos no hay nada que comparar: sin enlace real, el teclado no puede llegar a /comparar.
+                        <span role="link" aria-disabled="true" className="inline-flex items-center min-h-11 text-sm font-medium rounded-full px-4 bg-gray-600 cursor-not-allowed">
+                            Comparar
+                        </span>
+                    ) : (
+                        <Link href={`/comparar?ids=${ids.join(',')}`} className="inline-flex items-center min-h-11 text-sm font-medium rounded-full px-4 bg-white text-marca">
+                            Comparar
+                        </Link>
+                    )}
                 </div>
             </div>
         </div>

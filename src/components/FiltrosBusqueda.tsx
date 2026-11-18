@@ -69,7 +69,7 @@ export default function FiltrosBusqueda({ iniciales }: { iniciales: Filtros }) {
 
     const moneda = filtros.tipoOperacion ? MONEDA_POR_OPERACION[filtros.tipoOperacion] : null;
     // text-base porque con letra menor a 16 px el iPhone hace zoom al tocar el campo.
-    const campo = "w-full min-h-11 border rounded-lg px-3 py-2 bg-white text-base";
+    const campo = "w-full min-h-11 border border-borde-campo rounded-lg px-3 py-2 bg-white text-base disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed";
 
     return (
         <form onSubmit={buscar} className="grid grid-cols-2 lg:grid-cols-4 gap-3 p-4 border rounded-xl bg-gray-50">

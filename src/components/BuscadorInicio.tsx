@@ -45,7 +45,7 @@ export default function BuscadorInicio({ comunas }: { comunas: Ciudad[] }) {
     // text-base porque con letra menor a 16 px el iPhone hace zoom al tocar el campo.
     const campo = "w-full appearance-none bg-transparent border-0 p-0 pr-7 text-base font-medium text-gray-900 truncate focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]";
     const campoDesplegable = "bg-transparent text-base font-medium text-gray-900 focus:outline-none";
-    const caja = "relative flex flex-col gap-1 px-5 py-3 rounded-xl hover:bg-gray-50 focus-within:bg-gray-50 focus-within:ring-2 focus-within:ring-acento/40 transition-colors";
+    const caja = "relative flex flex-col gap-1 px-5 py-3 rounded-xl hover:bg-gray-50 focus-within:bg-gray-50 focus-within:ring-2 focus-within:ring-acento transition-colors";
     const etiqueta = "text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap";
 
     return (

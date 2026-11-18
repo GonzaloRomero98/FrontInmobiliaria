@@ -12,6 +12,8 @@
   --color-marca: #16304b;
   --color-acento: #1e727d;
   --color-acento-suave: #e6f2f3;
+  /* Borde de los campos de formulario: 3,4:1 sobre blanco, el mínimo para controles (WCAG 1.4.11). */
+  --color-borde-campo: #848b96;
   /* Montserrat se parece a la letra del logo y se usa en títulos y precios (clase font-titulo). */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
