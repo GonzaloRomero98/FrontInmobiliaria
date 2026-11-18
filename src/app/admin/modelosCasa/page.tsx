@@ -158,7 +158,7 @@ export default function ListadoModelosCasa(){
                             </div>
                             <div className="flex flex-wrap items-center gap-2">
                                 <span className="text-sm text-gray-600" title={ETIQUETA_ESTADO[modelo.estado]}>
-                                    {modelo.unidades != null ? `${unidadesDisponibles(modelo)} de ${modelo.unidades} disponibles` : ETIQUETA_ESTADO[modelo.estado]}
+                                    {unidadesDisponibles(modelo)} de {modelo.unidades} disponibles
                                 </span>
                                 <Link href={`/admin/modelosCasa/${modelo.id}`} className="text-sm border rounded-lg px-3 py-1.5 hover:bg-gray-50">
                                     Editar

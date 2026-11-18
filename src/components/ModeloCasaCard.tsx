@@ -38,7 +38,7 @@ export default function ModeloCasaCard({modelo, valorUF = null}:{modelo:ModeloCa
                         <span>{plural(modelo.banos, 'baño', 'baños')}</span>
                         <span>{formatearNumero(modelo.superficieConstruida)} m²</span>
                     </div>
-                    {modelo.estado === 'DISPONIBLE' && modelo.unidades != null && <p className="text-sm text-gray-600 mt-1">{textoQuedan(modelo)}</p>}
+                    {modelo.estado === 'DISPONIBLE' && <p className="text-sm text-gray-600 mt-1">{textoQuedan(modelo)}</p>}
                 </div>
             </Link>
         </div>

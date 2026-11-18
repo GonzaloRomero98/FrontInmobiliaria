@@ -74,8 +74,7 @@ function valoresIniciales(modelo?: ModeloCasa): Partial<FormValues> {
         bono: modelo.bono ?? '',
         quitarModelo3d: false,
         quitarPlano: false,
-        // Si la API no tiene la migración de reservas no envía unidades, por eso se usa 1.
-        unidades: String(modelo.unidades ?? 1),
+        unidades: String(modelo.unidades),
         publicado: modelo.activo,
     };
 }

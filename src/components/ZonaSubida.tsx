@@ -20,7 +20,6 @@ interface ZonaSubidaProps {
     onSoltar: (archivo: File) => void;
 }
 
-// Zona para arrastrar y soltar un archivo, o hacer clic para abrir el selector.
 export default function ZonaSubida({ icono: Icono, queSubir, ayuda, error = false, deshabilitado = false, onElegir, onSoltar }: ZonaSubidaProps) {
     const [arrastrando, setArrastrando] = useState(false);
 
@@ -65,7 +64,6 @@ interface FilaArchivoProps {
     children?: ReactNode;
 }
 
-// Nombre y peso del archivo elegido, con los botones para cambiarlo o quitarlo.
 export function FilaArchivo({ archivo, deshabilitado = false, onCambiar, onQuitar, children }: FilaArchivoProps) {
     return (
         <div className={`flex items-center gap-3 p-3 ${deshabilitado ? 'opacity-60' : ''}`}>

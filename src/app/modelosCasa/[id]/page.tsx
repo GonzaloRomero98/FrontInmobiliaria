@@ -105,8 +105,7 @@ export default async function DetallePropiedadID({params}:{params:Promise<{id:st
                             <p className="text-sm text-gray-600">Gastos comunes {formatearCLP(modelo.gastosComunes)} al mes</p>
                         )}
                     </div>
-                    {/* unidades no viene si la API todavía no tiene la migración de reservas. */}
-                    {modelo.estado === 'DISPONIBLE' && modelo.unidades != null && (
+                    {modelo.estado === 'DISPONIBLE' && (
                         <p className="text-sm font-medium text-gray-900">{textoQuedan(modelo)}</p>
                     )}
                     {(modelo.bono || modelo.subsidios?.length > 0) && (
