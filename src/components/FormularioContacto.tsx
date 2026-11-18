@@ -8,6 +8,7 @@ import { useId, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import z from "zod";
 import { CELULAR_VALIDO, normalizarCelular } from "@/lib/formato";
+import { DiaVisita, diasDeVisita, HorariosSala } from "@/lib/horarioSala";
 
 const esquemFormulario = z.object({
     nombre: z.string().min(1, 'El nombre es obligatorio'),
@@ -16,7 +17,6 @@ const esquemFormulario = z.object({
     celular: z.string().min(1, 'El celular es obligatorio').transform(normalizarCelular)
         .refine((v) => CELULAR_VALIDO.test(v), 'Ingresa un celular chileno válido, ej: +56 9 1234 5678'),
     mensaje: z.string().optional().default(''),
-    visita: z.string().optional(),
     aceptaPrivacidad: z.boolean().refine((v) => v, 'Debes aceptar la política de privacidad'),
 });
 
@@ -35,7 +35,7 @@ function MensajeError({ id, mensaje }: { id: string; mensaje?: string }) {
 interface FormularioContactoProps {
     idModeloCasa: string;
     conVisita?: boolean;
-    sala?: { direccion: string; horario: string | null } | null;
+    sala?: { direccion: string; horario: string | null; horarios: HorariosSala | null } | null;
 }
 
 export default function FormularioContacto({ idModeloCasa, conVisita = false, sala }: FormularioContactoProps) {
@@ -53,6 +53,18 @@ export default function FormularioContacto({ idModeloCasa, conVisita = false, sa
         defaultValues: { aceptaPrivacidad: false },
     });
     const mensaje = useWatch({ control, name: 'mensaje' }) ?? '';
+    // null = no quiere visita. Los días se calculan al marcar la casilla (no al renderizar en el servidor, cuya hora no es la del cliente).
+    const [visita, setVisita] = useState<{ dias: DiaVisita[]; dia: string; hora: string } | null>(null);
+
+    function activarVisita(activa: boolean) {
+        const dias = activa ? diasDeVisita(sala?.horarios ?? null, new Date()) : [];
+        setVisita(activa ? { dias, dia: dias[0]?.valor ?? '', hora: dias[0]?.horas[0] ?? '' } : null);
+    }
+
+    function elegirDia(dia: string) {
+        if (!visita) return;
+        setVisita({ ...visita, dia, hora: visita.dias.find((d) => d.valor === dia)?.horas[0] ?? '' });
+    }
     const id = useId();
     // Liga cada campo con su mensaje de error para los lectores de pantalla.
     const conError = (campo: keyof typeof errors) =>
@@ -62,15 +74,16 @@ export default function FormularioContacto({ idModeloCasa, conVisita = false, sa
         setError(null);
 
         try {
-            const { visita, ...datos } = dataForm;
             await crearSolicitud({
-                ...datos,
+                ...dataForm,
                 mensaje: dataForm.mensaje ?? '',
                 id_modelo_casa:idModeloCasa,
-                ...(conVisita && visita && { visitaPreferida: new Date(visita).toISOString() }),
+                // "AAAA-MM-DDTHH:MM" sin zona se interpreta en la hora local del navegador.
+                ...(conVisita && visita?.hora && { visitaPreferida: new Date(`${visita.dia}T${visita.hora}`).toISOString() }),
             });
             setEnviado({ nombre: dataForm.nombre.trim(), celular: dataForm.celular, correo: dataForm.correo });
             reset();
+            setVisita(null);
         } catch (e) {
             const status = isAxiosError(e) ? e.response?.status : undefined;
             const detalle = isAxiosError(e) ? e.response?.data?.message : undefined;
@@ -147,11 +160,34 @@ export default function FormularioContacto({ idModeloCasa, conVisita = false, sa
             </label>
 
             {conVisita && (
-                <label className={ETIQUETA}>
-                    ¿Quieres visitar la sala de ventas? Fecha y hora preferida (opcional)
-                    <input type="datetime-local" {...register('visita')} className={CAMPO} />
-                    <span className="text-xs font-normal text-gray-500">Te confirmaremos la visita por teléfono o WhatsApp.</span>
-                </label>
+                <div className="flex flex-col gap-3">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                        <input type="checkbox" checked={!!visita} onChange={(e) => activarVisita(e.target.checked)} className="w-5 h-5 shrink-0" />
+                        Quiero visitar la sala de ventas
+                    </label>
+                    {visita && (visita.dias.length ? (
+                        <div className="flex flex-col gap-2 pl-7">
+                            <div className="grid grid-cols-[1fr_6.5rem] gap-3">
+                                <label className={ETIQUETA}>
+                                    Día
+                                    <select value={visita.dia} onChange={(e) => elegirDia(e.target.value)} className={CAMPO}>
+                                        {visita.dias.map((d) => <option key={d.valor} value={d.valor}>{d.etiqueta}</option>)}
+                                    </select>
+                                </label>
+                                <label className={ETIQUETA}>
+                                    Hora
+                                    <select value={visita.hora} onChange={(e) => setVisita({ ...visita, hora: e.target.value })} className={CAMPO}>
+                                        {visita.dias.find((d) => d.valor === visita.dia)?.horas.map((h) => <option key={h}>{h}</option>)}
+                                    </select>
+                                </label>
+                            </div>
+                            {sala?.horario && <p className="text-xs text-gray-500">Horario de la sala: {sala.horario}</p>}
+                            <p className="text-xs text-gray-500">Te confirmaremos la visita por teléfono o WhatsApp.</p>
+                        </div>
+                    ) : (
+                        <p className="pl-7 text-sm text-gray-600">La sala no tiene horas disponibles en los próximos días. Cuéntanos en el mensaje cuándo te acomoda y te contactamos.</p>
+                    ))}
+                </div>
             )}
 
             <div>

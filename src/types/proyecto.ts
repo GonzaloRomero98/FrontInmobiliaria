@@ -1,4 +1,5 @@
 import { Ciudad } from "./ubicacion";
+import type { HorariosSala } from "@/lib/horarioSala";
 
 export type EtapaProyecto = 'EN_VERDE' | 'EN_BLANCO' | 'ENTREGA_INMEDIATA';
 
@@ -26,6 +27,7 @@ export interface Proyecto{
     fechaEntrega: string | null;
     salaDireccion: string | null;
     salaHorario: string | null;
+    salaHorarios: HorariosSala | null;
     salaTelefono: string | null;
     salaLatitud: number | null;
     salaLongitud: number | null;
@@ -46,6 +48,7 @@ export interface CrearPoyectoInput{
     fechaEntrega?: string | null;
     salaDireccion?: string | null;
     salaHorario?: string | null;
+    salaHorarios?: HorariosSala | null;
     salaTelefono?: string | null;
     salaLatitud?: number | null;
     salaLongitud?: number | null;

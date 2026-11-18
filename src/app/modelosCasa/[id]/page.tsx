@@ -179,7 +179,7 @@ export default async function DetallePropiedadID({params}:{params:Promise<{id:st
                 <div className="flex flex-col gap-4 lg:col-start-3 lg:row-start-2 lg:sticky lg:top-6">
                     <section id="contacto" className="border rounded-2xl p-5 scroll-mt-6" aria-label="Formulario de contacto">
                         <FormularioContacto idModeloCasa={modelo.id} conVisita={!!modelo.proyecto.salaDireccion}
-                            sala={modelo.proyecto.salaDireccion ? { direccion: modelo.proyecto.salaDireccion, horario: modelo.proyecto.salaHorario } : null} />
+                            sala={modelo.proyecto.salaDireccion ? { direccion: modelo.proyecto.salaDireccion, horario: modelo.proyecto.salaHorario, horarios: modelo.proyecto.salaHorarios } : null} />
                     </section>
                     <SalaVentas proyecto={modelo.proyecto} />
                 </div>
