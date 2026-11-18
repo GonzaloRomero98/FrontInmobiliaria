@@ -3,8 +3,11 @@
 import { enlaceWhatsApp, formatearFechaHora } from "@/lib/formato";
 import { descargarSolicitudesCsv, EVENTO_SOLICITUDES_ACTUALIZADAS, FiltroSolicitud, getSolicitudes, marcarContactado, Solicitud } from "@/services/solicitud.service";
 import { Reserva } from "@/types/reserva";
-import { CLAVE_ULTIMA_BANDEJA, ETIQUETA_ORIGEN, ETIQUETA_VISITA } from "@/types/solicitud";
+import { CLAVE_ULTIMA_BANDEJA, COLOR_VISITA, ETIQUETA_ORIGEN, ETIQUETA_VISITA, PILDORA, visitaAbierta } from "@/types/solicitud";
 import { avisar } from "@/components/Dialogos";
+import { DOS_DIAS_MS, hace } from "@/components/panel/Tablero";
+import { fechaVisitaCorta } from "@/lib/horarioSala";
+import { Clock, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
@@ -54,6 +57,8 @@ function BandejaSolicitudes() {
     const [total, setTotal] = useState(0);
     const [pendientes, setPendientes] = useState(0);
     const [recarga, setRecarga] = useState(0);
+    // Se toma al cargar (no al renderizar) para calcular atrasos y visitas pasadas.
+    const [ahora, setAhora] = useState(0);
 
     useEffect(() => {
         const temporizador = setTimeout(() => {
@@ -91,6 +96,7 @@ function BandejaSolicitudes() {
                     return;
                 }
                 setSolicitudes(data.solicitudes);
+                setAhora(Date.now());
                 setTotal(data.total);
                 setPendientes(data.pendientes);
             } catch {
@@ -191,9 +197,22 @@ function BandejaSolicitudes() {
                         <tbody>
                             {visibles.map((soli) => {
                                 const reserva = reservaActiva(soli);
+                                const atrasada = !soli.contactado && ahora - new Date(soli.creadoEn).getTime() > DOS_DIAS_MS;
+                                const sinAsistencia = !!soli.visitaPreferida && visitaAbierta(soli.visitaEstado) && new Date(soli.visitaPreferida).getTime() <= ahora;
                                 return (
                                 <tr key={soli.id} className="border-b text-sm align-top">
-                                    <td className="py-3 pr-4 whitespace-nowrap text-gray-500">{new Date(soli.creadoEn).toLocaleDateString('es-CL')}</td>
+                                    <td className="py-3 pr-4 whitespace-nowrap">
+                                        <div className="flex flex-col gap-1">
+                                            <span className="text-gray-500">{new Date(soli.creadoEn).toLocaleDateString('es-CL')}</span>
+                                            {/* Igual que en el inicio: ícono y texto además del color. */}
+                                            {!soli.contactado && (
+                                                <span className={atrasada ? `${PILDORA} bg-amber-50 text-amber-800 border border-amber-200` : 'inline-flex items-center gap-1 text-xs text-gray-500'}>
+                                                    <Clock className="w-3.5 h-3.5" aria-hidden />
+                                                    {atrasada ? 'Esperando ' : 'Llegó '}{hace(soli.creadoEn)}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </td>
                                     <td className="py-3 pr-4">
                                         <Link href={`/secretario/solicitudes/${soli.id}`} className="font-medium text-marca underline underline-offset-2 hover:no-underline">
                                             {soli.nombre} {soli.apellido}
@@ -215,20 +234,30 @@ function BandejaSolicitudes() {
                                         {soli.modeloCasa ? <>{soli.modeloCasa.nombreModelo}<span className="block text-xs text-gray-500">{soli.modeloCasa.proyecto.nombre}</span></> : '-'}
                                     </td>
                                     <td className="py-3 pr-4 whitespace-nowrap">
-                                        {soli.visitaPreferida ? formatearFechaHora(soli.visitaPreferida) : '-'}
-                                        {soli.visitaEstado && <span className="block text-xs text-gray-500">{ETIQUETA_VISITA[soli.visitaEstado]}</span>}
+                                        {soli.visitaPreferida && soli.visitaEstado ? (
+                                            <div className="flex flex-col gap-1">
+                                                <span className="font-medium" title={formatearFechaHora(soli.visitaPreferida)}>{fechaVisitaCorta(soli.visitaPreferida, ahora)}</span>
+                                                {sinAsistencia ? (
+                                                    <span className={`${PILDORA} bg-red-50 text-red-700 border border-red-200`}>
+                                                        <TriangleAlert className="w-3.5 h-3.5" aria-hidden />Marcar asistencia
+                                                    </span>
+                                                ) : (
+                                                    <span className={`${PILDORA} ${COLOR_VISITA[soli.visitaEstado]}`}>{ETIQUETA_VISITA[soli.visitaEstado]}</span>
+                                                )}
+                                            </div>
+                                        ) : <span className="text-gray-400">—</span>}
                                     </td>
-                                    <td className="py-3 pr-4 font-medium">
-                                        {soli.contactado ? (
-                                            <span className="text-green-700">Contactado</span>
-                                        ) : (
-                                            <span className="text-amber-800">Pendiente</span>
-                                        )}
-                                        {reserva && (
-                                            <span className={`block mt-1 text-xs font-semibold ${reserva.estado === 'VENDIDA' ? 'text-gray-600' : 'text-amber-700'}`}>
-                                                {ETIQUETA_RESERVA[reserva.estado as 'RESERVADA' | 'VENDIDA']}{reserva.lote && ` · ${reserva.lote}`}
+                                    <td className="py-3 pr-4">
+                                        <div className="flex flex-col gap-1">
+                                            <span className={`${PILDORA} ${soli.contactado ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-800'}`}>
+                                                {soli.contactado ? 'Contactado' : 'Pendiente'}
                                             </span>
-                                        )}
+                                            {reserva && (
+                                                <span className={`${PILDORA} bg-gray-100 text-gray-700`}>
+                                                    {ETIQUETA_RESERVA[reserva.estado as 'RESERVADA' | 'VENDIDA']}{reserva.lote && ` · ${reserva.lote}`}
+                                                </span>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="py-3 pr-4">
                                         {soli.contactado ? (

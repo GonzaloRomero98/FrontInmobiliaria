@@ -4,13 +4,12 @@ import { Check, Clock, FileText, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { usePanel } from "@/components/panel/PanelLayout";
-import { Accion, Esqueleto, hace, Informativa, numero, ProximasVisitas, Tarjeta, ZONA } from "@/components/panel/Tablero";
+import { Accion, DOS_DIAS_MS, Esqueleto, hace, Informativa, numero, ProximasVisitas, Tarjeta, ZONA } from "@/components/panel/Tablero";
 import { enlaceWhatsApp } from "@/lib/formato";
 import { avisar } from "@/components/Dialogos";
 import { getSeguimiento, Seguimiento } from "@/services/metricas.service";
 import { EVENTO_SOLICITUDES_ACTUALIZADAS, marcarContactado } from "@/services/solicitud.service";
 
-const DOS_DIAS_MS = 2 * 24 * 60 * 60 * 1000;
 const BANDEJA = '/secretario/solicitudes';
 
 function PorContactar({ solicitudes, ahora, alMarcar }: { solicitudes: Seguimiento['solicitudes']['porContactar']; ahora: number; alMarcar: (id: string) => Promise<void> }) {

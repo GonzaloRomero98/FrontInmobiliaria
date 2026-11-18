@@ -57,6 +57,20 @@ export function diasDeVisita(horarios: HorariosSala | null, ahora: Date): DiaVis
     return dias;
 }
 
+const ZONA = 'America/Santiago';
+const diaChile = (fecha: Date) => fecha.toLocaleDateString('en-CA', { timeZone: ZONA }); // "AAAA-MM-DD"
+const RELATIVO: Record<string, string> = { '-1': 'Ayer', '0': 'Hoy', '1': 'Mañana' };
+
+// "Hoy 11:00", "Mañana 16:30" o "jue, 20 nov · 11:00", en hora de Chile como el resto del panel.
+export function fechaVisitaCorta(iso: string, ahora: number): string {
+    const fecha = new Date(iso);
+    const hora = fecha.toLocaleTimeString('es-CL', { timeZone: ZONA, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+    const dias = (Date.parse(diaChile(fecha)) - Date.parse(diaChile(new Date(ahora)))) / 86_400_000;
+    const relativo = RELATIVO[String(dias)];
+    return relativo ? `${relativo} ${hora}`
+        : `${fecha.toLocaleDateString('es-CL', { timeZone: ZONA, weekday: 'short', day: 'numeric', month: 'short' })} · ${hora}`;
+}
+
 // Texto para mostrar, agrupando días seguidos con el mismo horario: "Lun a vie 10:00 a 18:00 · Sáb 10:00 a 14:00".
 export function textoHorario(horarios: HorariosSala): string | null {
     const grupos: { desde: number; hasta: number; texto: string }[] = [];

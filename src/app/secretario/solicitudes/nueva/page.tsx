@@ -8,11 +8,12 @@ import { crearSolicitudPanel } from "@/services/solicitud.service";
 import { ModeloCasa } from "@/types/modeloCasa";
 import { CrearSolicitudPanelInput, ETIQUETA_ORIGEN } from "@/types/solicitud";
 import { mensajeError } from "@/lib/errores";
+import SelectorVisita from "@/components/SelectorVisita";
 
 const ORIGENES = ['SALA_VENTAS', 'TELEFONO', 'WHATSAPP'] as const;
 // Mismo tope que el backend (CrearSolicitudDto).
 const MAX_MENSAJE = 2000;
-const VACIO ={ nombre: '', apellido: '', correo: '', celular: '', mensaje: '', id_modelo_casa: '', visita: '' };
+const VACIO ={ nombre: '', apellido: '', correo: '', celular: '', mensaje: '', id_modelo_casa: '' };
 
 // Para clientes que llegan a la sala, llaman o escriben. Queda como contactado y, si se agenda visita, confirmada.
 export default function NuevaSolicitud() {
@@ -21,6 +22,8 @@ export default function NuevaSolicitud() {
     const [datos, setDatos] = useState(VACIO);
     const [origen, setOrigen] = useState<CrearSolicitudPanelInput['origen']>('SALA_VENTAS');
     const [informado, setInformado] = useState(false);
+    // null = sin visita; si no, el valor de SelectorVisita.
+    const [visita, setVisita] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [guardando, setGuardando] = useState(false);
 
@@ -45,8 +48,8 @@ export default function NuevaSolicitud() {
                 nombre: datos.nombre.trim(), apellido: datos.apellido.trim(), correo: datos.correo.trim(), celular: datos.celular,
                 id_modelo_casa: datos.id_modelo_casa, origen, clienteInformado: informado,
                 ...(datos.mensaje.trim() && { mensaje: datos.mensaje.trim() }),
-                // datetime-local entrega la hora local del navegador y la API la recibe en UTC.
-                ...(conSala && datos.visita && { visitaPreferida: new Date(datos.visita).toISOString() }),
+                // El valor viene en hora local del navegador y la API la recibe en UTC.
+                ...(conSala && visita && { visitaPreferida: new Date(visita).toISOString() }),
             });
             router.push(`/secretario/solicitudes/${solicitud.id}`);
         } catch (err) {
@@ -77,7 +80,8 @@ export default function NuevaSolicitud() {
 
                 <label className="flex flex-col gap-1 text-sm font-medium">
                     Modelo de interés
-                    <select {...campo('id_modelo_casa')} required className={entrada}>
+                    <select {...campo('id_modelo_casa')} onChange={(e) => { campo('id_modelo_casa').onChange(e); setVisita((v) => v === null ? null : ''); }}
+                        required className={entrada}>
                         <option value="">Elige un modelo</option>
                         {proyectos.map((p) => (
                             <optgroup key={p} label={p}>
@@ -104,10 +108,19 @@ export default function NuevaSolicitud() {
                 </label>
 
                 {conSala && (
-                    <label className="flex flex-col gap-1 text-sm font-medium">
-                        Visita a la sala de ventas (opcional, queda confirmada)
-                        <input type="datetime-local" {...campo('visita')} className={`${entrada} sm:max-w-xs`} />
-                    </label>
+                    <div className="flex flex-col gap-3">
+                        <label className="flex items-center gap-2 text-sm font-medium">
+                            <input type="checkbox" checked={visita !== null} onChange={(e) => setVisita(e.target.checked ? '' : null)} className="w-4 h-4" />
+                            Agendar visita a la sala de ventas (queda confirmada)
+                        </label>
+                        {visita !== null && (
+                            // key: al cambiar de modelo puede cambiar la sala, y con ella el horario.
+                            <div className="pl-6 sm:max-w-md">
+                                <SelectorVisita key={modelo.id} horarios={modelo.proyecto.salaHorarios} horario={modelo.proyecto.salaHorario}
+                                    valor={visita} onCambio={setVisita} otraHora claseEtiqueta="flex flex-col gap-1 text-sm font-medium" claseCampo={entrada} />
+                            </div>
+                        )}
+                    </div>
                 )}
 
                 {/* Ley 21.719: los datos se registran solo después de informar la política de privacidad. */}

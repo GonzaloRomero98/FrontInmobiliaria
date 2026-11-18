@@ -5,7 +5,10 @@ import { ETIQUETA_VISITA, EstadoVisita } from "@/types/solicitud";
 
 export const ZONA = 'America/Santiago';
 
-export const numero = (n: number) => n.toLocaleString('es-CL');
+// Una solicitud sin contactar por más de 2 días se marca como atrasada.
+export const DOS_DIAS_MS = 2 * 24 * 60 * 60 * 1000;
+
+export const numero =(n: number) => n.toLocaleString('es-CL');
 
 export function hace(iso: string): string {
     const minutos = Math.round((Date.now() - new Date(iso).getTime()) / 60_000);

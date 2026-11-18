@@ -13,12 +13,8 @@ import {
     actualizarVisita, agregarNota, corregirDatosSolicitud, DatosContacto, eliminarDatosPersona, EVENTO_SOLICITUDES_ACTUALIZADAS,
     FichaSolicitud, getSolicitud, marcarContactado,
 } from "@/services/solicitud.service";
-import { CLAVE_ULTIMA_BANDEJA, ETIQUETA_ORIGEN, ETIQUETA_VISITA, EstadoVisita, folioCotizacion } from "@/types/solicitud";
-
-const COLOR_VISITA: Record<EstadoVisita, string> = {
-    POR_CONFIRMAR: 'bg-amber-50 text-amber-800', CONFIRMADA: 'bg-green-50 text-green-700',
-    ASISTIO: 'bg-gray-100 text-gray-700', NO_ASISTIO: 'bg-red-50 text-red-700',
-};
+import { CLAVE_ULTIMA_BANDEJA, COLOR_VISITA, ETIQUETA_ORIGEN, ETIQUETA_VISITA, folioCotizacion, visitaAbierta as estaAbierta } from "@/types/solicitud";
+import SelectorVisita, { visitaCompleta } from "@/components/SelectorVisita";
 
 function Seccion({ titulo, accion, children }: { titulo: string; accion?: ReactNode; children: ReactNode }) {
     return (
@@ -89,8 +85,8 @@ export default function FichaCliente() {
 
     async function guardarFecha(e: FormEvent) {
         e.preventDefault();
-        // datetime-local entrega la hora local del navegador y la API la recibe en UTC.
-        if (nuevaFecha && await hacer(() => actualizarVisita(id, { fecha: new Date(nuevaFecha).toISOString() }), 'No se pudo guardar la visita')) {
+        // El valor viene en hora local del navegador y la API la recibe en UTC.
+        if (nuevaFecha && visitaCompleta(nuevaFecha) && await hacer(() => actualizarVisita(id, { fecha: new Date(nuevaFecha).toISOString() }), 'No se pudo guardar la visita')) {
             setNuevaFecha(null);
         }
     }
@@ -135,7 +131,7 @@ export default function FichaCliente() {
     const { modeloCasa: modelo } = ficha;
     const reserva = ficha.reservas?.find((r) => r.estado !== 'ANULADA');
     const visitaPasada = ficha.visitaPreferida !== null && new Date(ficha.visitaPreferida).getTime() <= ahora;
-    const visitaAbierta = ficha.visitaEstado === 'POR_CONFIRMAR' || ficha.visitaEstado === 'CONFIRMADA';
+    const visitaAbierta = estaAbierta(ficha.visitaEstado);
     const conSala = !!modelo.proyecto.salaDireccion;
 
     return (
@@ -241,14 +237,14 @@ export default function FichaCliente() {
                         <p className="text-sm text-gray-600">El proyecto no tiene sala de ventas.</p>
                     )}
                     {nuevaFecha !== null && (
-                        <form onSubmit={guardarFecha} className="flex flex-wrap items-end gap-2">
-                            <label className="flex flex-col gap-1 text-sm">
-                                Nueva fecha y hora (queda confirmada)
-                                <input type="datetime-local" value={nuevaFecha} onChange={(e) => setNuevaFecha(e.target.value)} required autoFocus
-                                    className="border rounded-lg px-3 py-1.5" />
-                            </label>
-                            <button type="submit" disabled={ocupado} className="text-sm bg-marca text-white rounded-lg px-3 py-1.5 disabled:opacity-50">Guardar</button>
-                            <button type="button" onClick={() => setNuevaFecha(null)} className={boton}>Cancelar</button>
+                        <form onSubmit={guardarFecha} className="flex flex-col gap-3">
+                            <p className="text-sm font-medium">Nueva fecha (queda confirmada)</p>
+                            <SelectorVisita horarios={modelo.proyecto.salaHorarios} horario={modelo.proyecto.salaHorario} valor={nuevaFecha}
+                                onCambio={setNuevaFecha} otraHora claseEtiqueta="flex flex-col gap-1 text-sm" claseCampo="border rounded-lg px-3 py-1.5" />
+                            <div className="flex gap-2">
+                                <button type="submit" disabled={ocupado} className="text-sm bg-marca text-white rounded-lg px-3 py-1.5 disabled:opacity-50">Guardar</button>
+                                <button type="button" onClick={() => setNuevaFecha(null)} className={boton}>Cancelar</button>
+                            </div>
                         </form>
                     )}
                 </Seccion>

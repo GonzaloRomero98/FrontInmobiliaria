@@ -1,6 +1,16 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { diasDeVisita, horasDelDia, textoHorario } from "./horarioSala.ts";
+import { diasDeVisita, fechaVisitaCorta, horasDelDia, textoHorario } from "./horarioSala.ts";
+
+test('fecha corta de la visita en hora de Chile', () => {
+    // 18-11-2026 a las 12:00 de Chile (UTC-3).
+    const ahora = Date.parse('2026-11-18T15:00:00Z');
+    assert.equal(fechaVisitaCorta('2026-11-18T14:00:00Z', ahora), 'Hoy 11:00');
+    assert.equal(fechaVisitaCorta('2026-11-19T02:00:00Z', ahora), 'Hoy 23:00'); // ya es 19 en UTC, pero sigue siendo 18 en Chile
+    assert.equal(fechaVisitaCorta('2026-11-19T19:30:00Z', ahora), 'Mañana 16:30');
+    assert.equal(fechaVisitaCorta('2026-11-17T14:00:00Z', ahora), 'Ayer 11:00');
+    assert.match(fechaVisitaCorta('2026-11-20T14:00:00Z', ahora), /^vie.*20.*nov.* · 11:00$/);
+});
 
 const horarios = { lun: [['10:00', '12:00']], sab: [['10:00', '11:00']] } as const;
 const h = horarios as unknown as Parameters<typeof horasDelDia>[0];
