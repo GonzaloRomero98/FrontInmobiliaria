@@ -6,6 +6,7 @@ import { gerRegiones, getCiudades } from "@/services/ubicacion.service";
 import { Ciudad, Region } from "@/types/ubicacion";
 import { ETIQUETA_TIPO_VIVIENDA, FiltrosBusqueda as Filtros, Operacion, TipoVivienda } from "@/types/modeloCasa";
 import Desplegable from "./Desplegable";
+import { BOTON_PRIMARIO, BOTON_SECUNDARIO } from "@/lib/estilos";
 
 const MINIMOS = ['1', '2', '3', '4'].map((n) => ({ valor: n, texto: `${n}+` }));
 const TODAS = { valor: '', texto: 'Todas' };
@@ -69,7 +70,9 @@ export default function FiltrosBusqueda({ iniciales }: { iniciales: Filtros }) {
 
     const moneda = filtros.tipoOperacion ? MONEDA_POR_OPERACION[filtros.tipoOperacion] : null;
     // text-base porque con letra menor a 16 px el iPhone hace zoom al tocar el campo.
-    const campo = "w-full min-h-11 border border-borde-campo rounded-lg px-3 py-2 bg-white text-base disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed";
+    // Limpiar se deshabilita si no hay nada que limpiar, ni en el formulario ni en la URL.
+    const hayFiltros = Object.values(filtros).some(Boolean) || Object.values(iniciales).some(Boolean);
+    const campo = "w-full min-h-11 border border-borde-campo rounded-xl px-3 py-2 bg-white text-base disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed";
 
     return (
         <form onSubmit={buscar} className="grid grid-cols-2 lg:grid-cols-4 gap-3 p-4 border rounded-xl bg-gray-50">
@@ -88,7 +91,7 @@ export default function FiltrosBusqueda({ iniciales }: { iniciales: Filtros }) {
             <label className="flex flex-col gap-1 text-sm">
                 Comuna
                 <Desplegable etiqueta="Comuna" valor={filtros.id_ciudad ?? ''} onChange={(v) => cambiar('id_ciudad', v)} className={campo} disabled={!filtros.id_region}
-                    opciones={[TODAS, ...ciudadesDeRegion.map((c) => ({ valor: String(c.id), texto: c.nombre }))]} />
+                    opciones={[filtros.id_region ? TODAS : { valor: '', texto: 'Elige una región primero' }, ...ciudadesDeRegion.map((c) => ({ valor: String(c.id), texto: c.nombre }))]} />
             </label>
 
             <label className="flex flex-col gap-1 text-sm">
@@ -110,7 +113,7 @@ export default function FiltrosBusqueda({ iniciales }: { iniciales: Filtros }) {
             </label>
 
             <button type="button" onClick={() => setMasFiltros((v) => !v)} aria-expanded={masFiltros} aria-controls="mas-filtros"
-                className="lg:hidden col-span-2 min-h-11 border rounded-lg bg-white text-sm font-medium">
+                className={`${BOTON_SECUNDARIO} lg:hidden col-span-2 min-h-11 px-4 text-sm`}>
                 {masFiltros ? 'Menos filtros' : `Más filtros${extrasActivos ? ` (${extrasActivos})` : ''}`}
             </button>
 
@@ -140,14 +143,14 @@ export default function FiltrosBusqueda({ iniciales }: { iniciales: Filtros }) {
                 </label>
 
                 <label className="flex items-center gap-2 text-sm self-end min-h-11">
-                    <input type="checkbox" className="w-5 h-5" checked={filtros.mascotas === 'true'} onChange={(e) => cambiar('mascotas', e.target.checked ? 'true' : '')} />
+                    <input type="checkbox" className="w-5 h-5 accent-acento" checked={filtros.mascotas === 'true'} onChange={(e) => cambiar('mascotas', e.target.checked ? 'true' : '')} />
                     Acepta mascotas
                 </label>
             </div>
 
             <div className="col-span-2 flex gap-2 self-end">
-                <button type="submit" className="flex-1 bg-marca text-white rounded-lg py-3 font-medium">Buscar</button>
-                <button type="button" onClick={() => { setFiltros({}); router.push('/buscar'); }} className="px-4 border rounded-lg bg-white">
+                <button type="submit" className={`${BOTON_PRIMARIO} flex-1 min-h-12 px-5`}>Buscar</button>
+                <button type="button" onClick={() => { setFiltros({}); router.push('/buscar'); }} disabled={!hayFiltros} className={`${BOTON_SECUNDARIO} min-h-12 px-4`}>
                     Limpiar
                 </button>
             </div>

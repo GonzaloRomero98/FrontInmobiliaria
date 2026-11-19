@@ -63,12 +63,12 @@ export default function Desplegable({ etiqueta, valor, opciones, onChange, disab
                 onKeyUp={(e) => { if (e.key === ' ') e.preventDefault(); }} onBlur={() => setAbierto(false)}
                 className={`flex w-full items-center justify-between gap-2 text-left cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 ${className}`}>
                 <span className="truncate">{elegida?.texto}</span>
-                <ChevronDown className={`w-4 h-4 shrink-0 text-gray-400 transition-transform ${abierto ? 'rotate-180' : ''}`} aria-hidden="true" />
+                <ChevronDown className={`w-4 h-4 shrink-0 text-gray-600 transition-transform ${abierto ? 'rotate-180' : ''}`} aria-hidden="true" />
             </button>
             {abierto && (
                 // mousedown cancelado: el foco se queda en el botón. click cancelado: el <label> que envuelve no reabre la lista.
                 <ul id={`${id}-lista`} role="listbox" aria-label={etiqueta} onMouseDown={(e) => e.preventDefault()}
-                    className="absolute inset-x-0 top-full z-30 mt-2 max-h-72 overflow-auto rounded-xl bg-white p-1.5 shadow-lg shadow-slate-900/10 ring-1 ring-gray-200/70">
+                    className="absolute inset-x-0 top-full z-30 mt-2 max-h-72 overflow-auto rounded-xl bg-white p-1.5 shadow-lg shadow-gray-900/10 ring-1 ring-gray-200/70">
                     {opciones.map((o, i) => (
                         <li key={o.valor} id={`${id}-${i}`} role="option" aria-selected={o.valor === valor}
                             onPointerEnter={() => setActivo(i)} onClick={(e) => { e.preventDefault(); elegir(i); }}

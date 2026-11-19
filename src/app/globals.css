@@ -2,7 +2,7 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #334155;
+  --foreground: #374151;
 }
 
 @theme inline {
@@ -12,6 +12,8 @@
   --color-marca: #16304b;
   --color-acento: #1e727d;
   --color-acento-suave: #e6f2f3;
+  /* Hover del botón principal: más oscuro que el acento, y distinto del azul marca para verse sobre fondos marca. */
+  --color-acento-oscuro: #175a63;
   /* Borde de los campos de formulario: 3,4:1 sobre blanco, el mínimo para controles (WCAG 1.4.11). */
   --color-borde-campo: #848b96;
   /* Montserrat se parece a la letra del logo y se usa en títulos y precios (clase font-titulo). */

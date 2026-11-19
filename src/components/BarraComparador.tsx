@@ -19,7 +19,8 @@ export default function BarraComparador() {
         <div className={`fixed inset-x-0 z-50 px-4 pointer-events-none ${sobreBarraContacto ? 'bottom-24 lg:bottom-4' : 'bottom-4'}`}>
             <div className="pointer-events-auto max-w-md mx-auto flex items-center justify-between gap-3 bg-marca text-white rounded-full pl-5 pr-2 py-1 shadow-xl">
                 <span role="status" className="text-sm">
-                    {ids.length} de {MAXIMO_COMPARAR} modelos para comparar
+                    {/* Texto corto para que quepa en una línea a 360 px; el lector de pantalla oye "modelos" igual. */}
+                    {ids.length} de {MAXIMO_COMPARAR}<span className="sr-only"> modelos</span> para comparar
                 </span>
                 <div className="flex items-center gap-1">
                     <button type="button" onClick={() => reemplazar([])} className="min-h-11 px-3 text-sm text-gray-300 hover:text-white">

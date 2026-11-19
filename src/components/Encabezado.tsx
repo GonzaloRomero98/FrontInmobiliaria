@@ -3,6 +3,7 @@ import Link from "next/link";
 import { NOMBRE_SITIO } from "@/lib/sitio";
 import MenuUsuario from "@/components/MenuUsuario";
 import NavegacionPrincipal from "@/components/NavegacionPrincipal";
+import { BOTON_PRIMARIO } from "@/lib/estilos";
 
 export default function Encabezado() {
     return (
@@ -16,7 +17,7 @@ export default function Encabezado() {
                     <MenuUsuario />
                     {/* El agendamiento vive en la ficha de cada proyecto, por eso el botón lleva a la grilla. */}
                     <Link href="/#proyectos"
-                        className="hidden sm:inline-flex items-center min-h-11 px-5 rounded-xl bg-acento text-white font-semibold shadow-sm hover:brightness-110 transition">
+                        className={`${BOTON_PRIMARIO} max-sm:hidden min-h-11 px-5`}>
                         Agendar visita
                     </Link>
                 </div>

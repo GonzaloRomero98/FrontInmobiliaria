@@ -26,7 +26,7 @@ const COLUMNAS = [
 
 export default function PieDePagina() {
     return (
-        <footer className="bg-marca mt-16 text-slate-300">
+        <footer className="bg-marca mt-16 text-gray-300">
             <div className="max-w-6xl mx-auto px-4 pt-14 pb-8 flex flex-col gap-10">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr] gap-10">
                     <div className="flex flex-col gap-3">
@@ -66,7 +66,7 @@ export default function PieDePagina() {
                     </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-between border-t border-white/10 pt-6 text-sm text-slate-400">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-between border-t border-white/10 pt-6 text-sm text-gray-400">
                     <p className="flex items-center">© {new Date().getFullYear()} {NOMBRE_SITIO}. Precios y valores referenciales.</p>
                     <div className="flex flex-wrap gap-x-4 -my-3">
                         <Link href="/privacidad" className={ENLACE}>Política de privacidad</Link>

@@ -47,11 +47,11 @@ export default async function Buscar({ searchParams }: { searchParams: Promise<R
             <FiltrosBusqueda key={JSON.stringify(filtros)} iniciales={filtros} />
 
             {error ? (
-                <p className="text-red-600">No pudimos aplicar esos filtros. Revisa los valores e intenta de nuevo.</p>
+                <p role="alert" className="text-red-600">No pudimos aplicar esos filtros. Revisa los valores e intenta de nuevo.</p>
             ) : (
                 <>
                     <h2 className="sr-only">Resultados</h2>
-                    <p className="text-gray-600">
+                    <p role="status" className="text-gray-600">
                         {modelos.length === 0
                             ? 'No hay propiedades con esos filtros. Prueba ampliando el rango de precio o la ubicación.'
                             : `${modelos.length} ${modelos.length === 1 ? 'propiedad encontrada' : 'propiedades encontradas'}`}

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { ETIQUETA_TIPO_VIVIENDA, Operacion, TipoVivienda } from "@/types/modeloCasa";
 import { Ciudad } from "@/types/ubicacion";
 import Desplegable from "./Desplegable";
+import { BOTON_PRIMARIO } from "@/lib/estilos";
 
 const OPCIONES_TIPO = (Object.keys(ETIQUETA_TIPO_VIVIENDA) as TipoVivienda[]).map((t) => ({ valor: t, texto: ETIQUETA_TIPO_VIVIENDA[t] }));
 
@@ -61,7 +62,7 @@ export default function BuscadorInicio({ comunas }: { comunas: Ciudad[] }) {
             </div>
 
             <form onSubmit={buscar}
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto] items-center gap-1 lg:gap-0 p-2 rounded-2xl rounded-tl-none bg-white shadow-lg shadow-slate-900/8 ring-1 ring-gray-100">
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto] items-center gap-1 lg:gap-0 p-2 rounded-2xl rounded-tl-none bg-white shadow-lg shadow-gray-900/8 ring-1 ring-gray-100">
                 <label className={caja}>
                     <span className={etiqueta}>Comuna</span>
                     <Desplegable etiqueta="Comuna" valor={comuna} onChange={setComuna} className={campoDesplegable}
@@ -81,7 +82,7 @@ export default function BuscadorInicio({ comunas }: { comunas: Ciudad[] }) {
                 </label>
 
                 <button type="submit"
-                    className="sm:col-span-2 lg:col-span-1 lg:ml-2 flex items-center justify-center gap-2 min-h-13 px-7 rounded-xl bg-acento text-white font-semibold shadow-sm hover:brightness-110 transition whitespace-nowrap">
+                    className={`${BOTON_PRIMARIO} sm:col-span-2 lg:col-span-1 lg:ml-2 min-h-13 px-7 whitespace-nowrap`}>
                     <Search className="w-5 h-5" aria-hidden="true" />
                     Buscar propiedades
                 </button>

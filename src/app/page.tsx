@@ -9,6 +9,7 @@ import { colorProyecto, htmlSimbolo, SIMBOLOS, TipoPunto } from "@/components/ma
 import { getProyectos } from "@/services/proyecto.service";
 import { getModeloCasa } from "@/services/modeloCasa.service";
 import { obtenerValorUF } from "@/lib/uf";
+import { BOTON_PRIMARIO } from "@/lib/estilos";
 import { equivalencia, formatearUF, plural, precioDesdeUF } from "@/lib/formato";
 import { ModeloCasa } from "@/types/modeloCasa";
 import { Proyecto, urlComoLlegar } from "@/types/proyecto";
@@ -113,7 +114,7 @@ export default async function Home() {
     
                         {destacado && (
                             <Link href={`/proyectos/${destacado.id}`}
-                                className="group block rounded-3xl overflow-hidden bg-white border border-gray-100 shadow-xl shadow-slate-900/10">
+                                className="group block rounded-3xl overflow-hidden bg-white border border-gray-100 shadow-xl shadow-gray-900/10">
                                 <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
                                     <Image src={destacado.imagenPortada!} alt={destacado.nombre} fill priority
                                         sizes="(min-width: 1024px) 520px, 100vw"
@@ -220,20 +221,20 @@ export default async function Home() {
             )}
 
             <section className="max-w-6xl w-full mx-auto px-4">
-                <div className="relative overflow-hidden rounded-3xl bg-marca px-6 py-12 sm:px-12 sm:py-14 shadow-xl shadow-slate-900/20">
+                <div className="relative overflow-hidden rounded-3xl bg-marca px-6 py-12 sm:px-12 sm:py-14 shadow-xl shadow-gray-900/20">
                     <div aria-hidden="true" className="absolute -top-24 -right-16 w-72 h-72 rounded-full bg-acento/40 blur-3xl" />
                     <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-8">
                         <div className="flex flex-col gap-3 max-w-xl">
                             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white text-balance">
                                 ¿Listo para dar el siguiente paso hacia tu nuevo hogar?
                             </h2>
-                            <p className="text-lg text-slate-300">
+                            <p className="text-lg text-gray-300">
                                 Elige un proyecto, recórrelo en 3D y agenda tu visita a la sala de ventas.
                             </p>
                         </div>
                         <div className="flex flex-col sm:flex-row gap-3 shrink-0">
                             <Link href="#proyectos"
-                                className="inline-flex items-center justify-center min-h-12 px-6 rounded-xl bg-acento text-white font-semibold shadow-sm hover:brightness-110 transition">
+                                className={`${BOTON_PRIMARIO} min-h-12 px-6`}>
                                 Agendar visita ahora
                             </Link>
                             <Link href="/buscar"

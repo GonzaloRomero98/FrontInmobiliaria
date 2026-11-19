@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { plural } from "@/lib/formato";
 import { ETIQUETA_ETAPA, Proyecto } from "@/types/proyecto";
+import { BOTON_TARJETA, ETIQUETA_FOTO, TARJETA } from "@/lib/estilos";
 
 export interface ResumenPrecio {
     desde: string | null;
@@ -14,35 +15,39 @@ export interface ResumenPrecio {
     ultimasUnidades: boolean;
 }
 
-const ETIQUETA = "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold shadow-sm";
-
 export default function ProyectoCard({ proyecto, precio }: { proyecto: Proyecto; precio?: ResumenPrecio }) {
+    const idTitulo = `proyecto-${proyecto.id}-titulo`;
     return (
-        <Link href={`/proyectos/${proyecto.id}`}
-            className="group flex flex-col h-full rounded-2xl overflow-hidden bg-white border border-gray-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition motion-reduce:transition-none motion-reduce:hover:translate-y-0">
+        <Link href={`/proyectos/${proyecto.id}`} aria-labelledby={idTitulo} className={TARJETA}>
             <div className="relative w-full aspect-[16/10] bg-gray-100">
-                <Image
-                    src={proyecto.imagenPortada ?? '/placeholder.jpg'}
-                    alt={proyecto.nombre}
-                    fill
-                    sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                    className="object-cover"
-                />
+                {proyecto.imagenPortada ? (
+                    <Image
+                        src={proyecto.imagenPortada}
+                        alt=""
+                        fill
+                        sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                        className="object-cover"
+                    />
+                ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+                        <Building2 className="w-10 h-10" aria-hidden="true" />
+                    </div>
+                )}
                 {(proyecto.etapa || precio?.ultimasUnidades) && (
                     <div className="absolute top-3 left-3 flex flex-wrap gap-2">
                         {proyecto.etapa && (
-                            <span className={`${ETIQUETA} ${proyecto.etapa === 'ENTREGA_INMEDIATA' ? 'bg-acento text-white' : 'bg-white/95 text-marca'}`}>
+                            <span className={`${ETIQUETA_FOTO} ${proyecto.etapa === 'ENTREGA_INMEDIATA' ? 'bg-acento text-white' : 'bg-white/95 text-marca'}`}>
                                 {ETIQUETA_ETAPA[proyecto.etapa]}
                             </span>
                         )}
-                        {precio?.ultimasUnidades && <span className={`${ETIQUETA} bg-amber-400 text-amber-950`}>Últimas unidades</span>}
+                        {precio?.ultimasUnidades && <span className={`${ETIQUETA_FOTO} bg-amber-400 text-amber-950`}>Últimas unidades</span>}
                     </div>
                 )}
             </div>
 
             <div className="flex flex-col flex-1 gap-3 p-5">
                 <div>
-                    <h3 className="font-semibold text-lg leading-snug">{proyecto.nombre}</h3>
+                    <h3 id={idTitulo} className="font-semibold text-lg leading-snug">{proyecto.nombre}</h3>
                     <p className="mt-1 flex items-center gap-1.5 text-sm text-gray-600">
                         <MapPin className="w-4 h-4 shrink-0 text-acento" aria-hidden="true" />
                         {proyecto.ciudad.nombre}, {proyecto.ciudad.region.nombre}
@@ -75,7 +80,7 @@ export default function ProyectoCard({ proyecto, precio }: { proyecto: Proyecto;
 
                 {proyecto.descripcion && <p className="text-gray-600 text-sm line-clamp-2">{proyecto.descripcion}</p>}
 
-                <span className="mt-auto flex items-center justify-center gap-2 min-h-11 rounded-xl bg-marca text-white text-sm font-semibold group-hover:bg-acento transition-colors">
+                <span className={BOTON_TARJETA}>
                     {precio?.con3d ? 'Ver proyecto y Tour 3D' : 'Ver proyecto'}
                     <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" aria-hidden="true" />
                 </span>
