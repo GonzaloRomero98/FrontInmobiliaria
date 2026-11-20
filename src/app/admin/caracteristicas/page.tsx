@@ -4,15 +4,18 @@ import { FormEvent, useEffect, useState } from "react";
 import { isAxiosError } from "axios";
 import { crearCaracteristica, getCaracteristicas } from "@/services/caracteristica.service";
 import { Caracteristica } from "@/types/caracteristicas";
+import { CargandoLista, Vacio } from "@/components/panel/Tablero";
+import { NORMAL, PANEL_PAGINA, PANEL_PRIMARIO, SUPERFICIE } from "@/lib/estilos";
 
 export default function Caracteristicas(){
     const [caracteristicas, setCaracteristicas] = useState<Caracteristica[]>([]);
+    const [cargando, setCargando] = useState(true);
     const [nombre, setNombre] = useState('');
     const [guardando, setGuardando] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(()=>{
-        getCaracteristicas().then(setCaracteristicas).catch(()=> setError('No se pudieron cargar las características'));
+        getCaracteristicas().then(setCaracteristicas).catch(()=> setError('No se pudieron cargar las características')).finally(()=> setCargando(false));
     },[]);
 
     async function agregar(e:FormEvent){
@@ -33,31 +36,35 @@ export default function Caracteristicas(){
     }
 
     return(
-        <main className="max-w-lg mx-auto px-4 py-10 flex flex-col gap-6">
+        <main className={`${PANEL_PAGINA} flex flex-col gap-6`}>
             <div>
                 <h1 className="text-2xl font-bold">Características</h1>
-                <p className="text-gray-500 text-sm">Comodidades que se pueden marcar en cada modelo de casa.</p>
+                <p className="text-gray-600 text-sm">Comodidades que se pueden marcar en cada modelo de casa.</p>
             </div>
 
-            <form onSubmit={agregar} className="flex gap-2">
-                <input
-                    value={nombre}
-                    onChange={(e) => setNombre(e.target.value)}
-                    placeholder="Ej: Piscina"
-                    maxLength={150}
-                    aria-label="Nombre de la característica"
-                    className="flex-1 border rounded-lg px-3 py-2"
-                />
-                <button type="submit" disabled={guardando || !nombre.trim()} className="bg-marca text-white rounded-lg px-4 font-medium disabled:opacity-50">
+            <form onSubmit={agregar} className="flex flex-wrap items-end gap-2 max-w-xl">
+                <label className="flex flex-col gap-1 flex-1 min-w-56 text-sm font-medium text-gray-800">
+                    Nueva característica
+                    <input
+                        value={nombre}
+                        onChange={(e) => setNombre(e.target.value)}
+                        placeholder="Ej: Piscina"
+                        maxLength={150}
+                        className="border border-borde-campo rounded-lg px-3 py-2 text-base font-normal"
+                    />
+                </label>
+                <button type="submit" disabled={guardando || !nombre.trim()} className={`${PANEL_PRIMARIO} ${NORMAL}`}>
                     {guardando ? 'Agregando...' : 'Agregar'}
                 </button>
             </form>
-            {error && <p className="text-red-500 text-sm">{error}</p>}
+            {error && <p role="alert" className="text-red-700 text-sm">{error}</p>}
 
-            {caracteristicas.length === 0 ? (
-                <p className="text-gray-500">Todavía no hay caracteristicas.</p>
+            {cargando ? (
+                <CargandoLista filas={1} alto="h-24" etiqueta="Cargando características" />
+            ) : caracteristicas.length === 0 ? (
+                !error && <Vacio texto="Todavía no hay características. Agrega la primera con el campo de arriba." />
             ) : (
-                <ul className="flex flex-wrap gap-2">
+                <ul className={`${SUPERFICIE} p-5 flex flex-wrap gap-2`}>
                     {caracteristicas.map((c) => (
                         <li key={c.id} className="bg-gray-100 text-gray-700 text-sm px-3 py-1 rounded-full">{c.nombre}</li>
                     ))}

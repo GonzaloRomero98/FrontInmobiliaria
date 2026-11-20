@@ -9,6 +9,7 @@ import { ModeloCasa } from "@/types/modeloCasa";
 import { CrearSolicitudPanelInput, ETIQUETA_ORIGEN } from "@/types/solicitud";
 import { mensajeError } from "@/lib/errores";
 import SelectorVisita from "@/components/SelectorVisita";
+import { PANEL_PAGINA, SUPERFICIE, PANEL_PRIMARIO, NORMAL } from "@/lib/estilos";
 
 const ORIGENES = ['SALA_VENTAS', 'TELEFONO', 'WHATSAPP'] as const;
 // Mismo tope que el backend (CrearSolicitudDto).
@@ -58,16 +59,16 @@ export default function NuevaSolicitud() {
         }
     }
 
-    const entrada = "border rounded-lg px-3 py-2 font-normal";
+    const entrada = "border border-borde-campo rounded-lg px-3 py-2 font-normal";
     return (
-        <main className="max-w-2xl mx-auto px-4 py-10 flex flex-col gap-6">
+        <main className={`${PANEL_PAGINA} flex flex-col gap-6`}>
             <div>
                 <Link href="/secretario/solicitudes" className="text-sm text-gray-500 hover:underline">← Solicitudes</Link>
                 <h1 className="text-2xl font-bold">Nueva solicitud</h1>
                 <p className="text-sm text-gray-600 mt-1">Para clientes que llegan a la sala, llaman o escriben. Queda como contactada.</p>
             </div>
 
-            <form onSubmit={enviar} className="flex flex-col gap-4">
+            <form onSubmit={enviar} className={`${SUPERFICIE} p-5 sm:p-6 max-w-2xl flex flex-col gap-4`}>
                 <fieldset className="flex flex-wrap gap-2">
                     <legend className="text-sm font-medium mb-1">¿Cómo llegó el cliente?</legend>
                     {ORIGENES.map((o) => (
@@ -133,7 +134,7 @@ export default function NuevaSolicitud() {
                 </label>
 
                 {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
-                <button type="submit" disabled={guardando} className="self-start bg-marca text-white rounded-lg px-5 py-2.5 font-medium disabled:opacity-50">
+                <button type="submit" disabled={guardando} className={`self-start ${PANEL_PRIMARIO} ${NORMAL}`}>
                     {guardando ? 'Guardando…' : 'Registrar solicitud'}
                 </button>
             </form>

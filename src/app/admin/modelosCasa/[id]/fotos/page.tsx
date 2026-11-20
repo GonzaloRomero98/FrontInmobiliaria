@@ -1,12 +1,14 @@
 'use client'
 
 import Link from "next/link";
+import { CargandoLista } from "@/components/panel/Tablero";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import SubidaGaleria from "@/components/SubidaGaleria";
 import { agregarFotoModelo, eliminarFotoModelo, getModeloAdminById, ordenarFotosModelo } from "@/services/modeloCasa.service";
 import { obtenerUrlSubida, subirArchivo } from "@/services/s3.service";
 import { ModeloCasa } from "@/types/modeloCasa";
+import { PANEL_PAGINA, SUPERFICIE, PANEL_PRIMARIO, PANEL_SECUNDARIO, NORMAL } from "@/lib/estilos";
 
 export default function FotosModeloCasa(){
     const { id } = useParams<{ id: string }>();
@@ -68,10 +70,10 @@ export default function FotosModeloCasa(){
         }
     }
 
-    if (!modelo) return <main className="max-w-3xl mx-auto px-4 py-10">{error ?? 'Cargando...'}</main>;
+    if (!modelo) return <main className={PANEL_PAGINA}><Link href="/admin/modelosCasa" className="text-sm text-gray-600 hover:underline">← Modelos de casa</Link><div className="mt-4">{error ? <p role="alert" className="text-red-700">{error}</p> : <CargandoLista filas={2} alto="h-40" etiqueta="Cargando las fotos" />}</div></main>;
 
     return(
-        <main className="max-w-3xl mx-auto px-4 py-10 flex flex-col gap-6">
+        <main className={`${PANEL_PAGINA} flex flex-col gap-6`}>
             <div>
                 <Link href="/admin/modelosCasa" className="text-sm text-gray-500 hover:underline">← Modelos de casa</Link>
                 <h1 className="text-2xl font-bold">Fotos de {modelo.nombreModelo}</h1>
@@ -84,15 +86,15 @@ export default function FotosModeloCasa(){
                 <p className="text-sm text-gray-500">
                     Este es el orden del carrusel de la ficha pública. La foto principal del modelo siempre va primero, antes de estas.
                 </p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                     {modelo.fotos.map((foto, i) => (
                         <div key={foto.id} className="flex flex-col gap-1">
                             <img src={foto.urlImagen} alt={`Foto ${i + 1} de ${modelo.nombreModelo}`} className="w-full h-32 object-cover rounded-lg border" />
                             <div className="flex items-center gap-1">
                                 <button type="button" onClick={() => mover(i, -1)} disabled={i === 0} aria-label={`Mover foto ${i + 1} hacia atrás`}
-                                    className="text-sm border rounded px-2 py-0.5 hover:bg-gray-50 disabled:opacity-30">←</button>
+                                    className={`${PANEL_SECUNDARIO} px-2.5 py-1 text-sm`}>←</button>
                                 <button type="button" onClick={() => mover(i, 1)} disabled={i === modelo.fotos.length - 1} aria-label={`Mover foto ${i + 1} hacia adelante`}
-                                    className="text-sm border rounded px-2 py-0.5 hover:bg-gray-50 disabled:opacity-30">→</button>
+                                    className={`${PANEL_SECUNDARIO} px-2.5 py-1 text-sm`}>→</button>
                                 <span className="text-xs text-gray-500 mx-1">{i + 1}</span>
                                 {porEliminar === foto.id ? (
                                     <span className="ml-auto flex items-center gap-2 text-sm">
@@ -114,15 +116,15 @@ export default function FotosModeloCasa(){
                 </>
             )}
 
-            <section className="p-4 border rounded-xl flex flex-col gap-3">
+            <section className={`${SUPERFICIE} p-5 flex flex-col gap-3`}>
                 <h2 className="font-semibold">Agregar fotos</h2>
                 <SubidaGaleria key={versionSelector} archivosSeleccionados={setArchivos} disabled={subiendo !== null} />
-                {error && <p className="text-red-500 text-sm">{error}</p>}
+                {error && <p role="alert" className="text-red-700 text-sm">{error}</p>}
                 <button
                     type="button"
                     onClick={subirFotos}
                     disabled={archivos.length === 0 || subiendo !== null}
-                    className="bg-marca text-white rounded-lg py-2 px-4 font-medium disabled:opacity-50 self-start"
+                    className={`${PANEL_PRIMARIO} ${NORMAL} self-start`}
                 >
                     {subiendo ?? `Subir ${archivos.length || ''} foto${archivos.length === 1 ? '' : 's'}`}
                 </button>

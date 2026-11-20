@@ -23,7 +23,7 @@ function mensajeDeError(err:unknown, porDefecto:string):string{
 function TextoAviso({aviso}:{aviso:Aviso}){
     if(!aviso) return null;
     return aviso.tipo === 'error'
-        ? <p className="text-red-500 text-sm" role="alert">{aviso.texto}</p>
+        ? <p className="text-red-700 text-sm" role="alert">{aviso.texto}</p>
         : <p className="text-green-700 text-sm" role="status">{aviso.texto}</p>;
 }
 
@@ -43,7 +43,7 @@ export default function MiPerfil(){
                 )}
                 <h1 className="text-2xl font-bold">Mi perfil</h1>
             </div>
-            {errorCarga && <p className="text-red-500 text-sm" role="alert">No se pudo cargar tu perfil</p>}
+            {errorCarga && <p className="text-red-700 text-sm" role="alert">No se pudo cargar tu perfil</p>}
             {!perfil && !errorCarga && <p className="text-gray-500 text-sm">Cargando...</p>}
             {perfil && (
                 <>
@@ -159,7 +159,7 @@ function SeccionDatos({perfil, alCambiar}:{perfil:Usuario; alCambiar:(u:Usuario)
                 <label className="flex flex-col gap-1 text-sm">
                     Nombre
                     <input required maxLength={100} autoComplete="name" value={nombre} onChange={(e) => setNombre(e.target.value)}
-                        className="border rounded-lg px-3 py-2 text-base" />
+                        className="border border-borde-campo rounded-lg px-3 py-2 text-base" />
                 </label>
                 <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
                     <dt className="text-gray-500">Correo</dt>
@@ -212,11 +212,11 @@ function SeccionContrasena(){
             <h2 id="titulo-contrasena" className="font-semibold">Cambiar contraseña</h2>
             <form onSubmit={guardar} className="flex flex-col gap-4">
                 <input required type="password" autoComplete="current-password" value={actual} onChange={(e) => setActual(e.target.value)}
-                    placeholder="Contraseña actual" aria-label="Contraseña actual" className="border rounded-lg px-3 py-2" />
+                    placeholder="Contraseña actual" aria-label="Contraseña actual" className="border border-borde-campo rounded-lg px-3 py-2" />
                 <input required type="password" autoComplete="new-password" value={nueva} onChange={(e) => setNueva(e.target.value)}
-                    placeholder="Contraseña nueva" aria-label="Contraseña nueva" className="border rounded-lg px-3 py-2" />
+                    placeholder="Contraseña nueva" aria-label="Contraseña nueva" className="border border-borde-campo rounded-lg px-3 py-2" />
                 <input required type="password" autoComplete="new-password" value={repetida} onChange={(e) => setRepetida(e.target.value)}
-                    placeholder="Repite la contraseña nueva" aria-label="Repite la contraseña nueva" className="border rounded-lg px-3 py-2" />
+                    placeholder="Repite la contraseña nueva" aria-label="Repite la contraseña nueva" className="border border-borde-campo rounded-lg px-3 py-2" />
                 <p className="text-xs text-gray-500">Mínimo 10 caracteres, con mayúscula, minúscula y número.</p>
                 <TextoAviso aviso={aviso} />
                 <button type="submit" disabled={guardando} className={`${ESTILO_BOTON} self-start`}>

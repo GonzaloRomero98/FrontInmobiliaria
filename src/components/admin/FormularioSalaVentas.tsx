@@ -5,6 +5,7 @@ import { SelectorUbicacion } from "@/components/mapas";
 import { actualizarProyecto } from "@/services/proyecto.service";
 import { ActualizarProyectoInput, Proyecto } from "@/types/proyecto";
 import { DiaSemana, HorariosSala, horasEntre, SEMANA, textoHorario } from "@/lib/horarioSala";
+import { SUPERFICIE, PANEL_PRIMARIO, PANEL_SECUNDARIO, NORMAL } from "@/lib/estilos";
 
 const HORAS = horasEntre('06:00', '23:30');
 const HORARIO_INICIAL: HorariosSala = Object.fromEntries(
@@ -75,7 +76,7 @@ export default function FormularioSalaVentas({ proyecto, onGuardado }: { proyect
     }
 
     return (
-        <section className="flex flex-col gap-4 p-5 border rounded-xl">
+        <section className={`${SUPERFICIE} flex flex-col gap-4 p-5`}>
             <div>
                 <h2 className="text-xl font-semibold">Sala de ventas</h2>
                 <p className="text-sm text-gray-500">Opcional. Con sala, el formulario de contacto permite pedir una visita y la sala aparece en el mapa.</p>
@@ -84,12 +85,12 @@ export default function FormularioSalaVentas({ proyecto, onGuardado }: { proyect
             <label className="flex flex-col gap-1 text-sm">
                 Dirección
                 <input value={direccion} onChange={(e) => setDireccion(e.target.value)} maxLength={200}
-                    placeholder="Ej.: 1 Sur 1234, Talca" className="border rounded-lg px-3 py-2" />
+                    placeholder="Ej.: 1 Sur 1234, Talca" className="border border-borde-campo rounded-lg px-3 py-2" />
             </label>
             <label className="flex flex-col gap-1 text-sm">
                 Teléfono
                 <input value={telefono} onChange={(e) => setTelefono(e.target.value)} maxLength={20} type="tel"
-                    placeholder="+56712345678" className="border rounded-lg px-3 py-2" />
+                    placeholder="+56712345678" className="border border-borde-campo rounded-lg px-3 py-2" />
             </label>
 
             <fieldset className="flex flex-col gap-2">
@@ -111,12 +112,12 @@ export default function FormularioSalaVentas({ proyecto, onGuardado }: { proyect
                             {tramo ? (
                                 <>
                                     <select aria-label={`${nombre}: abre`} value={tramo[0]} onChange={(e) => cambiarDia(dia, [e.target.value, tramo[1]])}
-                                        className="border rounded-lg px-2 py-1.5">
+                                        className="border border-borde-campo rounded-lg px-2 py-1.5">
                                         {HORAS.map((h) => <option key={h}>{h}</option>)}
                                     </select>
                                     a
                                     <select aria-label={`${nombre}: cierra`} value={tramo[1]} onChange={(e) => cambiarDia(dia, [tramo[0], e.target.value])}
-                                        className="border rounded-lg px-2 py-1.5">
+                                        className="border border-borde-campo rounded-lg px-2 py-1.5">
                                         {HORAS.map((h) => <option key={h}>{h}</option>)}
                                     </select>
                                 </>
@@ -136,18 +137,18 @@ export default function FormularioSalaVentas({ proyecto, onGuardado }: { proyect
 
             <div className="flex gap-2">
                 <button type="button" onClick={guardarSala} disabled={guardando}
-                    className="flex-1 bg-marca text-white rounded-lg py-2.5 font-medium disabled:opacity-50">
+                    className={`flex-1 ${PANEL_PRIMARIO} ${NORMAL}`}>
                     {guardando ? 'Guardando...' : 'Guardar sala de ventas'}
                 </button>
                 {proyecto.salaDireccion && (
                     <button type="button" onClick={quitarSala} disabled={guardando}
-                        className="border rounded-lg px-4 py-2.5 text-sm hover:bg-gray-50 disabled:opacity-50">
+                        className={`${PANEL_SECUNDARIO} ${NORMAL}`}>
                         Quitar sala
                     </button>
                 )}
             </div>
 
-            {mensaje && <p className={`text-sm ${mensaje.tipo === 'ok' ? 'text-green-700' : 'text-red-600'}`}>{mensaje.texto}</p>}
+            {mensaje && <p role={mensaje.tipo === 'ok' ? 'status' : 'alert'} className={`text-sm ${mensaje.tipo === 'ok' ? 'text-green-700' : 'text-red-600'}`}>{mensaje.texto}</p>}
         </section>
     );
 }

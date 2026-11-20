@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
 import { guardarNormativa } from "@/services/proyecto.service";
 import { Normativa, NormativaInput, Riesgo, RIESGOS } from "@/types/normativa";
+import { SUPERFICIE, PANEL_PRIMARIO, NORMAL } from "@/lib/estilos";
 
 const numeroOpcional = (min: number, max: number) => z.string().refine(
     (v) => v === '' || (!Number.isNaN(Number(v)) && Number(v) >= min && Number(v) <= max),
@@ -81,11 +82,11 @@ export default function FormularioNormativa({ idProyecto, normativa }: { idProye
         }
     }
 
-    const campo = "w-full border rounded-lg px-3 py-2";
-    const error = (clave: keyof Valores) => errors[clave] && <p className="text-red-500 text-sm mt-1">{errors[clave]?.message}</p>;
+    const campo = "w-full border border-borde-campo rounded-lg px-3 py-2";
+    const error = (clave: keyof Valores) => errors[clave] && <p role="alert" className="text-red-700 text-sm mt-1">{errors[clave]?.message}</p>;
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 p-5 border rounded-xl">
+        <form onSubmit={handleSubmit(onSubmit)} className={`${SUPERFICIE} flex flex-col gap-4 p-5`}>
             <div>
                 <h2 className="text-xl font-semibold">Normativa urbana (plan regulador)</h2>
                 <p className="text-sm text-gray-500">
@@ -173,9 +174,9 @@ export default function FormularioNormativa({ idProyecto, normativa }: { idProye
                 {error('observaciones')}
             </div>
 
-            {mensaje && <p className={`text-sm ${mensaje.tipo === 'ok' ? 'text-green-700' : 'text-red-600'}`}>{mensaje.texto}</p>}
+            {mensaje && <p role={mensaje.tipo === 'ok' ? 'status' : 'alert'} className={`text-sm ${mensaje.tipo === 'ok' ? 'text-green-700' : 'text-red-600'}`}>{mensaje.texto}</p>}
 
-            <button type="submit" disabled={isSubmitting} className="bg-marca text-white rounded-lg py-2.5 font-medium disabled:opacity-50">
+            <button type="submit" disabled={isSubmitting} className={`${PANEL_PRIMARIO} ${NORMAL}`}>
                 {isSubmitting ? 'Guardando...' : 'Guardar normativa'}
             </button>
         </form>

@@ -7,6 +7,7 @@ import AvisoCercania, { confirmarSiDuplicado, DISTANCIA_DUPLICADO_M, guardarConf
 import { actualizarEntorno, actualizarProyecto, getEntorno } from "@/services/proyecto.service";
 import { Proyecto } from "@/types/proyecto";
 import { CATEGORIAS_ENTORNO, CategoriaEntorno, EntornoProyecto } from "@/types/entorno";
+import { SUPERFICIE, PANEL_PRIMARIO, PANEL_SECUNDARIO, NORMAL, COMPACTO } from "@/lib/estilos";
 
 const ESPERA_ENTORNO_MS = 5000;
 const INTENTOS_ENTORNO = 12;
@@ -107,7 +108,7 @@ export default function FormularioUbicacion({ proyecto, onGuardado }: { proyecto
     }
 
     return (
-        <section className="flex flex-col gap-4 p-5 border rounded-xl">
+        <section className={`${SUPERFICIE} flex flex-col gap-4 p-5`}>
             <div>
                 <h2 className="text-xl font-semibold">Ubicación</h2>
                 <p className="text-sm text-gray-500">Haz clic en el mapa en la ubicación del proyecto. Con ella se calculan los servicios cercanos.</p>
@@ -116,7 +117,7 @@ export default function FormularioUbicacion({ proyecto, onGuardado }: { proyecto
             <label className="flex flex-col gap-1 text-sm">
                 Dirección
                 <input value={direccion} onChange={(e) => setDireccion(e.target.value)} maxLength={200}
-                    placeholder="Ej.: 1 Sur 1234" className="w-full border rounded-lg px-3 py-2" />
+                    placeholder="Ej.: 1 Sur 1234" className="w-full border border-borde-campo rounded-lg px-3 py-2" />
             </label>
 
             <SelectorUbicacion latitud={latitud} longitud={longitud} onCambio={(lat, lng) => { setLatitud(lat); setLongitud(lng); }}
@@ -128,28 +129,28 @@ export default function FormularioUbicacion({ proyecto, onGuardado }: { proyecto
                 <label className="flex flex-col gap-1 text-sm">
                     Latitud
                     <input type="number" step="0.000001" value={latitud ?? ''} onChange={(e) => setLatitud(coordenada(e.target.value, -90, 90))}
-                        className="border rounded-lg px-3 py-2" />
+                        className="border border-borde-campo rounded-lg px-3 py-2" />
                 </label>
                 <label className="flex flex-col gap-1 text-sm">
                     Longitud
                     <input type="number" step="0.000001" value={longitud ?? ''} onChange={(e) => setLongitud(coordenada(e.target.value, -180, 180))}
-                        className="border rounded-lg px-3 py-2" />
+                        className="border border-borde-campo rounded-lg px-3 py-2" />
                 </label>
             </div>
 
             <button type="button" onClick={guardar} disabled={guardando}
-                className="bg-marca text-white rounded-lg py-2.5 font-medium disabled:opacity-50">
+                className={`${PANEL_PRIMARIO} ${NORMAL}`}>
                 {guardando ? 'Guardando...' : 'Guardar ubicación'}
             </button>
 
-            {mensaje && <p className={`text-sm ${mensaje.tipo === 'ok' ? 'text-green-700' : 'text-red-600'}`}>{mensaje.texto}</p>}
+            {mensaje && <p role={mensaje.tipo === 'ok' ? 'status' : 'alert'} className={`text-sm ${mensaje.tipo === 'ok' ? 'text-green-700' : 'text-red-600'}`}>{mensaje.texto}</p>}
 
             {proyecto.latitud !== null && (
                 <div className="flex flex-col gap-2 pt-3 border-t">
                     <div className="flex items-center justify-between gap-3">
                         <h3 className="font-medium">Entorno (OpenStreetMap)</h3>
                         <button type="button" onClick={recalcular} disabled={calculando}
-                            className="text-sm border rounded-lg px-3 py-1.5 hover:bg-gray-50 disabled:opacity-50">
+                            className={`${PANEL_SECUNDARIO} ${COMPACTO}`}>
                             {calculando ? 'Calculando...' : 'Actualizar entorno'}
                         </button>
                     </div>

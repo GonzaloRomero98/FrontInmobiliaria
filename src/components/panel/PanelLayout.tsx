@@ -44,12 +44,12 @@ function Navegacion({ esAdmin, pendientes, perfil, ruta }: { esAdmin: boolean; p
             <nav aria-label="Secciones del panel" className="flex flex-col">
                 {grupos.map((g) => (
                     <div key={g.titulo ?? 'inicio'} className="flex flex-col gap-0.5">
-                        {g.titulo && <p className="px-3 mt-5 mb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{g.titulo}</p>}
+                        {g.titulo && <p className="px-3 mt-5 mb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400">{g.titulo}</p>}
                         {g.items.map(({ href, etiqueta, icono: Icono, insignia, exacto }) => {
                             const activo = exacto ? ruta === href : ruta === href || ruta.startsWith(`${href}/`);
                             return (
                                 <Link key={href} href={href} aria-current={activo ? 'page' : undefined}
-                                    className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${activo ? 'bg-white/15 text-white' : 'hover:bg-white/10 hover:text-white'}`}>
+                                    className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${activo ? 'bg-white/20 text-white' : 'hover:bg-white/10 hover:text-white'}`}>
                                     <Icono className="w-4.5 h-4.5 shrink-0" aria-hidden />
                                     {etiqueta}
                                     {insignia && !!pendientes && (
@@ -71,7 +71,7 @@ function Navegacion({ esAdmin, pendientes, perfil, ruta }: { esAdmin: boolean; p
                 <AvatarUsuario nombre={perfil?.nombre ?? '?'} fotoUrl={perfil?.fotoUrl} />
                 <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-white truncate">{perfil?.nombre ?? 'Mi cuenta'}</p>
-                    <p className="text-xs text-slate-400 truncate">{perfil?.correo}</p>
+                    <p className="text-xs text-gray-400 truncate">{perfil?.correo}</p>
                     <div className="flex gap-3 mt-1 text-xs">
                         <Link href="/cuenta" className="hover:text-white underline-offset-2 hover:underline">Mi perfil</Link>
                         <BotonDesconectar className="hover:text-white underline-offset-2 hover:underline" />
@@ -135,8 +135,8 @@ export default function PanelLayout({ rol, children }: { rol: string | undefined
 
     return (
         <PanelContext.Provider value={{ perfil }}>
-            <div className="lg:flex min-h-screen bg-slate-50">
-                <aside className="hidden lg:flex print:hidden w-64 shrink-0 sticky top-0 h-screen overflow-y-auto flex-col bg-marca text-slate-300 px-4 py-5">
+            <div className="lg:flex min-h-screen bg-gray-50">
+                <aside className="hidden lg:flex print:hidden w-64 shrink-0 sticky top-0 h-screen overflow-y-auto flex-col bg-marca text-gray-300 px-4 py-5">
                     {navegacion}
                 </aside>
 
@@ -155,9 +155,9 @@ export default function PanelLayout({ rol, children }: { rol: string | undefined
                     <div className="lg:hidden print:hidden fixed inset-0 z-50">
                         <div className="absolute inset-0 bg-black/40" onClick={() => setMenuAbierto(false)} aria-hidden />
                         <div ref={panelMenu} id="menu-panel" role="dialog" aria-modal="true" aria-label="Menú del panel"
-                            className="absolute inset-y-0 left-0 w-72 max-w-[85vw] flex flex-col overflow-y-auto bg-marca text-slate-300 px-4 py-5">
+                            className="absolute inset-y-0 left-0 w-72 max-w-[85vw] flex flex-col overflow-y-auto bg-marca text-gray-300 px-4 py-5">
                             <button ref={botonCerrar} type="button" onClick={() => { setMenuAbierto(false); botonMenu.current?.focus(); }}
-                                className="self-end -mt-1 mb-2 text-white rounded-lg p-1.5 hover:bg-white/10">
+                                className="self-end -mt-1 mb-2 text-white rounded-lg p-2.5 hover:bg-white/10">
                                 <X className="w-5 h-5" aria-hidden />
                                 <span className="sr-only">Cerrar menú</span>
                             </button>

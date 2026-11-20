@@ -2,6 +2,7 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { ReactNode } from "react";
 import { ETIQUETA_VISITA, EstadoVisita } from "@/types/solicitud";
+import { SUPERFICIE } from "@/lib/estilos";
 
 export const ZONA = 'America/Santiago';
 
@@ -21,7 +22,7 @@ export function hace(iso: string): string {
 export function Tarjeta({ titulo, enlace, extra, children, id }: { titulo: string; enlace?: { href: string; texto: string }; extra?: ReactNode; children: ReactNode; id?: string }) {
     const idTitulo = `${id ?? titulo}-titulo`;
     return (
-        <section id={id} aria-labelledby={idTitulo} className="bg-white border rounded-2xl p-5 scroll-mt-20">
+        <section id={id} aria-labelledby={idTitulo} className={`${SUPERFICIE} p-5 scroll-mt-20`}>
             <div className="flex items-center justify-between gap-3 mb-4">
                 <h2 id={idTitulo} className="text-base font-bold">{titulo}</h2>
                 {enlace && <Link href={enlace.href} className="text-sm font-medium text-acento hover:underline">{enlace.texto} →</Link>}
@@ -48,7 +49,7 @@ export function Informativa({ cifra, texto, children }: { cifra: number; texto: 
     return (
         <div className="px-5 py-4">
             <p className="font-titulo text-2xl font-bold text-marca tabular-nums">{numero(cifra)}</p>
-            <p className="text-sm text-slate-600">{texto}{children}</p>
+            <p className="text-sm text-gray-600">{texto}{children}</p>
         </div>
     );
 }
@@ -60,7 +61,7 @@ const parteFecha = (iso: string, opciones: Intl.DateTimeFormatOptions) => new Da
 export function Dia({ iso }: { iso: string }) {
     return (
         <span className="w-12 shrink-0 text-center border rounded-lg py-1 leading-tight">
-            <span className="block text-[11px] uppercase text-slate-600">{parteFecha(iso, { weekday: 'short' }).replace('.', '')}</span>
+            <span className="block text-xs uppercase text-gray-600">{parteFecha(iso, { weekday: 'short' }).replace('.', '')}</span>
             <span className="font-titulo font-bold text-lg text-marca tabular-nums">{parteFecha(iso, { day: 'numeric' })}</span>
         </span>
     );
@@ -69,9 +70,9 @@ export function Dia({ iso }: { iso: string }) {
 export const hora = (iso: string) => parteFecha(iso, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
 
 export function ProximasVisitas({ visitas }: { visitas: Visita[] }) {
-    if (visitas.length === 0) return <p className="text-sm text-slate-600">No hay visitas agendadas para los próximos 7 días.</p>;
+    if (visitas.length === 0) return <p className="text-sm text-gray-600">No hay visitas agendadas para los próximos 7 días.</p>;
     return (
-        <ul className="divide-y divide-slate-100">
+        <ul className="divide-y divide-gray-100">
             {visitas.map((v) => (
                 <li key={v.id} className="flex gap-3 py-2.5 first:pt-0 last:pb-0">
                     <Dia iso={v.visitaPreferida} />
@@ -79,7 +80,7 @@ export function ProximasVisitas({ visitas }: { visitas: Visita[] }) {
                         <Link href={`/secretario/solicitudes/${v.id}`} className="block font-semibold text-marca truncate hover:underline">
                             {v.nombre} {v.apellido} · {hora(v.visitaPreferida)}
                         </Link>
-                        <p className="text-sm text-slate-600 truncate">
+                        <p className="text-sm text-gray-600 truncate">
                             {v.visitaEstado && <span className={v.visitaEstado === 'POR_CONFIRMAR' ? 'font-semibold text-amber-700' : 'text-green-700'}>{ETIQUETA_VISITA[v.visitaEstado]} · </span>}
                             {[v.modelo, v.proyecto].filter(Boolean).join(' · ')}
                         </p>
@@ -91,5 +92,25 @@ export function ProximasVisitas({ visitas }: { visitas: Visita[] }) {
 }
 
 export function Esqueleto({ className }: { className: string }) {
-    return <div className={`animate-pulse bg-slate-200/70 rounded-2xl ${className}`} />;
+    return <div className={`animate-pulse motion-reduce:animate-none bg-gray-200/70 rounded-2xl ${className}`} />;
+}
+
+// Mientras carga, el título de la página sigue a la vista y en el lugar del contenido van bloques grises.
+export function CargandoLista({ filas = 4, alto = 'h-16', etiqueta = 'Cargando' }: { filas?: number; alto?: string; etiqueta?: string }) {
+    return (
+        <div role="status" className="flex flex-col gap-3">
+            <span className="sr-only">{etiqueta}…</span>
+            {Array.from({ length: filas }, (_, i) => <Esqueleto key={i} className={alto} />)}
+        </div>
+    );
+}
+
+// Lista vacía: dice qué pasa y, si hay algo que hacer, ofrece el botón para hacerlo.
+export function Vacio({ texto, children }: { texto: string; children?: ReactNode }) {
+    return (
+        <div className={`${SUPERFICIE} px-6 py-10 flex flex-col items-center gap-4 text-center`}>
+            <p className="text-gray-600">{texto}</p>
+            {children}
+        </div>
+    );
 }

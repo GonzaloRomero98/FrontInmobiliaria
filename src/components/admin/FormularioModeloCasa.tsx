@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
+import { SUPERFICIE, PANEL_PRIMARIO, NORMAL } from "@/lib/estilos";
 
 const esquemaModeloCasa = z.object({
     id_proyecto: z.string().min(1, 'Selecciona el proyecto'),
@@ -50,7 +51,7 @@ const esquemaModeloCasa = z.object({
 type FormValues = z.infer<typeof esquemaModeloCasa>;
 
 const ETIQUETA = "flex flex-col gap-1 text-sm";
-const CAMPO = "w-full border rounded-lg px-3 py-2";
+const CAMPO = "w-full border border-borde-campo rounded-lg px-3 py-2";
 const SECCION = "flex flex-col gap-4";
 const TITULO_SECCION = "font-titulo font-semibold text-marca mb-3";
 
@@ -228,7 +229,7 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
     }
 
     return(
-            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-8">
+            <form onSubmit={handleSubmit(onSubmit)} className={`${SUPERFICIE} p-5 sm:p-6 flex flex-col gap-8`}>
                 <fieldset className={SECCION}>
                     <legend className={TITULO_SECCION}>Identificación</legend>
                     <div>
@@ -241,7 +242,7 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                                 ))}
                             </select>
                         </label>
-                        {errors.id_proyecto && <p className="text-red-500 text-sm mt-1">{errors.id_proyecto.message}</p>}
+                        {errors.id_proyecto && <p role="alert" className="text-red-700 text-sm mt-1">{errors.id_proyecto.message}</p>}
                     </div>
 
                     <div>
@@ -249,7 +250,7 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                             Nombre del modelo
                             <input {...register('nombreModelo')} className={CAMPO} />
                         </label>
-                        {errors.nombreModelo && <p className="text-red-500 text-sm mt-1">{errors.nombreModelo.message}</p>}
+                        {errors.nombreModelo && <p role="alert" className="text-red-700 text-sm mt-1">{errors.nombreModelo.message}</p>}
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
@@ -279,21 +280,21 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                                 Dormitorios
                                 <input {...register('dormitorios')} type="number" min="0" className={CAMPO} />
                             </label>
-                            {errors.dormitorios && <p className="text-red-500 text-sm mt-1">{errors.dormitorios.message}</p>}
+                            {errors.dormitorios && <p role="alert" className="text-red-700 text-sm mt-1">{errors.dormitorios.message}</p>}
                         </div>
                         <div>
                             <label className={ETIQUETA}>
                                 Baños
                                 <input {...register('banos')} type="number" min="0" className={CAMPO} />
                             </label>
-                            {errors.banos && <p className="text-red-500 text-sm mt-1">{errors.banos.message}</p>}
+                            {errors.banos && <p role="alert" className="text-red-700 text-sm mt-1">{errors.banos.message}</p>}
                         </div>
                         <div>
                             <label className={ETIQUETA}>
                                 Estacionamientos
                                 <input {...register('estacionamiento')} type="number" min="0" className={CAMPO} />
                             </label>
-                            {errors.estacionamiento && <p className="text-red-500 text-sm mt-1">{errors.estacionamiento.message}</p>}
+                            {errors.estacionamiento && <p role="alert" className="text-red-700 text-sm mt-1">{errors.estacionamiento.message}</p>}
                         </div>
                     </div>
 
@@ -303,14 +304,14 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                                 Superficie construida (m²)
                                 <input {...register('superficieConstruida')} type="number" step="0.01" className={CAMPO} />
                             </label>
-                            {errors.superficieConstruida && <p className="text-red-500 text-sm mt-1">{errors.superficieConstruida.message}</p>}
+                            {errors.superficieConstruida && <p role="alert" className="text-red-700 text-sm mt-1">{errors.superficieConstruida.message}</p>}
                         </div>
                         <div>
                             <label className={ETIQUETA}>
                                 {esCasa ? 'Superficie terreno (m²)' : 'Superficie terreno (m², opcional)'}
                                 <input {...register('superficieTerreno')} type="number" step="0.01" className={CAMPO} />
                             </label>
-                            {errors.superficieTerreno && <p className="text-red-500 text-sm mt-1">{errors.superficieTerreno.message}</p>}
+                            {errors.superficieTerreno && <p role="alert" className="text-red-700 text-sm mt-1">{errors.superficieTerreno.message}</p>}
                         </div>
                     </div>
 
@@ -373,7 +374,7 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                                 Precio
                                 <input {...register('precio')} type="number" step="0.0001" min="0" className={CAMPO} />
                             </label>
-                            {errors.precio && <p className="text-red-500 text-sm mt-1">{errors.precio.message}</p>}
+                            {errors.precio && <p role="alert" className="text-red-700 text-sm mt-1">{errors.precio.message}</p>}
                         </div>
                         <label className={ETIQUETA}>
                             Moneda
@@ -389,7 +390,7 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                             {esCasa ? 'Gastos comunes mensuales en $ (si es condominio)' : 'Gastos comunes mensuales en $ (opcional)'}
                             <input {...register('gastosComunes')} type="number" min="0" step="1" className={CAMPO} />
                         </label>
-                        {errors.gastosComunes && <p className="text-red-500 text-sm mt-1">{errors.gastosComunes.message}</p>}
+                        {errors.gastosComunes && <p role="alert" className="text-red-700 text-sm mt-1">{errors.gastosComunes.message}</p>}
                     </div>
 
                     <div className="flex flex-wrap gap-4 text-sm" role="group" aria-label="Apto para subsidio">
@@ -407,7 +408,7 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                             Bono o promoción (opcional)
                             <input {...register('bono')} maxLength={150} placeholder="Ej.: Bono pie 10%" className={CAMPO} />
                         </label>
-                        {errors.bono && <p className="text-red-500 text-sm mt-1">{errors.bono.message}</p>}
+                        {errors.bono && <p role="alert" className="text-red-700 text-sm mt-1">{errors.bono.message}</p>}
                     </div>
                 </fieldset>
 
@@ -419,7 +420,7 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                         <img src={modelo.imgPrincipal} alt="Imagen actual" className="w-32 h-24 object-cover rounded-lg border mb-2" />
                     )}
                     <SubidaImagen archivoSeleccionado={setArchivoImagen} progreso={progresoImagen} subiendo={subiendoImagen} />
-                    {errors.imgPrincipal && <p className="text-red-500 text-sm mt-1">{errors.imgPrincipal.message}</p>}
+                    {errors.imgPrincipal && <p role="alert" className="text-red-700 text-sm mt-1">{errors.imgPrincipal.message}</p>}
                 </div>
 
                 <div>
@@ -459,8 +460,8 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                     <label className="text-sm">
                         Unidades (casas de este modelo)
                         <input type="number" min={1} max={9999} step={1} {...register('unidades')}
-                            className="w-full border rounded-lg px-3 py-2 mt-1" />
-                        {errors.unidades && <span className="text-red-500 text-xs">{errors.unidades.message}</span>}
+                            className="w-full border border-borde-campo rounded-lg px-3 py-2 mt-1" />
+                        {errors.unidades && <span role="alert" className="text-red-700 text-xs">{errors.unidades.message}</span>}
                     </label>
                     <label className="flex items-center gap-2 text-sm">
                         <input type="checkbox" {...register('publicado')} />
@@ -473,12 +474,12 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                 </p>
                 </fieldset>
 
-                {error && <p className="text-red-500 text-sm">{error}</p>}
+                {error && <p role="alert" className="text-red-700 text-sm">{error}</p>}
 
                 <button
                     type="submit"
                     disabled={isSubmitting || subiendoImagen || subiendoModelo3D || subiendoPlano}
-                    className="bg-marca text-white rounded-lg py-3 font-medium disabled:opacity-50"
+                    className={`${PANEL_PRIMARIO} ${NORMAL}`}
                 >
                     {subiendoImagen ? 'Subiendo imagen...' : subiendoModelo3D ? 'Subiendo modelo 3D...' : subiendoPlano ? 'Subiendo plano...' : isSubmitting ? 'Guardando...' : modelo ? 'Guardar cambios' : 'Crear modelo de casa'}
                 </button>

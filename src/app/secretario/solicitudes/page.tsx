@@ -5,12 +5,13 @@ import { descargarSolicitudesCsv, EVENTO_SOLICITUDES_ACTUALIZADAS, FiltroSolicit
 import { Reserva } from "@/types/reserva";
 import { CLAVE_ULTIMA_BANDEJA, COLOR_VISITA, ETIQUETA_ORIGEN, ETIQUETA_VISITA, PILDORA, visitaAbierta } from "@/types/solicitud";
 import { avisar } from "@/components/Dialogos";
-import { DOS_DIAS_MS, hace } from "@/components/panel/Tablero";
+import { CargandoLista, DOS_DIAS_MS, hace, Vacio } from "@/components/panel/Tablero";
 import { fechaVisitaCorta } from "@/lib/horarioSala";
 import { Clock, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import { COMPACTO, NORMAL, PANEL_EXITO, PANEL_PAGINA, PANEL_PRIMARIO, PANEL_SECUNDARIO, SUPERFICIE, TONO } from "@/lib/estilos";
 
 type Filtro = FiltroSolicitud;
 
@@ -32,7 +33,7 @@ function reservaActiva(soli: Solicitud): Reserva | undefined {
 // useSearchParams necesita un Suspense por encima (documentación de Next 16).
 export default function PaginaSolicitudes() {
     return (
-        <Suspense fallback={<main className="max-w-6xl mx-auto px-4 py-10 text-gray-500">Cargando...</main>}>
+        <Suspense fallback={<main className={PANEL_PAGINA}><h1 className="text-2xl font-bold mb-6">Solicitudes de contacto</h1><CargandoLista filas={5} etiqueta="Cargando solicitudes" /></main>}>
             <BandejaSolicitudes />
         </Suspense>
     );
@@ -135,21 +136,77 @@ function BandejaSolicitudes() {
         }
     }
 
-    const visibles = solicitudes;
+
     const paginas = Math.max(1, Math.ceil(total / POR_PAGINA));
+    // Lo que se calcula por fila sirve igual para la tabla (escritorio) y para las tarjetas (celular).
+    const filas = solicitudes.map((soli) => ({
+        soli,
+        reserva: reservaActiva(soli),
+        atrasada: !soli.contactado && ahora - new Date(soli.creadoEn).getTime() > DOS_DIAS_MS,
+        sinAsistencia: !!soli.visitaPreferida && visitaAbierta(soli.visitaEstado) && new Date(soli.visitaPreferida).getTime() <= ahora,
+    }));
+    type Fila = (typeof filas)[number];
+
+    // Igual que en el inicio: ícono y texto además del color.
+    const llegada = ({ soli, atrasada }: Fila) => !soli.contactado && (
+        <span className={atrasada ? `${PILDORA} ${TONO.aviso}` : 'inline-flex items-center gap-1 text-xs text-gray-600'}>
+            <Clock className="w-3.5 h-3.5" aria-hidden />
+            {atrasada ? 'Esperando ' : 'Llegó '}{hace(soli.creadoEn)}
+        </span>
+    );
+
+    const estadoVisita = ({ soli, sinAsistencia }: Fila) => soli.visitaEstado && (sinAsistencia ? (
+        <span className={`${PILDORA} ${TONO.peligro}`}>
+            <TriangleAlert className="w-3.5 h-3.5" aria-hidden />Marcar asistencia
+        </span>
+    ) : (
+        <span className={`${PILDORA} ${COLOR_VISITA[soli.visitaEstado]}`}>{ETIQUETA_VISITA[soli.visitaEstado]}</span>
+    ));
+
+    const estado = ({ soli, reserva }: Fila) => (
+        <>
+            <span className={`${PILDORA} ${soli.contactado ? TONO.exito : TONO.aviso}`}>
+                {soli.contactado ? 'Contactado' : 'Pendiente'}
+            </span>
+            {reserva && (
+                <span className={`${PILDORA} ${TONO.neutro}`}>
+                    {ETIQUETA_RESERVA[reserva.estado as 'RESERVADA' | 'VENDIDA']}{reserva.lote && ` · ${reserva.lote}`}
+                </span>
+            )}
+        </>
+    );
+
+    const accion = ({ soli }: Fila) => soli.contactado ? (
+        <Link href={`/secretario/solicitudes/${soli.id}`} className={`${PANEL_SECUNDARIO} ${COMPACTO}`}>
+            Abrir ficha<span className="sr-only"> de {soli.nombre} {soli.apellido}</span>
+        </Link>
+    ) : (
+        <button type="button" onClick={() => handleMarcarContactado(soli.id)} className={`${PANEL_PRIMARIO} ${COMPACTO}`}
+            aria-label={`Marcar como contactada la solicitud de ${soli.nombre} ${soli.apellido}`}>
+            Marcar contactado
+        </button>
+    );
+
+    const whatsapp = (soli: Solicitud) => enlaceWhatsApp({ ...soli, modelo: soli.modeloCasa?.nombreModelo, proyecto: soli.modeloCasa?.proyecto.nombre });
+
+    const textoVacio = buscar ? `Ninguna solicitud de esta vista coincide con «${buscar}».`
+        : filtro === 'todas' ? 'Todavía no hay solicitudes.' : filtro === 'pendientes' ? 'No hay solicitudes pendientes.' : 'No hay solicitudes en esta vista.';
 
     return (
-        <main className="max-w-6xl mx-auto px-4 py-10">
+        <main className={PANEL_PAGINA}>
             <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
                 <h1 className="text-2xl font-bold">Solicitudes de contacto</h1>
-                <Link href="/secretario/solicitudes/nueva" className="bg-marca text-white text-sm rounded-lg px-4 py-2 font-medium hover:bg-marca/90">
+                <Link href="/secretario/solicitudes/nueva" className={`${PANEL_PRIMARIO} ${NORMAL}`}>
                     Nueva solicitud
                 </Link>
             </div>
 
-            <input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} maxLength={100}
-                placeholder="Buscar por nombre, correo o celular" aria-label="Buscar solicitudes"
-                className="w-full sm:max-w-sm border rounded-lg px-3 py-2 mb-3" />
+            <label className="flex flex-col gap-1 w-full sm:max-w-sm mb-3 text-sm font-medium text-gray-800">
+                Buscar solicitud
+                <input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} maxLength={100}
+                    placeholder="Nombre, correo o celular"
+                    className="border border-borde-campo rounded-lg px-3 py-2 text-base font-normal" />
+            </label>
 
             <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
                 <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar solicitudes">
@@ -159,138 +216,137 @@ function BandejaSolicitudes() {
                             type="button"
                             aria-pressed={filtro === valor}
                             onClick={() => cambiarFiltro(valor)}
-                            className={`text-sm px-3 py-1.5 rounded-full border ${filtro === valor ? 'bg-marca text-white border-marca' : 'hover:bg-gray-50'}`}
+                            className={`inline-flex items-center max-md:min-h-11 text-sm px-3 py-1.5 rounded-full border ${filtro === valor ? 'bg-marca text-white border-marca' : 'bg-white border-gray-300 text-gray-800 hover:bg-gray-50'}`}
                         >
                             {etiqueta}{valor === 'pendientes' && ` (${pendientes})`}
                         </button>
                     ))}
                 </div>
                 <button type="button" onClick={handleExportar} disabled={exportando}
-                    className="text-sm border rounded-lg px-3 py-1.5 hover:bg-gray-50 disabled:opacity-50">
+                    className={`${PANEL_SECUNDARIO} ${COMPACTO}`}>
                     {exportando ? 'Exportando…' : 'Descargar CSV para Excel (todas)'}
                 </button>
             </div>
 
-            {cargando && visibles.length === 0 && <p className="text-gray-500">Cargando...</p>}
-            {error && <p className="text-red-700">{error}</p>}
+            {error && <p role="alert" className="text-red-700 mb-4">{error}</p>}
 
-            {!cargando && !error && visibles.length === 0 && (
-                <p className="text-gray-500">
-                    {buscar ? `Ninguna solicitud de esta vista coincide con «${buscar}».`
-                        : filtro === 'todas' ? 'Todavía no hay solicitudes.' : filtro === 'pendientes' ? 'No hay solicitudes pendientes.' : 'No hay solicitudes en esta vista.'}
-                </p>
+            {cargando && filas.length === 0 && <CargandoLista filas={5} etiqueta="Cargando solicitudes" />}
+
+            {!cargando && !error && filas.length === 0 && (
+                <Vacio texto={textoVacio}>
+                    {filtro === 'todas' && !buscar && (
+                        <Link href="/secretario/solicitudes/nueva" className={`${PANEL_PRIMARIO} ${NORMAL}`}>Registrar la primera solicitud</Link>
+                    )}
+                </Vacio>
             )}
 
-            {visibles.length > 0 && (
-                <div className={`overflow-x-auto ${cargando ? 'opacity-60' : ''}`} aria-busy={cargando}>
-                    <table className="w-full border-collapse">
-                        <thead>
-                            <tr className="text-left border-b text-sm text-gray-500">
-                                <th className="py-2 pr-4">Fecha</th>
-                                <th className="py-2 pr-4">Cliente</th>
-                                <th className="py-2 pr-4">Modelo</th>
-                                <th className="py-2 pr-4">Visita</th>
-                                <th className="py-2 pr-4">Estado</th>
-                                <th className="py-2 pr-4"><span className="sr-only">Acción</span></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {visibles.map((soli) => {
-                                const reserva = reservaActiva(soli);
-                                const atrasada = !soli.contactado && ahora - new Date(soli.creadoEn).getTime() > DOS_DIAS_MS;
-                                const sinAsistencia = !!soli.visitaPreferida && visitaAbierta(soli.visitaEstado) && new Date(soli.visitaPreferida).getTime() <= ahora;
-                                return (
-                                <tr key={soli.id} className="border-b text-sm align-top">
-                                    <td className="py-3 pr-4 whitespace-nowrap">
-                                        <div className="flex flex-col gap-1">
-                                            <span className="text-gray-500">{new Date(soli.creadoEn).toLocaleDateString('es-CL')}</span>
-                                            {/* Igual que en el inicio: ícono y texto además del color. */}
-                                            {!soli.contactado && (
-                                                <span className={atrasada ? `${PILDORA} bg-amber-50 text-amber-800 border border-amber-200` : 'inline-flex items-center gap-1 text-xs text-gray-500'}>
-                                                    <Clock className="w-3.5 h-3.5" aria-hidden />
-                                                    {atrasada ? 'Esperando ' : 'Llegó '}{hace(soli.creadoEn)}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td className="py-3 pr-4">
-                                        <Link href={`/secretario/solicitudes/${soli.id}`} className="font-medium text-marca underline underline-offset-2 hover:no-underline">
+            {filas.length > 0 && (
+                <div className={cargando ? 'opacity-60' : ''} aria-busy={cargando}>
+                    {/* Celular: una tarjeta por solicitud con lo necesario para decidir y actuar. */}
+                    <ul className="md:hidden flex flex-col gap-3">
+                        {filas.map((fila) => {
+                            const { soli } = fila;
+                            return (
+                                <li key={soli.id} className={`${SUPERFICIE} p-4 flex flex-col gap-3`}>
+                                    <div className="min-w-0">
+                                        <Link href={`/secretario/solicitudes/${soli.id}`} className="font-semibold text-marca underline underline-offset-2 hover:no-underline">
                                             {soli.nombre} {soli.apellido}
                                         </Link>
-                                        {soli.origen !== 'WEB' && <span className="text-xs text-gray-500"> · {ETIQUETA_ORIGEN[soli.origen]}</span>}
-                                        <div className="flex flex-col gap-0.5 mt-1">
-                                            <a href={`mailto:${soli.correo}`} className="text-gray-700 underline break-all">{soli.correo}</a>
-                                            <a
-                                                href={enlaceWhatsApp({ ...soli, modelo: soli.modeloCasa?.nombreModelo, proyecto: soli.modeloCasa?.proyecto.nombre })}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="text-green-700 underline"
-                                            >
-                                                WhatsApp {soli.celular}
-                                            </a>
-                                        </div>
-                                    </td>
-                                    <td className="py-3 pr-4">
-                                        {soli.modeloCasa ? <>{soli.modeloCasa.nombreModelo}<span className="block text-xs text-gray-500">{soli.modeloCasa.proyecto.nombre}</span></> : '-'}
-                                    </td>
-                                    <td className="py-3 pr-4 whitespace-nowrap">
-                                        {soli.visitaPreferida && soli.visitaEstado ? (
-                                            <div className="flex flex-col gap-1">
-                                                <span className="font-medium" title={formatearFechaHora(soli.visitaPreferida)}>{fechaVisitaCorta(soli.visitaPreferida, ahora)}</span>
-                                                {sinAsistencia ? (
-                                                    <span className={`${PILDORA} bg-red-50 text-red-700 border border-red-200`}>
-                                                        <TriangleAlert className="w-3.5 h-3.5" aria-hidden />Marcar asistencia
-                                                    </span>
-                                                ) : (
-                                                    <span className={`${PILDORA} ${COLOR_VISITA[soli.visitaEstado]}`}>{ETIQUETA_VISITA[soli.visitaEstado]}</span>
-                                                )}
-                                            </div>
-                                        ) : <span className="text-gray-400">—</span>}
-                                    </td>
-                                    <td className="py-3 pr-4">
-                                        <div className="flex flex-col gap-1">
-                                            <span className={`${PILDORA} ${soli.contactado ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-800'}`}>
-                                                {soli.contactado ? 'Contactado' : 'Pendiente'}
-                                            </span>
-                                            {reserva && (
-                                                <span className={`${PILDORA} bg-gray-100 text-gray-700`}>
-                                                    {ETIQUETA_RESERVA[reserva.estado as 'RESERVADA' | 'VENDIDA']}{reserva.lote && ` · ${reserva.lote}`}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td className="py-3 pr-4">
-                                        {soli.contactado ? (
-                                            <Link href={`/secretario/solicitudes/${soli.id}`}
-                                                className="inline-block text-sm border px-3 py-1.5 rounded-lg whitespace-nowrap hover:bg-gray-50">
-                                                Abrir ficha
-                                            </Link>
-                                        ) : (
-                                            <button type="button" onClick={() => handleMarcarContactado(soli.id)}
-                                                className="text-sm bg-marca text-white px-3 py-1.5 rounded-lg whitespace-nowrap hover:bg-marca/90">
-                                                Marcar contactado
-                                            </button>
-                                        )}
-                                    </td>
+                                        <p className="text-sm text-gray-600">
+                                            {soli.modeloCasa ? `${soli.modeloCasa.nombreModelo} · ${soli.modeloCasa.proyecto.nombre}` : 'Sin modelo'}
+                                            {soli.origen !== 'WEB' && ` · ${ETIQUETA_ORIGEN[soli.origen]}`}
+                                        </p>
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-1.5">
+                                        {estado(fila)}
+                                        {estadoVisita(fila)}
+                                        {llegada(fila)}
+                                    </div>
+                                    {soli.visitaPreferida && (
+                                        <p className="text-sm text-gray-700">Visita: <span className="font-medium">{fechaVisitaCorta(soli.visitaPreferida, ahora)}</span></p>
+                                    )}
+                                    <div className="flex flex-wrap gap-2">
+                                        {accion(fila)}
+                                        <a href={whatsapp(soli)} target="_blank" rel="noreferrer" className={`${PANEL_EXITO} ${COMPACTO}`}>
+                                            WhatsApp<span className="sr-only"> a {soli.nombre} {soli.apellido}</span>
+                                        </a>
+                                    </div>
+                                </li>
+                            );
+                        })}
+                    </ul>
+
+                    {/* Escritorio: la tabla completa. */}
+                    <div className={`${SUPERFICIE} overflow-x-auto px-4 max-md:hidden`}>
+                        <table className="w-full border-collapse">
+                            <thead>
+                                <tr className="text-left border-b text-sm text-gray-600">
+                                    <th scope="col" className="py-2 pr-4">Fecha</th>
+                                    <th scope="col" className="py-2 pr-4">Cliente</th>
+                                    <th scope="col" className="py-2 pr-4">Modelo</th>
+                                    <th scope="col" className="py-2 pr-4">Visita</th>
+                                    <th scope="col" className="py-2 pr-4">Estado</th>
+                                    <th scope="col" className="py-2 pr-4"><span className="sr-only">Acción</span></th>
                                 </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {filas.map((fila) => {
+                                    const { soli } = fila;
+                                    return (
+                                        <tr key={soli.id} className="border-b last:border-b-0 text-sm align-top">
+                                            <td className="py-3 pr-4 whitespace-nowrap">
+                                                <div className="flex flex-col gap-1">
+                                                    <span className="text-gray-600">{new Date(soli.creadoEn).toLocaleDateString('es-CL')}</span>
+                                                    {llegada(fila)}
+                                                </div>
+                                            </td>
+                                            <td className="py-3 pr-4">
+                                                <Link href={`/secretario/solicitudes/${soli.id}`} className="font-medium text-marca underline underline-offset-2 hover:no-underline">
+                                                    {soli.nombre} {soli.apellido}
+                                                </Link>
+                                                {soli.origen !== 'WEB' && <span className="text-xs text-gray-600"> · {ETIQUETA_ORIGEN[soli.origen]}</span>}
+                                                <div className="flex flex-col gap-0.5 mt-1">
+                                                    <a href={`mailto:${soli.correo}`} className="text-gray-700 underline break-all">{soli.correo}</a>
+                                                    <a href={whatsapp(soli)} target="_blank" rel="noreferrer" className="text-green-700 underline">
+                                                        WhatsApp {soli.celular}
+                                                    </a>
+                                                </div>
+                                            </td>
+                                            <td className="py-3 pr-4">
+                                                {soli.modeloCasa ? <>{soli.modeloCasa.nombreModelo}<span className="block text-xs text-gray-600">{soli.modeloCasa.proyecto.nombre}</span></> : '-'}
+                                            </td>
+                                            <td className="py-3 pr-4 whitespace-nowrap">
+                                                {soli.visitaPreferida && soli.visitaEstado ? (
+                                                    <div className="flex flex-col gap-1">
+                                                        <span className="font-medium" title={formatearFechaHora(soli.visitaPreferida)}>{fechaVisitaCorta(soli.visitaPreferida, ahora)}</span>
+                                                        {estadoVisita(fila)}
+                                                    </div>
+                                                ) : <span className="text-gray-500">—</span>}
+                                            </td>
+                                            <td className="py-3 pr-4">
+                                                <div className="flex flex-col gap-1">{estado(fila)}</div>
+                                            </td>
+                                            <td className="py-3 pr-4">{accion(fila)}</td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
 
             {total > POR_PAGINA && (
                 <nav aria-label="Páginas de solicitudes" className="flex items-center justify-between gap-2 mt-4 text-sm">
                     <button type="button" onClick={() => setPagina((p) => p - 1)} disabled={pagina <= 1 || cargando}
-                        className="border rounded-lg px-3 py-1.5 hover:bg-gray-50 disabled:opacity-50">
+                        className={`${PANEL_SECUNDARIO} ${COMPACTO}`}>
                         ← Anterior
                     </button>
-                    <span className="text-gray-500">
-                        {(pagina - 1) * POR_PAGINA + 1}–{Math.min(pagina * POR_PAGINA, total)} de {total} · página {pagina} de {paginas}
+                    <span className="text-gray-600 text-center">
+                        {(pagina - 1) * POR_PAGINA + 1}–{Math.min(pagina * POR_PAGINA, total)} de {total}<span className="max-sm:hidden"> · página {pagina} de {paginas}</span>
                     </span>
                     <button type="button" onClick={() => setPagina((p) => p + 1)} disabled={pagina >= paginas || cargando}
-                        className="border rounded-lg px-3 py-1.5 hover:bg-gray-50 disabled:opacity-50">
+                        className={`${PANEL_SECUNDARIO} ${COMPACTO}`}>
                         Siguiente →
                     </button>
                 </nav>

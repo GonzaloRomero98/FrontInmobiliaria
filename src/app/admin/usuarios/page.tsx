@@ -4,6 +4,11 @@ import { actualizarUsuario, crearUsuario, getUsuarios, Rol, Usuario } from "@/se
 import { FormEvent, useEffect, useState } from "react";
 import { mensajeError } from "@/lib/errores";
 import { confirmar } from "@/components/Dialogos";
+import { CargandoLista } from "@/components/panel/Tablero";
+import { COMPACTO, NORMAL, PANEL_EXITO, PANEL_PAGINA, PANEL_PELIGRO, PANEL_PRIMARIO, PANEL_SECUNDARIO, PILDORA, SUPERFICIE, TONO } from "@/lib/estilos";
+
+const ETIQUETA = "flex flex-col gap-1 text-sm font-medium text-gray-800";
+const ENTRADA = "border border-borde-campo rounded-lg px-3 py-2 text-base font-normal";
 
 const NUEVO = { correo: '', nombre: '', contrasena: '', rol: 'SECRETARIO' as Rol };
 
@@ -71,65 +76,80 @@ export default function Usuarios() {
     }
 
     return (
-        <main className="max-w-3xl mx-auto px-4 py-10">
+        <main className={PANEL_PAGINA}>
             <h1 className="text-2xl font-bold mb-6">Usuarios</h1>
 
-            <form onSubmit={crear} className="border rounded-xl p-4 mb-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <form onSubmit={crear} className={`${SUPERFICIE} p-5 mb-8 grid grid-cols-1 sm:grid-cols-2 gap-3`}>
                 <h2 className="font-semibold sm:col-span-2">Nueva cuenta</h2>
-                <input required value={nuevo.nombre} onChange={(e) => setNuevo({ ...nuevo, nombre: e.target.value })}
-                    placeholder="Nombre" aria-label="Nombre" className="border rounded-lg px-3 py-2" />
-                <input required type="email" value={nuevo.correo} onChange={(e) => setNuevo({ ...nuevo, correo: e.target.value })}
-                    placeholder="Correo" aria-label="Correo" className="border rounded-lg px-3 py-2" />
-                <input required type="password" autoComplete="new-password" value={nuevo.contrasena} onChange={(e) => setNuevo({ ...nuevo, contrasena: e.target.value })}
-                    placeholder="Contraseña inicial" aria-label="Contraseña inicial" className="border rounded-lg px-3 py-2" />
-                <select value={nuevo.rol} onChange={(e) => setNuevo({ ...nuevo, rol: e.target.value as Rol })}
-                    aria-label="Rol" className="border rounded-lg px-3 py-2">
-                    <option value="SECRETARIO">Secretario (solo solicitudes)</option>
-                    <option value="ADMIN">Administrador</option>
-                </select>
-                <p className="text-xs text-gray-500 sm:col-span-2">Mínimo 10 caracteres, con mayúscula, minúscula y número.</p>
-                <button type="submit" disabled={creando} className="sm:col-span-2 bg-marca text-white rounded-lg py-2 font-medium disabled:opacity-50">
+                <label className={ETIQUETA}>
+                    Nombre
+                    <input required value={nuevo.nombre} onChange={(e) => setNuevo({ ...nuevo, nombre: e.target.value })} className={ENTRADA} />
+                </label>
+                <label className={ETIQUETA}>
+                    Correo
+                    <input required type="email" value={nuevo.correo} onChange={(e) => setNuevo({ ...nuevo, correo: e.target.value })} className={ENTRADA} />
+                </label>
+                <label className={ETIQUETA}>
+                    Contraseña inicial
+                    <input required type="password" autoComplete="new-password" value={nuevo.contrasena} onChange={(e) => setNuevo({ ...nuevo, contrasena: e.target.value })}
+                        aria-describedby="regla-contrasena" className={ENTRADA} />
+                    <span id="regla-contrasena" className="text-xs font-normal text-gray-600">Mínimo 10 caracteres, con mayúscula, minúscula y número.</span>
+                </label>
+                <label className={ETIQUETA}>
+                    Rol
+                    <select value={nuevo.rol} onChange={(e) => setNuevo({ ...nuevo, rol: e.target.value as Rol })} className={`${ENTRADA} bg-white`}>
+                        <option value="SECRETARIO">Secretario (solo solicitudes)</option>
+                        <option value="ADMIN">Administrador</option>
+                    </select>
+                </label>
+                <button type="submit" disabled={creando} className={`sm:col-span-2 ${PANEL_PRIMARIO} ${NORMAL}`}>
                     {creando ? 'Creando...' : 'Crear cuenta'}
                 </button>
             </form>
 
             {aviso && <p className="text-green-700 text-sm mb-4" role="status">{aviso}</p>}
-            {error && <p className="text-red-500 text-sm mb-4" role="alert">{error}</p>}
-            {cargando && <p className="text-gray-500">Cargando...</p>}
+            {error && <p className="text-red-700 text-sm mb-4" role="alert">{error}</p>}
+            {cargando && <CargandoLista filas={3} etiqueta="Cargando usuarios" />}
 
-            <div className="flex flex-col divide-y border rounded-xl">
+            {!cargando && usuarios.length > 0 && (
+            <div className={`${SUPERFICIE} flex flex-col divide-y divide-gray-200`}>
                 {usuarios.map((usuario) => (
                     <div key={usuario.id} className="px-4 py-3">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                             <div>
-                                <p className={`font-medium ${usuario.activo ? '' : 'text-gray-400'}`}>
+                                <p className={`font-medium ${usuario.activo ? '' : 'text-gray-500'}`}>
                                     {usuario.nombre}
-                                    <span className="ml-2 text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded">{usuario.rol.nombre === 'ADMIN' ? 'Administrador' : 'Secretario'}</span>
-                                    {!usuario.activo && <span className="ml-2 text-xs bg-red-50 text-red-700 px-2 py-0.5 rounded">Desactivado</span>}
+                                    <span className={`ml-2 ${PILDORA} ${TONO.neutro}`}>{usuario.rol.nombre === 'ADMIN' ? 'Administrador' : 'Secretario'}</span>
+                                    {!usuario.activo && <span className={`ml-2 ${PILDORA} ${TONO.peligro}`}>Desactivado</span>}
                                 </p>
-                                <p className="text-sm text-gray-500">{usuario.correo}</p>
+                                <p className="text-sm text-gray-600">{usuario.correo}</p>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex flex-wrap gap-2">
                                 <button type="button" onClick={() => { setRestableciendo(restableciendo === usuario.id ? null : usuario.id); setContrasenaNueva(''); }}
-                                    className="text-sm border rounded-lg px-3 py-1.5 hover:bg-gray-50">
+                                    aria-expanded={restableciendo === usuario.id} aria-controls={`restablecer-${usuario.id}`}
+                                    className={`${PANEL_SECUNDARIO} ${COMPACTO}`}>
                                     Restablecer contraseña
                                 </button>
                                 <button type="button" onClick={() => alternarActivo(usuario)}
-                                    className={`text-sm border rounded-lg px-3 py-1.5 ${usuario.activo ? 'border-red-200 text-red-600 hover:bg-red-50' : 'border-green-300 text-green-700 hover:bg-green-50'}`}>
+                                    className={`${usuario.activo ? PANEL_PELIGRO : PANEL_EXITO} ${COMPACTO}`}>
                                     {usuario.activo ? 'Desactivar' : 'Reactivar'}
                                 </button>
                             </div>
                         </div>
                         {restableciendo === usuario.id && (
-                            <form onSubmit={(e) => restablecer(e, usuario)} className="flex gap-2 mt-3">
-                                <input required type="password" autoComplete="new-password" value={contrasenaNueva} onChange={(e) => setContrasenaNueva(e.target.value)}
-                                    placeholder="Contraseña nueva" aria-label={`Contraseña nueva para ${usuario.correo}`} className="flex-1 border rounded-lg px-3 py-1.5 text-sm" />
-                                <button type="submit" className="text-sm bg-marca text-white rounded-lg px-3 py-1.5">Guardar</button>
+                            <form id={`restablecer-${usuario.id}`} onSubmit={(e) => restablecer(e, usuario)} className="flex flex-wrap items-end gap-2 mt-3">
+                                <label className={`${ETIQUETA} flex-1 min-w-56`}>
+                                    Contraseña nueva para {usuario.correo}
+                                    <input required type="password" autoComplete="new-password" value={contrasenaNueva} onChange={(e) => setContrasenaNueva(e.target.value)}
+                                        className={ENTRADA} />
+                                </label>
+                                <button type="submit" className={`${PANEL_PRIMARIO} ${NORMAL}`}>Guardar</button>
                             </form>
                         )}
                     </div>
                 ))}
             </div>
+            )}
         </main>
     );
 }

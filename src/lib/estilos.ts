@@ -17,3 +17,33 @@ export const BOTON_TARJETA = "mt-auto flex items-center justify-center gap-2 min
 
 // Etiquetas sobre la foto de una tarjeta.
 export const ETIQUETA_FOTO = "inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold shadow-sm";
+
+// ---- Panel del admin y la secretaria ----
+
+// Mismo ancho en todas las pantallas del panel, para que el contenido no salte al navegar por el menú.
+export const PANEL_PAGINA = "max-w-6xl mx-auto px-4 sm:px-8 py-8";
+
+// Superficie blanca de listados, secciones y formularios, igual a las tarjetas del Inicio.
+export const SUPERFICIE = "bg-white border border-gray-200 rounded-2xl";
+
+const BASE_PANEL = `inline-flex items-center justify-center gap-1.5 rounded-lg font-medium whitespace-nowrap ${ESTADOS}`;
+// Una sola acción principal por zona: guardar, crear, marcar contactado.
+export const PANEL_PRIMARIO = `${BASE_PANEL} bg-marca text-white hover:bg-marca/90 disabled:hover:bg-marca`;
+// Acciones de apoyo y reversibles: editar, fotos, despublicar, paginar.
+export const PANEL_SECUNDARIO = `${BASE_PANEL} border border-gray-300 bg-white text-gray-800 hover:bg-gray-50 disabled:hover:bg-white`;
+// Solo lo que borra o corta algo: eliminar, desactivar, anular.
+export const PANEL_PELIGRO = `${BASE_PANEL} border border-red-200 bg-white text-red-700 hover:bg-red-50 disabled:hover:bg-white`;
+// Lo que vuelve a poner algo en línea: publicar, reactivar, escribir por WhatsApp.
+export const PANEL_EXITO = `${BASE_PANEL} border border-green-300 bg-white text-green-800 hover:bg-green-50 disabled:hover:bg-white`;
+export const NORMAL = "px-4 py-2.5 text-sm";
+// En el celular el compacto también mide 44 px de alto, para tocarlo sin errar.
+export const COMPACTO = "px-3 py-1.5 text-sm max-md:min-h-11";
+
+// Etiquetas de estado: la forma es siempre la misma y el tono dice qué significa.
+export const PILDORA = "inline-flex items-center gap-1 w-fit rounded-full border px-2 py-0.5 text-xs font-semibold whitespace-nowrap";
+export const TONO = {
+    exito: "bg-green-50 text-green-800 border-green-200",
+    aviso: "bg-amber-50 text-amber-800 border-amber-200",
+    peligro: "bg-red-50 text-red-700 border-red-200",
+    neutro: "bg-gray-100 text-gray-700 border-gray-200",
+} as const;

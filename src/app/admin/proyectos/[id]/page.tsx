@@ -1,6 +1,7 @@
 'use client'
 
 import Link from "next/link";
+import { CargandoLista } from "@/components/panel/Tablero";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import FormularioUbicacion from "@/components/admin/FormularioUbicacion";
@@ -10,6 +11,7 @@ import FormularioSalaVentas from "@/components/admin/FormularioSalaVentas";
 import { getNormativa, getProyectoPorId } from "@/services/proyecto.service";
 import { Proyecto } from "@/types/proyecto";
 import { Normativa } from "@/types/normativa";
+import { PANEL_PAGINA } from "@/lib/estilos";
 
 export default function EditarProyecto() {
     const { id } = useParams<{ id: string }>();
@@ -25,11 +27,12 @@ export default function EditarProyecto() {
             .finally(() => setCargando(false));
     }, [id]);
 
-    if (cargando) return <main className="max-w-3xl mx-auto px-4 py-10">Cargando...</main>;
-    if (error || !proyecto) return <main className="max-w-3xl mx-auto px-4 py-10 text-red-500">{error}</main>;
+    if (cargando) return <main className={PANEL_PAGINA}><Link href="/admin/proyectos" className="text-sm text-gray-600 hover:underline">← Proyectos</Link><div className="max-w-3xl mt-4"><CargandoLista filas={4} alto="h-40" etiqueta="Cargando el proyecto" /></div></main>;
+    if (error || !proyecto) return <main className={`${PANEL_PAGINA} text-red-700`}>{error}</main>;
 
     return (
-        <main className="max-w-3xl mx-auto px-4 py-10 flex flex-col gap-6">
+        <main className={PANEL_PAGINA}>
+            <div className="max-w-3xl flex flex-col gap-6">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <div>
                     <Link href="/admin/proyectos" className="text-sm text-gray-500 hover:underline">← Proyectos</Link>
@@ -43,6 +46,7 @@ export default function EditarProyecto() {
             <FormularioUbicacion proyecto={proyecto} onGuardado={setProyecto} />
             <FormularioSalaVentas proyecto={proyecto} onGuardado={setProyecto} />
             <FormularioNormativa idProyecto={proyecto.id} normativa={normativa} />
+            </div>
         </main>
     );
 }

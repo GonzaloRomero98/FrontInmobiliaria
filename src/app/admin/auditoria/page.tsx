@@ -2,6 +2,8 @@
 
 import { FiltrosAuditoria, getAuditoria, MODULOS_AUDITORIA, ProblemaCadena, RegistroAuditoria, VerificacionAuditoria, verificarAuditoria } from "@/services/auditoria.service";
 import { FormEvent, useEffect, useState } from "react";
+import { CargandoLista } from "@/components/panel/Tablero";
+import { PANEL_PAGINA, SUPERFICIE, PANEL_PRIMARIO, PANEL_SECUNDARIO, COMPACTO } from "@/lib/estilos";
 
 const LIMITE = 50;
 
@@ -99,22 +101,22 @@ export default function Auditoria() {
         }
     }
 
-    const campo = "border rounded-lg px-2 py-1.5 text-sm";
+    const campo = "border border-borde-campo rounded-lg px-2 py-1.5 text-sm";
     const cambiar = <K extends keyof Borrador>(clave: K, valor: Borrador[K]) => setBorrador((b) => ({ ...b, [clave]: valor }));
 
     return (
-        <main className="max-w-6xl mx-auto px-4 py-10">
+        <main className={PANEL_PAGINA}>
             <h1 className="text-2xl font-bold mb-1">Auditoría</h1>
             <p className="text-sm text-gray-500 mb-6">Cambios de datos, accesos rechazados, inicios de sesión, lecturas de datos personales y exportaciones. Más recientes primero.</p>
 
-            <section className="border rounded-xl p-4 mb-6" aria-labelledby="titulo-integridad">
+            <section className={`${SUPERFICIE} p-5 mb-6`} aria-labelledby="titulo-integridad">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h2 id="titulo-integridad" className="font-semibold">Integridad del registro</h2>
                         <p className="text-sm text-gray-500">Cada registro guarda el hash del anterior: si alguien edita o borra uno directo en la base de datos, la cadena se rompe.</p>
                     </div>
                     <button type="button" onClick={verificar} disabled={verificando}
-                        className="text-sm border rounded-lg px-3 py-1.5 hover:bg-gray-50 disabled:opacity-50">
+                        className={`${PANEL_SECUNDARIO} ${COMPACTO}`}>
                         {verificando ? 'Verificando...' : 'Verificar integridad'}
                     </button>
                 </div>
@@ -166,29 +168,29 @@ export default function Auditoria() {
                     <input type="checkbox" checked={borrador.soloRechazados} onChange={(e) => cambiar('soloRechazados', e.target.checked)} />
                     Solo rechazados
                 </label>
-                <button type="submit" className="text-sm bg-marca text-white rounded-lg px-3 py-1.5">Filtrar</button>
+                <button type="submit" className={`${PANEL_PRIMARIO} ${COMPACTO}`}>Filtrar</button>
                 {hayFiltros && (
-                    <button type="button" onClick={limpiar} className="text-sm border rounded-lg px-3 py-1.5 hover:bg-gray-50">Limpiar</button>
+                    <button type="button" onClick={limpiar} className={`${PANEL_SECUNDARIO} ${COMPACTO}`}>Limpiar</button>
                 )}
             </form>
 
-            {error && <p className="text-red-500">{error}</p>}
-            {cargando && <p className="text-gray-500">Cargando...</p>}
+            {error && <p role="alert" className="text-red-700">{error}</p>}
+            {cargando && <CargandoLista filas={6} alto="h-12" etiqueta="Cargando registros" />}
             {!cargando && !error && registros.length === 0 && (
                 <p className="text-gray-500">{hayFiltros ? 'Ningún registro coincide con los filtros.' : 'Todavía no hay registros.'}</p>
             )}
 
             {!cargando && registros.length > 0 && (
-                <div className="overflow-x-auto">
+                <div className={`${SUPERFICIE} overflow-x-auto px-4`}>
                     <table className="w-full border-collapse text-sm">
                         <thead>
                             <tr className="text-left border-b text-gray-500">
-                                <th className="py-2 pr-4">Fecha</th>
-                                <th className="py-2 pr-4">Acción</th>
-                                <th className="py-2 pr-4">Resultado</th>
-                                <th className="py-2 pr-4">Usuario</th>
-                                <th className="py-2 pr-4">IP</th>
-                                <th className="py-2 pr-4">Detalle</th>
+                                <th scope="col" className="py-2 pr-4">Fecha</th>
+                                <th scope="col" className="py-2 pr-4">Acción</th>
+                                <th scope="col" className="py-2 pr-4">Resultado</th>
+                                <th scope="col" className="py-2 pr-4">Usuario</th>
+                                <th scope="col" className="py-2 pr-4">IP</th>
+                                <th scope="col" className="py-2 pr-4">Detalle</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -196,11 +198,11 @@ export default function Auditoria() {
                                 <tr key={r.id} className="border-b align-top">
                                     <td className="py-2 pr-4 whitespace-nowrap text-gray-500">
                                         {new Date(r.fecha).toLocaleString('es-CL')}
-                                        <span className="block text-xs text-gray-400">#{r.secuencia}</span>
+                                        <span className="block text-xs text-gray-600">#{r.secuencia}</span>
                                     </td>
                                     <td className="py-2 pr-4 min-w-60">
                                         {r.descripcion && <span className="block">{r.descripcion}</span>}
-                                        <span className={`block font-mono break-all ${r.descripcion ? 'text-xs text-gray-400' : 'text-xs'}`}>{r.accion}</span>
+                                        <span className={`block font-mono break-all ${r.descripcion ? 'text-xs text-gray-600' : 'text-xs'}`}>{r.accion}</span>
                                     </td>
                                     <td className="py-2 pr-4 whitespace-nowrap">
                                         <span className={r.exito ? 'text-green-700' : 'text-red-600 font-medium'}>
@@ -219,12 +221,12 @@ export default function Auditoria() {
 
             <nav aria-label="Páginas" className="flex items-center justify-between mt-4 text-sm">
                 <button type="button" disabled={pagina <= 1 || cargando} onClick={() => irA(pagina - 1)}
-                    className="border rounded-lg px-3 py-1.5 disabled:opacity-40 hover:bg-gray-50">
+                    className={`${PANEL_SECUNDARIO} ${COMPACTO}`}>
                     ← Más recientes
                 </button>
                 <span className="text-gray-500">Página {pagina} de {paginas} · {total} registros</span>
                 <button type="button" disabled={pagina >= paginas || cargando} onClick={() => irA(pagina + 1)}
-                    className="border rounded-lg px-3 py-1.5 disabled:opacity-40 hover:bg-gray-50">
+                    className={`${PANEL_SECUNDARIO} ${COMPACTO}`}>
                     Más antiguos →
                 </button>
             </nav>

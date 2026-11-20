@@ -1,6 +1,7 @@
 'use client'
 
 import Link from "next/link";
+import { CargandoLista } from "@/components/panel/Tablero";
 import { useParams, useRouter } from "next/navigation";
 import { FormEvent, ReactNode, useCallback, useEffect, useState } from "react";
 import { avisar, confirmar } from "@/components/Dialogos";
@@ -15,10 +16,11 @@ import {
 } from "@/services/solicitud.service";
 import { CLAVE_ULTIMA_BANDEJA, COLOR_VISITA, ETIQUETA_ORIGEN, ETIQUETA_VISITA, folioCotizacion, visitaAbierta as estaAbierta } from "@/types/solicitud";
 import SelectorVisita, { visitaCompleta } from "@/components/SelectorVisita";
+import { PANEL_PAGINA, SUPERFICIE, PANEL_PRIMARIO, PANEL_SECUNDARIO, PANEL_PELIGRO, COMPACTO, PILDORA, TONO } from "@/lib/estilos";
 
 function Seccion({ titulo, accion, children }: { titulo: string; accion?: ReactNode; children: ReactNode }) {
     return (
-        <section className="border rounded-xl p-5 flex flex-col gap-3" aria-label={titulo}>
+        <section className={`${SUPERFICIE} p-5 flex flex-col gap-3`} aria-label={titulo}>
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="font-semibold">{titulo}</h2>
                 {accion}
@@ -28,7 +30,7 @@ function Seccion({ titulo, accion, children }: { titulo: string; accion?: ReactN
     );
 }
 
-const boton = "text-sm border rounded-lg px-3 py-1.5 hover:bg-gray-50 disabled:opacity-50";
+const boton = `${PANEL_SECUNDARIO} ${COMPACTO}`;
 
 const CAMPOS_CONTACTO: [keyof DatosContacto, string, string][] = [
     ['nombre', 'Nombre', 'text'], ['apellido', 'Apellido', 'text'], ['correo', 'Correo', 'email'], ['celular', 'Celular', 'tel'],
@@ -125,8 +127,8 @@ export default function FichaCliente() {
         });
     }
 
-    if (error) return <main className="max-w-4xl mx-auto px-4 py-10 text-red-600">{error}</main>;
-    if (!ficha) return <main className="max-w-4xl mx-auto px-4 py-10">Cargando...</main>;
+    if (error) return <main className={`${PANEL_PAGINA} text-red-700`}>{error}</main>;
+    if (!ficha) return <main className={PANEL_PAGINA}><Link href={volver} className="text-sm text-gray-600 hover:underline">← Solicitudes</Link><div className="mt-4"><CargandoLista filas={3} alto="h-40" etiqueta="Cargando la solicitud" /></div></main>;
 
     const { modeloCasa: modelo } = ficha;
     const reserva = ficha.reservas?.find((r) => r.estado !== 'ANULADA');
@@ -135,15 +137,15 @@ export default function FichaCliente() {
     const conSala = !!modelo.proyecto.salaDireccion;
 
     return (
-        <main className="max-w-4xl mx-auto px-4 py-10 flex flex-col gap-5">
+        <main className={`${PANEL_PAGINA} flex flex-col gap-5`}>
             <div>
                 <Link href={volver} className="text-sm text-gray-500 hover:underline">← Solicitudes</Link>
                 <div className="flex flex-wrap items-center gap-3 mt-1">
                     <h1 className="text-2xl font-bold">{ficha.nombre} {ficha.apellido}</h1>
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${ficha.contactado ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-800'}`}>
+                    <span className={`${PILDORA} ${ficha.contactado ? TONO.exito : TONO.aviso}`}>
                         {ficha.contactado ? 'Contactado' : 'Pendiente'}
                     </span>
-                    {reserva && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
+                    {reserva && <span className={`${PILDORA} ${TONO.neutro}`}>
                         {reserva.estado === 'VENDIDA' ? 'Vendida' : 'Reservada'}{reserva.lote && ` · ${reserva.lote}`}
                     </span>}
                 </div>
@@ -178,12 +180,12 @@ export default function FichaCliente() {
                                 <label key={campo} className="flex flex-col gap-1 text-sm">
                                     {etiqueta}
                                     <input type={tipo} value={datos[campo]} onChange={(e) => setDatos({ ...datos, [campo]: e.target.value })}
-                                        required maxLength={200} autoFocus={i === 0} className="border rounded-lg px-3 py-1.5" />
+                                        required maxLength={200} autoFocus={i === 0} className="border border-borde-campo rounded-lg px-3 py-1.5" />
                                 </label>
                             ))}
                             <p className="text-xs text-gray-500">Queda una nota en el seguimiento con los campos corregidos, sin el valor anterior.</p>
                             <div className="flex gap-2 self-end">
-                                <button type="submit" disabled={ocupado} className="text-sm bg-marca text-white rounded-lg px-3 py-1.5 disabled:opacity-50">
+                                <button type="submit" disabled={ocupado} className={`${PANEL_PRIMARIO} ${COMPACTO}`}>
                                     {ocupado ? 'Guardando…' : 'Guardar'}
                                 </button>
                                 <button type="button" onClick={() => setDatos(null)} className={boton}>Cancelar</button>
@@ -198,7 +200,7 @@ export default function FichaCliente() {
                         <>
                             <p className="flex flex-wrap items-center gap-2">
                                 <span className="font-medium">{formatearFechaHora(ficha.visitaPreferida)}</span>
-                                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${COLOR_VISITA[ficha.visitaEstado]}`}>{ETIQUETA_VISITA[ficha.visitaEstado]}</span>
+                                <span className={`${PILDORA} ${COLOR_VISITA[ficha.visitaEstado]}`}>{ETIQUETA_VISITA[ficha.visitaEstado]}</span>
                             </p>
                             {nuevaFecha === null && (
                                 <div className="flex flex-wrap gap-2">
@@ -242,7 +244,7 @@ export default function FichaCliente() {
                             <SelectorVisita horarios={modelo.proyecto.salaHorarios} horario={modelo.proyecto.salaHorario} valor={nuevaFecha}
                                 onCambio={setNuevaFecha} otraHora claseEtiqueta="flex flex-col gap-1 text-sm" claseCampo="border rounded-lg px-3 py-1.5" />
                             <div className="flex gap-2">
-                                <button type="submit" disabled={ocupado} className="text-sm bg-marca text-white rounded-lg px-3 py-1.5 disabled:opacity-50">Guardar</button>
+                                <button type="submit" disabled={ocupado} className={`${PANEL_PRIMARIO} ${COMPACTO}`}>Guardar</button>
                                 <button type="button" onClick={() => setNuevaFecha(null)} className={boton}>Cancelar</button>
                             </div>
                         </form>
@@ -254,8 +256,8 @@ export default function FichaCliente() {
                 <form onSubmit={guardarNota} className="flex flex-col gap-2">
                     <label htmlFor="nota" className="sr-only">Nueva nota</label>
                     <textarea id="nota" value={nota} onChange={(e) => setNota(e.target.value)} rows={2} maxLength={2000} required
-                        placeholder="Ej.: llamé y no contestó; pidió cotización con 20 % de pie" className="border rounded-lg px-3 py-2 text-sm" />
-                    <button type="submit" disabled={ocupado || !nota.trim()} className="self-end text-sm bg-marca text-white rounded-lg px-3 py-1.5 disabled:opacity-50">
+                        placeholder="Ej.: llamé y no contestó; pidió cotización con 20 % de pie" className="border border-borde-campo rounded-lg px-3 py-2 text-sm" />
+                    <button type="submit" disabled={ocupado || !nota.trim()} className={`self-end ${PANEL_PRIMARIO} ${COMPACTO}`}>
                         Agregar nota
                     </button>
                 </form>
@@ -304,7 +306,7 @@ export default function FichaCliente() {
                             Si alguna tiene una reserva o una venta, no se borra nada.
                         </p>
                         <button type="button" onClick={eliminarPersona}
-                            className="text-sm text-red-700 border border-red-200 rounded-lg px-3 py-1.5 hover:bg-red-50">
+                            className={`${PANEL_PELIGRO} ${COMPACTO}`}>
                             Eliminar datos de esta persona
                         </button>
                     </div>
@@ -377,7 +379,7 @@ function SeccionReserva({ idSolicitud, reserva, alCambiar }: { idSolicitud: stri
                         <div className="flex flex-wrap gap-2">
                             <button type="button" onClick={() => cambiar(reserva, 'VENDIDA')} className={boton}>Marcar vendida</button>
                             <button type="button" onClick={() => cambiar(reserva, 'ANULADA')}
-                                className="text-sm text-red-700 border border-red-200 rounded-lg px-3 py-1.5 hover:bg-red-50">
+                                className={`${PANEL_PELIGRO} ${COMPACTO}`}>
                                 Anular reserva
                             </button>
                         </div>
@@ -388,15 +390,15 @@ function SeccionReserva({ idSolicitud, reserva, alCambiar }: { idSolicitud: stri
                     <label className="flex flex-col gap-1 text-sm">
                         RUT del comprador
                         <input value={rut} onChange={(e) => { setRut(e.target.value); setErrorRut(null); }} required maxLength={12} autoFocus
-                            placeholder="12.345.678-5" aria-invalid={!!errorRut || undefined} className="border rounded-lg px-3 py-1.5" />
+                            placeholder="12.345.678-5" aria-invalid={!!errorRut || undefined} className="border border-borde-campo rounded-lg px-3 py-1.5" />
                         {errorRut && <span role="alert" className="text-red-700 text-xs">{errorRut}</span>}
                     </label>
                     <label className="flex flex-col gap-1 text-sm">
                         Lote (opcional)
-                        <input value={lote} onChange={(e) => setLote(e.target.value)} maxLength={50} className="border rounded-lg px-3 py-1.5" />
+                        <input value={lote} onChange={(e) => setLote(e.target.value)} maxLength={50} className="border border-borde-campo rounded-lg px-3 py-1.5" />
                     </label>
                     <div className="flex gap-2 self-end">
-                        <button type="submit" disabled={guardando} className="text-sm bg-marca text-white rounded-lg px-3 py-1.5 disabled:opacity-50">
+                        <button type="submit" disabled={guardando} className={`${PANEL_PRIMARIO} ${COMPACTO}`}>
                             {guardando ? 'Guardando…' : 'Guardar reserva'}
                         </button>
                         <button type="button" onClick={() => setAbierto(false)} className={boton}>Cancelar</button>

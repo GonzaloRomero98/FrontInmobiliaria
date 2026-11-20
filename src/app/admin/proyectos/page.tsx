@@ -6,6 +6,8 @@ import { despublicarProyecto, eliminarProyecto, getNormativa, getProyectosAdmin,
 import { Proyecto } from "@/types/proyecto";
 import { mensajeError } from "@/lib/errores";
 import { avisar, confirmar } from "@/components/Dialogos";
+import { CargandoLista, Vacio } from "@/components/panel/Tablero";
+import { COMPACTO, NORMAL, PANEL_EXITO, PANEL_PAGINA, PANEL_PELIGRO, PANEL_PRIMARIO, PANEL_SECUNDARIO, PILDORA, SUPERFICIE, TONO } from "@/lib/estilos";
 
 interface FilaProyecto {
     proyecto: Proyecto;
@@ -22,7 +24,7 @@ function leerFilas(): Promise<FilaProyecto[]> {
 
 function Estado({ ok, texto }: { ok: boolean; texto: string }) {
     return (
-        <span className={`text-xs px-2 py-0.5 rounded-full border ${ok ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-500'}`}>
+        <span className={`${PILDORA} ${ok ? TONO.exito : TONO.neutro}`}>
             {ok ? '✓' : '—'} {texto}
         </span>
     );
@@ -88,31 +90,36 @@ export default function ListadoProyectos() {
         avisar(`«${proyecto.nombre}» fue eliminado.`);
     }
 
-    if (cargando) {
-        return <main className="max-w-3xl mx-auto px-4 py-10">Cargando...</main>;
-    }
-
     const termino = busqueda.trim().toLocaleLowerCase('es');
     const visibles = termino ? filas.filter(({ proyecto }) => proyecto.nombre.toLocaleLowerCase('es').includes(termino)) : filas;
 
     return (
-        <main className="max-w-3xl mx-auto px-4 py-10">
-            <div className="flex items-center justify-between mb-6">
+        <main className={PANEL_PAGINA}>
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
                 <h1 className="text-2xl font-bold">Proyectos</h1>
-                <Link href="/admin/proyectos/nuevo" className="bg-marca text-white text-sm rounded-lg px-4 py-2 font-medium hover:bg-marca/90">Crear proyecto</Link>
+                <Link href="/admin/proyectos/nuevo" className={`${PANEL_PRIMARIO} ${NORMAL}`}>Crear proyecto</Link>
             </div>
-            {error && <p className="text-red-700">{error}</p>}
+            {error && <p role="alert" className="text-red-700 mb-4">{error}</p>}
             {filas.length > 0 && (
-                <input type="search" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} maxLength={100}
-                    placeholder="Buscar por nombre" aria-label="Buscar proyectos por nombre"
-                    className="w-full border rounded-lg px-3 py-2 mb-4" />
+                <label className="flex flex-col gap-1 w-full sm:max-w-sm mb-4 text-sm font-medium text-gray-800">
+                    Buscar proyecto
+                    <input type="search" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} maxLength={100}
+                        placeholder="Nombre del proyecto"
+                        className="border border-borde-campo rounded-lg px-3 py-2 text-base font-normal" />
+                </label>
             )}
-            {filas.length === 0 && !error ? (
-                <p className="text-gray-500">No hay proyectos todavía.</p>
-            ) : visibles.length === 0 && termino ? (
-                <p className="text-gray-500">Ningún proyecto coincide con «{busqueda.trim()}».</p>
+            {cargando ? (
+                <CargandoLista etiqueta="Cargando proyectos" />
+            ) : filas.length === 0 ? (
+                !error && (
+                    <Vacio texto="Todavía no hay proyectos.">
+                        <Link href="/admin/proyectos/nuevo" className={`${PANEL_PRIMARIO} ${NORMAL}`}>Crear el primer proyecto</Link>
+                    </Vacio>
+                )
+            ) : visibles.length === 0 ? (
+                <Vacio texto={`Ningún proyecto coincide con «${busqueda.trim()}».`} />
             ) : (
-                <div className="flex flex-col divide-y border rounded-xl">
+                <div className={`${SUPERFICIE} flex flex-col divide-y divide-gray-200`}>
                     {visibles.map(({ proyecto, tieneNormativa }) => (
                         <div key={proyecto.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
                             <div className="flex flex-col gap-1">
@@ -124,7 +131,7 @@ export default function ListadoProyectos() {
                                         <Estado ok={tieneNormativa} texto="Normativa" />
                                     </div>
                                 ) : (
-                                    <span className="self-start text-xs px-2 py-0.5 rounded-full border bg-amber-50 text-amber-800 border-amber-200">
+                                    <span className={`self-start ${PILDORA} ${TONO.aviso}`}>
                                         Despublicado: no se ve en el catálogo
                                     </span>
                                 )}
@@ -132,20 +139,20 @@ export default function ListadoProyectos() {
                             <div className="flex flex-wrap gap-2">
                                 {proyecto.activo ? (
                                     <>
-                                        <Link href={`/admin/proyectos/${proyecto.id}`} className="text-sm border rounded-lg px-3 py-1.5 hover:bg-gray-50">
+                                        <Link href={`/admin/proyectos/${proyecto.id}`} className={`${PANEL_SECUNDARIO} ${COMPACTO}`}>
                                             Editar
                                         </Link>
-                                        <button type="button" onClick={() => despublicar(proyecto)} className="text-sm border border-red-200 text-red-600 rounded-lg px-3 py-1.5 hover:bg-red-50">
+                                        <button type="button" onClick={() => despublicar(proyecto)} className={`${PANEL_SECUNDARIO} ${COMPACTO}`}>
                                             Despublicar
                                         </button>
                                     </>
                                 ) : (
                                     // Para editar un proyecto despublicado primero hay que publicarlo, porque la API no lo entrega.
-                                    <button type="button" onClick={() => publicar(proyecto)} className="text-sm border border-green-200 text-green-700 rounded-lg px-3 py-1.5 hover:bg-green-50">
+                                    <button type="button" onClick={() => publicar(proyecto)} className={`${PANEL_EXITO} ${COMPACTO}`}>
                                         Volver a publicar
                                     </button>
                                 )}
-                                <button type="button" onClick={() => eliminar(proyecto)} className="text-sm text-red-600 px-2 py-1.5 hover:underline">
+                                <button type="button" onClick={() => eliminar(proyecto)} className={`${PANEL_PELIGRO} ${COMPACTO}`}>
                                     Eliminar
                                 </button>
                             </div>

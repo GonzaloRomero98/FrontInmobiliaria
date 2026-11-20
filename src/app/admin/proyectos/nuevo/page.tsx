@@ -14,6 +14,7 @@ import SubidaImagen from "@/components/SubidaImagen";
 import { SelectorUbicacion } from "@/components/mapas";
 import AvisoCercania, { confirmarSiDuplicado, DISTANCIA_DUPLICADO_M, guardarConfirmandoCercania, proyectosCercanos, RADIO_ENTORNO_M, useProyectosEnMapa } from "@/components/admin/AvisoCercania";
 import { ETIQUETA_ETAPA, EtapaProyecto } from "@/types/proyecto";
+import { PANEL_PAGINA, SUPERFICIE, PANEL_PRIMARIO, NORMAL } from "@/lib/estilos";
 
 const esquemaProyecto = z.object({
     nombre: z.string().min(1, 'El nombre es obligatorio').max(150),
@@ -110,30 +111,30 @@ export default function NuevoProyecto() {
     }
 
     return (
-        <main className="max-w-lg mx-auto px-4 py-10">
+        <main className={PANEL_PAGINA}>
             <Link href="/admin/proyectos" className="text-sm text-gray-500 hover:underline">← Proyectos</Link>
             <h1 className="text-2xl font-bold mb-6">Crear proyecto</h1>
-            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+            <form onSubmit={handleSubmit(onSubmit)} className={`${SUPERFICIE} p-5 sm:p-6 max-w-2xl flex flex-col gap-4`}>
                 <div>
                     <label className="flex flex-col gap-1 text-sm">
                         Nombre del proyecto
-                        <input {...register('nombre')} className="w-full border rounded-lg px-3 py-2" />
+                        <input {...register('nombre')} className="w-full border border-borde-campo rounded-lg px-3 py-2" />
                     </label>
-                    {errors.nombre && <p className="text-red-500 text-sm mt-1">{errors.nombre.message}</p>}
+                    {errors.nombre && <p role="alert" className="text-red-700 text-sm mt-1">{errors.nombre.message}</p>}
                 </div>
 
                 <div className="flex flex-col gap-4">
                     <div>
                         <label className="flex flex-col gap-1 text-sm">
                             Región
-                            <select {...register('id_region')} className="w-full border rounded-lg px-3 py-2">
+                            <select {...register('id_region')} className="w-full border border-borde-campo rounded-lg px-3 py-2">
                                 <option value="">Selecciona una región</option>
                                 {regiones.map((r) => (
                                     <option key={r.id} value={r.id}>{r.nombre}</option>
                                 ))}
                             </select>
                         </label>
-                        {errors.id_region && <p className="text-red-500 text-sm mt-1">{errors.id_region.message}</p>}
+                        {errors.id_region && <p role="alert" className="text-red-700 text-sm mt-1">{errors.id_region.message}</p>}
                     </div>
 
                     <div>
@@ -141,7 +142,7 @@ export default function NuevoProyecto() {
                             Comuna
                             <select
                                 {...register('id_ciudad')}
-                                className="w-full border rounded-lg px-3 py-2"
+                                className="w-full border border-borde-campo rounded-lg px-3 py-2"
                                 disabled={!idRegionSeleccionada}
                             >
                                 <option value="">{idRegionSeleccionada ? 'Selecciona una comuna' : 'Primero elige la región'}</option>
@@ -150,19 +151,19 @@ export default function NuevoProyecto() {
                                 ))}
                             </select>
                         </label>
-                        {errors.id_ciudad && <p className="text-red-500 text-sm mt-1">{errors.id_ciudad.message}</p>}
+                        {errors.id_ciudad && <p role="alert" className="text-red-700 text-sm mt-1">{errors.id_ciudad.message}</p>}
                     </div>
                 </div>
 
                 <label className="flex flex-col gap-1 text-sm">
                     Descripción (opcional)
-                    <textarea {...register('descripcion')} className="w-full border rounded-lg px-3 py-2" rows={3} />
+                    <textarea {...register('descripcion')} className="w-full border border-borde-campo rounded-lg px-3 py-2" rows={3} />
                 </label>
 
                 <div className="grid grid-cols-2 gap-2">
                     <label className="flex flex-col gap-1 text-sm">
                         Etapa
-                        <select {...register('etapa')} className="w-full border rounded-lg px-3 py-2">
+                        <select {...register('etapa')} className="w-full border border-borde-campo rounded-lg px-3 py-2">
                             <option value="">Sin informar</option>
                             {Object.entries(ETIQUETA_ETAPA).map(([valor, etiqueta]) => (
                                 <option key={valor} value={valor}>{etiqueta}</option>
@@ -171,14 +172,14 @@ export default function NuevoProyecto() {
                     </label>
                     <label className="flex flex-col gap-1 text-sm">
                         Fecha de entrega (opcional)
-                        <input type="date" {...register('fechaEntrega')} className="w-full border rounded-lg px-3 py-2" />
+                        <input type="date" {...register('fechaEntrega')} className="w-full border border-borde-campo rounded-lg px-3 py-2" />
                     </label>
                 </div>
 
                 <div className="flex flex-col gap-2">
                     <label className="flex flex-col gap-1 text-sm">
                         Dirección (opcional)
-                        <input {...register('direccion')} placeholder="Ej.: 1 Sur 1234" className="w-full border rounded-lg px-3 py-2" />
+                        <input {...register('direccion')} placeholder="Ej.: 1 Sur 1234" className="w-full border border-borde-campo rounded-lg px-3 py-2" />
                     </label>
                     <p className="text-sm text-gray-500">
                         Ubicación en el mapa (opcional): haz clic donde está el proyecto.
@@ -197,15 +198,15 @@ export default function NuevoProyecto() {
                         progreso={progreso}
                         subiendo={subiendoImagen}
                     />
-                    {errors.imagenPortada && <p className="text-red-500 text-sm mt-1">{errors.imagenPortada.message}</p>}
+                    {errors.imagenPortada && <p role="alert" className="text-red-700 text-sm mt-1">{errors.imagenPortada.message}</p>}
                 </div>
 
-                {error && <p className="text-red-500 text-sm">{error}</p>}
+                {error && <p role="alert" className="text-red-700 text-sm">{error}</p>}
 
                 <button
                     type="submit"
                     disabled={isSubmitting || subiendoImagen}
-                    className="bg-marca text-white rounded-lg py-3 font-medium disabled:opacity-50"
+                    className={`${PANEL_PRIMARIO} ${NORMAL}`}
                 >
                     {subiendoImagen ? 'Subiendo imagen...' : isSubmitting ? 'Creando...' : 'Crear proyecto'}
                 </button>
