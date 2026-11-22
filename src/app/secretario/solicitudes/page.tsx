@@ -93,7 +93,7 @@ function BandejaSolicitudes() {
                 if (cancelado) return;
                 // Si la última fila de la última página ya no calza con el filtro, se retrocede una página.
                 if (data.solicitudes.length === 0 && pagina > 1) {
-                    setPagina(pagina - 1);
+                    setPagina((p) => p - 1);
                     return;
                 }
                 setSolicitudes(data.solicitudes);

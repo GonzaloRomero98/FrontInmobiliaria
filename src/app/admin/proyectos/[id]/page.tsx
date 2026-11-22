@@ -21,10 +21,12 @@ export default function EditarProyecto() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        let cancelado = false;
         Promise.all([getProyectoPorId(id), getNormativa(id)])
-            .then(([p, n]) => { setProyecto(p); setNormativa(n); })
-            .catch(() => setError('No se pudo cargar el proyecto'))
-            .finally(() => setCargando(false));
+            .then(([p, n]) => { if (!cancelado) { setProyecto(p); setNormativa(n); } })
+            .catch(() => { if (!cancelado) setError('No se pudo cargar el proyecto'); })
+            .finally(() => { if (!cancelado) setCargando(false); });
+        return () => { cancelado = true; };
     }, [id]);
 
     if (cargando) return <main className={PANEL_PAGINA}><Link href="/admin/proyectos" className="text-sm text-gray-600 hover:underline">← Proyectos</Link><div className="max-w-3xl mt-4"><CargandoLista filas={4} alto="h-40" etiqueta="Cargando el proyecto" /></div></main>;

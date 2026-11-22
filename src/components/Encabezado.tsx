@@ -15,8 +15,8 @@ export default function Encabezado() {
                 <NavegacionPrincipal />
                 <div className="flex items-center gap-3 text-sm font-medium">
                     <MenuUsuario />
-                    {/* El agendamiento vive en la ficha de cada proyecto, por eso el botón lleva a la grilla. */}
-                    <Link href="/#proyectos"
+                    {/* En /agendar se elige proyecto y modelo, porque cada solicitud va ligada a un modelo. */}
+                    <Link href="/agendar"
                         className={`${BOTON_PRIMARIO} max-sm:hidden min-h-11 px-5`}>
                         Agendar visita
                     </Link>

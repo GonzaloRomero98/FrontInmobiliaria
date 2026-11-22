@@ -233,7 +233,7 @@ export default async function Home() {
                             </p>
                         </div>
                         <div className="flex flex-col sm:flex-row gap-3 shrink-0">
-                            <Link href="#proyectos"
+                            <Link href="/agendar"
                                 className={`${BOTON_PRIMARIO} min-h-12 px-6`}>
                                 Agendar visita ahora
                             </Link>

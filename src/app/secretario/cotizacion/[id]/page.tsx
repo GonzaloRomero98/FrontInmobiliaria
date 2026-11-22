@@ -10,8 +10,6 @@ export default async function PaginaCotizacion({ params, searchParams }: {
     params: Promise<{ id: string }>;
     searchParams: Promise<{ folio?: string }>;
 }) {
-    const { id } = await params;
-    const { folio } = await searchParams;
-    const uf = await obtenerValorUF();
+    const [{ id }, { folio }, uf] = await Promise.all([params, searchParams, obtenerValorUF()]);
     return <Cotizacion idSolicitud={id} idCotizacion={folio} uf={uf} />;
 }

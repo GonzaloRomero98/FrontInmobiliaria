@@ -1,10 +1,14 @@
 'use client'
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const TamañoMaximo = 5*1024*1024;
 
+// Contador en vez de crypto.randomUUID, que no existe en páginas servidas por http.
+let siguienteId = 0;
+
 interface ArchivoPreview{
+    id: number;
     archivo: File;
     preview:string;
 }
@@ -19,9 +23,13 @@ export default function SubidaGaleria
     const [items, setItems] = useState<ArchivoPreview[]>([]);
     const [error, setError] = useState<string | null>(null);
 
+    // El ref guarda los items vigentes: la limpieza de abajo solo corre al desmontar y vería la lista vacía inicial.
+    const itemsRef = useRef(items);
+    useEffect(()=>{ itemsRef.current = items; },[items]);
+
     useEffect(()=>{
         return () =>{
-            items.forEach((items)=> URL.revokeObjectURL(items.preview));
+            itemsRef.current.forEach((item)=> URL.revokeObjectURL(item.preview));
         };
     },[]);
 
@@ -40,7 +48,7 @@ export default function SubidaGaleria
                 continue;
             }
 
-            archivoValidos.push({archivo, preview: URL.createObjectURL(archivo)});
+            archivoValidos.push({id: siguienteId++, archivo, preview: URL.createObjectURL(archivo)});
         }
 
         const nuevos = [...items, ...archivoValidos];
@@ -58,17 +66,18 @@ export default function SubidaGaleria
 
     return(
         <div className="flex flex-col gap-2">
-            <input type="file" accept="image/jpeg, image/png, image/webp"  multiple onChange={manejoCambios} disabled={disabled} className="text-sm"/>
+            <input type="file" accept="image/jpeg, image/png, image/webp"  multiple onChange={manejoCambios} disabled={disabled} aria-label="Subir fotos de la galería" className="text-sm"/>
             {error && <p className="text-red-500 text-sm">{error}</p>}
             {items.length > 0 && (
                 <div className="grid grid-cols-3 gap-2">
                     {items.map((item, i) => (
-                        <div key={i} className="relative">
+                        <div key={item.id} className="relative">
                             <img src={item.preview} alt="" className="w-full h-24 object-cover rounded-lg border" />
                             <button
                                 type="button"
                                 onClick={() => quitarImagen(i)}
                                 disabled={disabled}
+                                aria-label={`Quitar imagen ${i + 1}`}
                                 className="absolute top-1 right-1 bg-black/70 text-white rounded-full w-5 h-5 text-xs leading-5"
                             >
                                 ×

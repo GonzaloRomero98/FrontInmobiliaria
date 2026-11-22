@@ -81,7 +81,7 @@ export default function NavegacionPrincipal() {
                     <div className="max-w-6xl mx-auto px-4 py-3 flex flex-col gap-1 text-base font-medium">
                         {SECCIONES.map((s) => <Link key={s.href} href={s.href} className={enlaceMovil} onClick={cerrar}>{s.texto}</Link>)}
                         <EnlaceComparar className={enlaceMovil} alClic={cerrar} />
-                        <Link href="/#proyectos" onClick={cerrar}
+                        <Link href="/agendar" onClick={cerrar}
                             className={`${BOTON_PRIMARIO} mt-2 min-h-12`}>
                             Agendar visita
                         </Link>

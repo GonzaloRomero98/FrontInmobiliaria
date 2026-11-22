@@ -37,9 +37,11 @@ interface FormularioContactoProps {
     idModeloCasa: string;
     conVisita?: boolean;
     sala?: { direccion: string; horario: string | null; horarios: HorariosSala | null } | null;
+    // En /agendar la casilla de visita parte marcada.
+    visitaInicial?: boolean;
 }
 
-export default function FormularioContacto({ idModeloCasa, conVisita = false, sala }: FormularioContactoProps) {
+export default function FormularioContacto({ idModeloCasa, conVisita = false, sala, visitaInicial = false }: FormularioContactoProps) {
     const [enviado, setEnviado] = useState<{ nombre: string; celular: string; correo: string } | null>(null);
     const [error, setError] = useState<string | null>(null);
 
@@ -55,7 +57,7 @@ export default function FormularioContacto({ idModeloCasa, conVisita = false, sa
     });
     const mensaje = useWatch({ control, name: 'mensaje' }) ?? '';
     // null = no quiere visita; si no, el valor de SelectorVisita.
-    const [visita, setVisita] = useState<string | null>(null);
+    const [visita, setVisita] = useState<string | null>(visitaInicial ? '' : null);
     const id = useId();
     // Liga cada campo con su mensaje de error para los lectores de pantalla.
     const conError = (campo: keyof typeof errors) =>
