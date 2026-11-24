@@ -70,7 +70,8 @@ export default function GaleriaModelo({ idModelo, titulo, modelo3dUrl, imagenes 
                             className="flex overflow-x-auto snap-x snap-mandatory rounded-xl bg-gray-100 [scrollbar-width:none]">
                             {imagenes.map((url, i) => (
                                 <div key={url} className="relative w-full shrink-0 snap-center" style={{ height: ALTO }}>
-                                    <Image src={url} alt={`${titulo}, foto ${i + 1} de ${total}`} fill priority={i === 0}
+                                    <Image src={url} alt={`${titulo}, foto ${i + 1} de ${total}`} fill
+                                        loading={i === 0 ? 'eager' : 'lazy'} fetchPriority={i === 0 ? 'high' : 'auto'}
                                         sizes="(min-width: 1024px) 66vw, 100vw" className="object-cover" />
                                 </div>
                             ))}

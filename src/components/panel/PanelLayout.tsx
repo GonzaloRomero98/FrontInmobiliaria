@@ -39,7 +39,7 @@ function Navegacion({ esAdmin, pendientes, perfil, ruta }: { esAdmin: boolean; p
     return (
         <>
             <Link href={esAdmin ? '/admin' : '/secretario'} className="block bg-white rounded-xl px-3 py-2.5 mb-5">
-                <Image src="/logo-inmocap.png" alt={NOMBRE_SITIO} width={562} height={144} className="h-8 w-auto" priority />
+                <Image src="/logo-inmocap.png" alt={NOMBRE_SITIO} width={562} height={144} className="h-8 w-auto" loading="eager" />
             </Link>
             <nav aria-label="Secciones del panel" className="flex flex-col">
                 {grupos.map((g) => (

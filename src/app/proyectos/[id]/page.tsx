@@ -92,7 +92,7 @@ export default async function ProyectoDetalle({ params }: { params: Promise<{ id
                 </div>
                 {proyecto.imagenPortada && (
                     <div className="relative aspect-4/3 rounded-2xl overflow-hidden bg-gray-100 order-first lg:order-0">
-                        <Image src={proyecto.imagenPortada} alt={`Imagen del proyecto ${proyecto.nombre}`} fill priority
+                        <Image src={proyecto.imagenPortada} alt={`Imagen del proyecto ${proyecto.nombre}`} fill loading="eager" fetchPriority="high"
                             sizes="(min-width: 1024px) 45vw, 100vw" className="object-cover" />
                     </div>
                 )}

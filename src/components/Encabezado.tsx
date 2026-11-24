@@ -10,7 +10,7 @@ export default function Encabezado() {
         <header className="relative z-40 border-b bg-white">
             <nav className="relative max-w-6xl mx-auto px-4 h-16 flex items-center gap-4">
                 <Link href="/" className="shrink-0 mr-auto md:mr-0">
-                    <Image src="/logo-inmocap.png" alt={NOMBRE_SITIO} width={562} height={144} className="h-10 w-auto" priority />
+                    <Image src="/logo-inmocap.png" alt={NOMBRE_SITIO} width={562} height={144} className="h-10 w-auto" loading="eager" />
                 </Link>
                 <NavegacionPrincipal />
                 <div className="flex items-center gap-3 text-sm font-medium">

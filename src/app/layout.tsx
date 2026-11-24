@@ -16,6 +16,8 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  // Solo se usa en el panel de auditoría; precargarla en el sitio público le quita ancho de banda a la foto principal.
+  preload: false,
 });
 
 const montserrat = Montserrat({

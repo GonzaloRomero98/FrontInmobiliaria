@@ -116,7 +116,7 @@ export default async function Home() {
                             <Link href={`/proyectos/${destacado.id}`}
                                 className="group block rounded-3xl overflow-hidden bg-white border border-gray-100 shadow-xl shadow-gray-900/10">
                                 <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
-                                    <Image src={destacado.imagenPortada!} alt={destacado.nombre} fill priority
+                                    <Image src={destacado.imagenPortada!} alt={destacado.nombre} fill loading="eager" fetchPriority="high"
                                         sizes="(min-width: 1024px) 520px, 100vw"
                                         className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03] motion-reduce:transition-none" />
                                     <span className="absolute top-4 left-4 rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-marca shadow-sm">
