@@ -3,10 +3,14 @@
 import dynamic from "next/dynamic";
 import { useEffect, useState, type ComponentProps } from "react";
 import Visor3D from "./Visor3D";
+import { CargandoVisor } from "./Esqueleto";
 import { avisar } from "./Dialogos";
 
 // three.js solo se descarga si la persona entra al recorrido.
-const RecorridoInterior = dynamic(() => import("./RecorridoInterior"), { ssr: false });
+const RecorridoInterior = dynamic(() => import("./RecorridoInterior"), {
+    ssr: false,
+    loading: () => <CargandoVisor texto="Cargando recorrido" />,
+});
 
 // Donde hay WebXR (Android con Chrome) el botón de RA muestra la casa alrededor de la persona.
 // En iPhone no hay WebXR, así que se mantiene la RA exterior de Quick Look.
@@ -47,8 +51,11 @@ export default function VisorCasa(props: ComponentProps<typeof Visor3D>) {
                 ))}
             </div>
             {interior || sesionAr
-                ? <RecorridoInterior modeloUrl={props.modeloUrl} titulo={props.titulo} altura={props.altura}
-                    sesionAr={sesionAr} capaAr={capaAr} />
+                // El alto fijo reserva el espacio mientras baja three.js, así la página no salta.
+                ? <div className="relative" style={{ height: props.altura ?? 500 }}>
+                    <RecorridoInterior modeloUrl={props.modeloUrl} titulo={props.titulo} altura={props.altura}
+                        sesionAr={sesionAr} capaAr={capaAr} />
+                </div>
                 : <Visor3D {...props} alEntrarAr={soportaAr ? entrarAr : undefined} />}
             {/* Durante la RA el navegador muestra esta capa sobre la cámara. */}
             <div ref={setCapaAr} />

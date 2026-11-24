@@ -5,7 +5,7 @@ import SubidaImagen from "@/components/SubidaImagen";
 import { actualizarProyecto } from "@/services/proyecto.service";
 import { obtenerUrlSubida, subirArchivo } from "@/services/s3.service";
 import { ETIQUETA_ETAPA, EtapaProyecto, Proyecto } from "@/types/proyecto";
-import { SUPERFICIE, PANEL_PRIMARIO, NORMAL } from "@/lib/estilos";
+import { SUPERFICIE, PANEL_PRIMARIO, NORMAL, CAMPO_PANEL } from "@/lib/estilos";
 
 export default function FormularioDatosProyecto({ proyecto, onGuardado }: { proyecto: Proyecto; onGuardado: (p: Proyecto) => void }) {
     const [nombre, setNombre] = useState(proyecto.nombre);
@@ -53,18 +53,18 @@ export default function FormularioDatosProyecto({ proyecto, onGuardado }: { proy
 
             <label className="flex flex-col gap-1 text-sm">
                 Nombre
-                <input value={nombre} onChange={(e) => setNombre(e.target.value)} maxLength={150} className="border border-borde-campo rounded-lg px-3 py-2" />
+                <input value={nombre} onChange={(e) => setNombre(e.target.value)} maxLength={150} className={CAMPO_PANEL} />
             </label>
 
             <label className="flex flex-col gap-1 text-sm">
                 Descripción
-                <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} rows={4} className="border border-borde-campo rounded-lg px-3 py-2" />
+                <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} rows={4} className={CAMPO_PANEL} />
             </label>
 
             <div className="grid grid-cols-2 gap-2">
                 <label className="flex flex-col gap-1 text-sm">
                     Etapa
-                    <select value={etapa} onChange={(e) => setEtapa(e.target.value)} className="w-full border border-borde-campo rounded-lg px-3 py-2">
+                    <select value={etapa} onChange={(e) => setEtapa(e.target.value)} className={`${CAMPO_PANEL} w-full`}>
                         <option value="">Sin informar</option>
                         {Object.entries(ETIQUETA_ETAPA).map(([valor, etiqueta]) => (
                             <option key={valor} value={valor}>{etiqueta}</option>
@@ -73,7 +73,7 @@ export default function FormularioDatosProyecto({ proyecto, onGuardado }: { proy
                 </label>
                 <label className="flex flex-col gap-1 text-sm">
                     Fecha de entrega (opcional)
-                    <input type="date" value={fechaEntrega} onChange={(e) => setFechaEntrega(e.target.value)} className="w-full border border-borde-campo rounded-lg px-3 py-2" />
+                    <input type="date" value={fechaEntrega} onChange={(e) => setFechaEntrega(e.target.value)} className={`${CAMPO_PANEL} w-full`} />
                 </label>
             </div>
 

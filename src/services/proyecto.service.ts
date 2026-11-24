@@ -1,6 +1,6 @@
 import { api } from "@/lib/api";
 import { ActualizarProyectoInput, CrearPoyectoInput, Proyecto } from "@/types/proyecto";
-import { Normativa, NormativaInput } from "@/types/normativa";
+import { Normativa, NormativaGuardada, NormativaInput } from "@/types/normativa";
 import { EntornoProyecto } from "@/types/entorno";
 import { isAxiosError } from "axios";
 
@@ -39,7 +39,7 @@ export function getNormativa(id:string):Promise<Normativa | null> {
     return getOpcional(`/proyectos/${id}/normativa`);
 }
 
-export async function guardarNormativa(id:string, normativa:NormativaInput):Promise<Normativa> {
+export async function guardarNormativa(id:string, normativa:NormativaInput):Promise<NormativaGuardada> {
     const {data} = await api.put(`/proyectos/${id}/normativa`, normativa);
     return data;
 }

@@ -5,7 +5,7 @@ import { SelectorUbicacion } from "@/components/mapas";
 import { actualizarProyecto } from "@/services/proyecto.service";
 import { ActualizarProyectoInput, Proyecto } from "@/types/proyecto";
 import { DiaSemana, HorariosSala, horasEntre, SEMANA, textoHorario } from "@/lib/horarioSala";
-import { SUPERFICIE, PANEL_PRIMARIO, PANEL_SECUNDARIO, NORMAL } from "@/lib/estilos";
+import { SUPERFICIE, PANEL_PRIMARIO, PANEL_SECUNDARIO, NORMAL, CAMPO_PANEL } from "@/lib/estilos";
 
 const HORAS = horasEntre('06:00', '23:30');
 const HORARIO_INICIAL: HorariosSala = Object.fromEntries(
@@ -85,12 +85,12 @@ export default function FormularioSalaVentas({ proyecto, onGuardado }: { proyect
             <label className="flex flex-col gap-1 text-sm">
                 Dirección
                 <input value={direccion} onChange={(e) => setDireccion(e.target.value)} maxLength={200}
-                    placeholder="Ej.: 1 Sur 1234, Talca" className="border border-borde-campo rounded-lg px-3 py-2" />
+                    placeholder="Ej.: 1 Sur 1234, Talca" className={CAMPO_PANEL} />
             </label>
             <label className="flex flex-col gap-1 text-sm">
                 Teléfono
                 <input value={telefono} onChange={(e) => setTelefono(e.target.value)} maxLength={20} type="tel"
-                    placeholder="+56712345678" className="border border-borde-campo rounded-lg px-3 py-2" />
+                    placeholder="+56712345678" className={CAMPO_PANEL} />
             </label>
 
             <fieldset className="flex flex-col gap-2">

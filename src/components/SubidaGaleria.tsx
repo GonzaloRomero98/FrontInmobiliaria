@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState } from "react";
+import { ImagePlus, X } from "lucide-react";
+import ZonaSubida, { MensajeError } from "./ZonaSubida";
 
 const TamañoMaximo = 5*1024*1024;
 
@@ -22,6 +24,7 @@ export default function SubidaGaleria
 ({ archivosSeleccionados, disabled = false }: SubidaGaleriaProps){
     const [items, setItems] = useState<ArchivoPreview[]>([]);
     const [error, setError] = useState<string | null>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
 
     // El ref guarda los items vigentes: la limpieza de abajo solo corre al desmontar y vería la lista vacía inicial.
     const itemsRef = useRef(items);
@@ -33,8 +36,8 @@ export default function SubidaGaleria
         };
     },[]);
 
-    const manejoCambios = (e: React.ChangeEvent<HTMLInputElement>) =>{
-        const archivos =  Array.from(e.target.files  ?? []);
+    // Sirve tanto para los archivos elegidos con el selector como para los soltados en la zona.
+    const agregar = (archivos: File[]) =>{
         setError(null);
 
         const archivoValidos: ArchivoPreview[] = [];
@@ -54,7 +57,6 @@ export default function SubidaGaleria
         const nuevos = [...items, ...archivoValidos];
         setItems(nuevos);
         archivosSeleccionados(nuevos.map((u)=> u.archivo));
-        e.target.value = '';
     };
 
     function quitarImagen(index:number){
@@ -65,9 +67,31 @@ export default function SubidaGaleria
     }
 
     return(
-        <div className="flex flex-col gap-2">
-            <input type="file" accept="image/jpeg, image/png, image/webp"  multiple onChange={manejoCambios} disabled={disabled} aria-label="Subir fotos de la galería" className="text-sm"/>
-            {error && <p className="text-red-500 text-sm">{error}</p>}
+        <div className="flex flex-col gap-3">
+            <input
+                ref={inputRef}
+                type="file"
+                accept="image/jpeg, image/png, image/webp"
+                multiple
+                onChange={(e) => {
+                    const archivos = Array.from(e.target.files ?? []);
+                    // Se limpia para que volver a elegir el mismo archivo dispare onChange.
+                    e.target.value = '';
+                    agregar(archivos);
+                }}
+                disabled={disabled}
+                className="hidden"
+            />
+            <ZonaSubida
+                icono={ImagePlus}
+                queSubir="tus fotos"
+                ayuda="JPG, PNG o WEBP · hasta 5 MB cada una"
+                error={!!error}
+                deshabilitado={disabled}
+                onElegir={() => inputRef.current?.click()}
+                onSoltarVarios={agregar}
+            />
+            {error && <MensajeError>{error}</MensajeError>}
             {items.length > 0 && (
                 <div className="grid grid-cols-3 gap-2">
                     {items.map((item, i) => (
@@ -78,9 +102,9 @@ export default function SubidaGaleria
                                 onClick={() => quitarImagen(i)}
                                 disabled={disabled}
                                 aria-label={`Quitar imagen ${i + 1}`}
-                                className="absolute top-1 right-1 bg-black/70 text-white rounded-full w-5 h-5 text-xs leading-5"
+                                className="absolute top-1 right-1 size-8 flex items-center justify-center rounded-full bg-black/70 text-white hover:bg-black/90 transition-colors motion-reduce:transition-none disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                ×
+                                <X className="size-4" aria-hidden />
                             </button>
                         </div>
                     ))}

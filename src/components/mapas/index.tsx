@@ -1,10 +1,15 @@
 'use client'
 
 import dynamic from 'next/dynamic';
+import { ESQUELETO } from '@/components/Esqueleto';
 
 // Leaflet necesita window, por eso los mapas se cargan solo en el navegador.
 function Cargando({ altura }: { altura: number }) {
-    return <div style={{ height: altura }} className="w-full rounded-xl bg-gray-100 animate-pulse" aria-label="Cargando mapa" />;
+    return (
+        <div role="status" style={{ height: altura }} className={`${ESQUELETO} w-full rounded-xl`}>
+            <span className="sr-only">Cargando mapa…</span>
+        </div>
+    );
 }
 
 export const MapaProyectos = dynamic(() => import('./MapaLeaflet').then((m) => m.MapaProyectosLeaflet), {

@@ -1,6 +1,7 @@
 'use client'
 
 import AvatarUsuario from "@/components/AvatarUsuario";
+import { CargandoLista } from "@/components/panel/Tablero";
 import { obtenerUrlSubida, subirArchivo } from "@/services/s3.service";
 import { actualizarMiPerfil, cambiarMiContrasena, getMiPerfil, Usuario } from "@/services/usuario.service";
 import { isAxiosError } from "axios";
@@ -44,7 +45,7 @@ export default function MiPerfil(){
                 <h1 className="text-2xl font-bold">Mi perfil</h1>
             </div>
             {errorCarga && <p className="text-red-700 text-sm" role="alert">No se pudo cargar tu perfil</p>}
-            {!perfil && !errorCarga && <p className="text-gray-500 text-sm">Cargando...</p>}
+            {!perfil && !errorCarga && <CargandoLista filas={3} alto="h-40" etiqueta="Cargando tu perfil" />}
             {perfil && (
                 <>
                     <SeccionFoto perfil={perfil} alCambiar={setPerfil} />

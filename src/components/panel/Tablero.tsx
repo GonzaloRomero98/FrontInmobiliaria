@@ -3,6 +3,10 @@ import Link from "next/link";
 import { ReactNode } from "react";
 import { ETIQUETA_VISITA, EstadoVisita } from "@/types/solicitud";
 import { SUPERFICIE } from "@/lib/estilos";
+import { Esqueleto } from "@/components/Esqueleto";
+
+// Las pantallas del panel lo importan desde aquí.
+export { Esqueleto };
 
 export const ZONA = 'America/Santiago';
 
@@ -91,9 +95,6 @@ export function ProximasVisitas({ visitas }: { visitas: Visita[] }) {
     );
 }
 
-export function Esqueleto({ className }: { className: string }) {
-    return <div className={`animate-pulse motion-reduce:animate-none bg-gray-200/70 rounded-2xl ${className}`} />;
-}
 
 // Mientras carga, el título de la página sigue a la vista y en el lugar del contenido van bloques grises.
 export function CargandoLista({ filas = 4, alto = 'h-16', etiqueta = 'Cargando' }: { filas?: number; alto?: string; etiqueta?: string }) {

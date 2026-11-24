@@ -5,7 +5,7 @@ import { isAxiosError } from "axios";
 import { crearCaracteristica, getCaracteristicas } from "@/services/caracteristica.service";
 import { Caracteristica } from "@/types/caracteristicas";
 import { CargandoLista, Vacio } from "@/components/panel/Tablero";
-import { NORMAL, PANEL_PAGINA, PANEL_PRIMARIO, SUPERFICIE } from "@/lib/estilos";
+import { NORMAL, PANEL_PAGINA, PANEL_PRIMARIO, SUPERFICIE, CAMPO_PANEL } from "@/lib/estilos";
 
 export default function Caracteristicas(){
     const [caracteristicas, setCaracteristicas] = useState<Caracteristica[]>([]);
@@ -50,7 +50,7 @@ export default function Caracteristicas(){
                         onChange={(e) => setNombre(e.target.value)}
                         placeholder="Ej: Piscina"
                         maxLength={150}
-                        className="border border-borde-campo rounded-lg px-3 py-2 text-base font-normal"
+                        className={CAMPO_PANEL}
                     />
                 </label>
                 <button type="submit" disabled={guardando || !nombre.trim()} className={`${PANEL_PRIMARIO} ${NORMAL}`}>

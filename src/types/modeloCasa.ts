@@ -83,6 +83,7 @@ export interface ModeloCasaInput{
     caracteristicasID:number[];
     unidades?:number;
     activo?:boolean;
+    confirmarExceso?:boolean;
 }
 export type OrdenBusqueda = 'precio_asc' | 'precio_desc' | 'superficie_desc' | 'recientes';
 

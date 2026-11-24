@@ -14,7 +14,7 @@ import SubidaImagen from "@/components/SubidaImagen";
 import { SelectorUbicacion } from "@/components/mapas";
 import AvisoCercania, { confirmarSiDuplicado, DISTANCIA_DUPLICADO_M, guardarConfirmandoCercania, proyectosCercanos, RADIO_ENTORNO_M, useProyectosEnMapa } from "@/components/admin/AvisoCercania";
 import { ETIQUETA_ETAPA, EtapaProyecto } from "@/types/proyecto";
-import { PANEL_PAGINA, SUPERFICIE, PANEL_PRIMARIO, NORMAL } from "@/lib/estilos";
+import { PANEL_PAGINA, SUPERFICIE, PANEL_PRIMARIO, NORMAL, CAMPO_PANEL } from "@/lib/estilos";
 
 const esquemaProyecto = z.object({
     nombre: z.string().min(1, 'El nombre es obligatorio').max(150),
@@ -118,7 +118,7 @@ export default function NuevoProyecto() {
                 <div>
                     <label className="flex flex-col gap-1 text-sm">
                         Nombre del proyecto
-                        <input {...register('nombre')} className="w-full border border-borde-campo rounded-lg px-3 py-2" />
+                        <input {...register('nombre')} className={`${CAMPO_PANEL} w-full`} />
                     </label>
                     {errors.nombre && <p role="alert" className="text-red-700 text-sm mt-1">{errors.nombre.message}</p>}
                 </div>
@@ -127,7 +127,7 @@ export default function NuevoProyecto() {
                     <div>
                         <label className="flex flex-col gap-1 text-sm">
                             Región
-                            <select {...register('id_region')} className="w-full border border-borde-campo rounded-lg px-3 py-2">
+                            <select {...register('id_region')} className={`${CAMPO_PANEL} w-full`}>
                                 <option value="">Selecciona una región</option>
                                 {regiones.map((r) => (
                                     <option key={r.id} value={r.id}>{r.nombre}</option>
@@ -142,7 +142,7 @@ export default function NuevoProyecto() {
                             Comuna
                             <select
                                 {...register('id_ciudad')}
-                                className="w-full border border-borde-campo rounded-lg px-3 py-2"
+                                className={`${CAMPO_PANEL} w-full`}
                                 disabled={!idRegionSeleccionada}
                             >
                                 <option value="">{idRegionSeleccionada ? 'Selecciona una comuna' : 'Primero elige la región'}</option>
@@ -157,13 +157,13 @@ export default function NuevoProyecto() {
 
                 <label className="flex flex-col gap-1 text-sm">
                     Descripción (opcional)
-                    <textarea {...register('descripcion')} className="w-full border border-borde-campo rounded-lg px-3 py-2" rows={3} />
+                    <textarea {...register('descripcion')} className={`${CAMPO_PANEL} w-full`} rows={3} />
                 </label>
 
                 <div className="grid grid-cols-2 gap-2">
                     <label className="flex flex-col gap-1 text-sm">
                         Etapa
-                        <select {...register('etapa')} className="w-full border border-borde-campo rounded-lg px-3 py-2">
+                        <select {...register('etapa')} className={`${CAMPO_PANEL} w-full`}>
                             <option value="">Sin informar</option>
                             {Object.entries(ETIQUETA_ETAPA).map(([valor, etiqueta]) => (
                                 <option key={valor} value={valor}>{etiqueta}</option>
@@ -172,14 +172,14 @@ export default function NuevoProyecto() {
                     </label>
                     <label className="flex flex-col gap-1 text-sm">
                         Fecha de entrega (opcional)
-                        <input type="date" {...register('fechaEntrega')} className="w-full border border-borde-campo rounded-lg px-3 py-2" />
+                        <input type="date" {...register('fechaEntrega')} className={`${CAMPO_PANEL} w-full`} />
                     </label>
                 </div>
 
                 <div className="flex flex-col gap-2">
                     <label className="flex flex-col gap-1 text-sm">
                         Dirección (opcional)
-                        <input {...register('direccion')} placeholder="Ej.: 1 Sur 1234" className="w-full border border-borde-campo rounded-lg px-3 py-2" />
+                        <input {...register('direccion')} placeholder="Ej.: 1 Sur 1234" className={`${CAMPO_PANEL} w-full`} />
                     </label>
                     <p className="text-sm text-gray-500">
                         Ubicación en el mapa (opcional): haz clic donde está el proyecto.

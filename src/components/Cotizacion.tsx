@@ -13,6 +13,8 @@ import { equivalencia, formatearCLP, formatearNumero, formatearPrecio, plural } 
 import { fechaUF, type ValorUF } from "@/lib/uf";
 import { emitirCotizacion, FichaSolicitud, getSolicitud } from "@/services/solicitud.service";
 import { ETIQUETA_ESTADO, ETIQUETA_TIPO_VIVIENDA } from "@/types/modeloCasa";
+import { CAMPO_PANEL, NORMAL, PANEL_PRIMARIO, SUPERFICIE } from "@/lib/estilos";
+import { CargandoLista } from "@/components/panel/Tablero";
 
 const fecha = (d: Date) => d.toLocaleDateString('es-CL');
 
@@ -46,7 +48,7 @@ function Campo({ etiqueta, valor, onCambio, min, max, step = 1 }: { etiqueta: st
             <input type="number" value={valor} min={min} max={max} step={step}
                 // Los valores fuera de rango se ajustan para que el PDF no muestre, por ejemplo, un pie de 150 %.
                 onChange={(e) => onCambio(Math.min(max, Math.max(min, Number(e.target.value) || 0)))}
-                className="border rounded-lg px-3 py-2" />
+                className={CAMPO_PANEL} />
         </label>
     );
 }
@@ -98,8 +100,8 @@ export default function Cotizacion({ idSolicitud, idCotizacion, uf: ufDelDia }: 
         if (solicitud) document.title = `Cotización ${solicitud.modeloCasa.nombreModelo} - ${solicitud.nombre} ${solicitud.apellido}`;
     }, [solicitud]);
 
-    if (error) return <main className="max-w-3xl mx-auto px-4 py-10 text-red-600">{error}</main>;
-    if (!solicitud) return <main className="max-w-3xl mx-auto px-4 py-10">Cargando...</main>;
+    if (error) return <main className="max-w-3xl mx-auto px-4 py-10 text-red-700"><p role="alert">{error}</p></main>;
+    if (!solicitud) return <main className="max-w-3xl mx-auto px-4 py-10"><CargandoLista filas={3} alto="h-20" etiqueta="Cargando la cotización" /></main>;
 
     const modelo = solicitud.modeloCasa;
     const { proyecto } = modelo;
@@ -121,7 +123,7 @@ export default function Cotizacion({ idSolicitud, idCotizacion, uf: ufDelDia }: 
         <main className="max-w-3xl mx-auto px-4 py-10 flex flex-col gap-6">
             <style>{ESTILO_IMPRESION}</style>
 
-            <section className="no-imprimir flex flex-col gap-4 p-5 border rounded-xl bg-gray-50" aria-label="Ajustes de la cotización">
+            <section className={`no-imprimir flex flex-col gap-4 p-5 ${SUPERFICIE}`} aria-label="Ajustes de la cotización">
                 <div className="flex flex-wrap justify-between items-baseline gap-2">
                     <Link href={`/secretario/solicitudes/${idSolicitud}`} className="text-sm text-gray-500 hover:underline">
                         ← Ficha de {solicitud.nombre} {solicitud.apellido}
@@ -129,7 +131,7 @@ export default function Cotizacion({ idSolicitud, idCotizacion, uf: ufDelDia }: 
                     <p className="text-xs text-gray-500">Este panel no aparece en el PDF.</p>
                 </div>
                 {congelada && emitida && (
-                    <p className="text-sm bg-white border rounded-lg px-3 py-2">
+                    <p className="text-sm bg-gray-50 border rounded-lg px-3 py-2">
                         Cotización <strong>{folioCotizacion(emitida.folio)}</strong> emitida el {fecha(hoy)}: se reimprime con los mismos valores,
                         aunque el precio o la UF hayan cambiado.
                     </p>
@@ -153,12 +155,12 @@ export default function Cotizacion({ idSolicitud, idCotizacion, uf: ufDelDia }: 
                             <label className="col-span-2 flex flex-col gap-1 text-sm">
                                 Nota (opcional)
                                 <input value={nota} onChange={(e) => cambiar('nota')(e.target.value)} maxLength={300}
-                                    placeholder="Ej.: precio sujeto a disponibilidad" className="border rounded-lg px-3 py-2" />
+                                    placeholder="Ej.: precio sujeto a disponibilidad" className={CAMPO_PANEL} />
                             </label>
                         </div>
                     </>
                 )}
-                <button type="button" onClick={descargar} disabled={emitiendo} className="bg-marca text-white rounded-lg py-2.5 font-medium disabled:opacity-50">
+                <button type="button" onClick={descargar} disabled={emitiendo} className={`${PANEL_PRIMARIO} ${NORMAL}`}>
                     {emitiendo ? 'Emitiendo…' : emitida ? `Descargar de nuevo (${folioCotizacion(emitida.folio)})` : 'Emitir cotización y descargar PDF'}
                 </button>
                 <p className="text-sm text-gray-600 -mt-2">

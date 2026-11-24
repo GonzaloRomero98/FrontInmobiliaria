@@ -7,7 +7,7 @@ import AvisoCercania, { confirmarSiDuplicado, DISTANCIA_DUPLICADO_M, guardarConf
 import { actualizarEntorno, actualizarProyecto, getEntorno } from "@/services/proyecto.service";
 import { Proyecto } from "@/types/proyecto";
 import { CATEGORIAS_ENTORNO, CategoriaEntorno, EntornoProyecto } from "@/types/entorno";
-import { SUPERFICIE, PANEL_PRIMARIO, PANEL_SECUNDARIO, NORMAL, COMPACTO } from "@/lib/estilos";
+import { SUPERFICIE, PANEL_PRIMARIO, PANEL_SECUNDARIO, NORMAL, COMPACTO, CAMPO_PANEL } from "@/lib/estilos";
 
 const ESPERA_ENTORNO_MS = 5000;
 const INTENTOS_ENTORNO = 12;
@@ -117,7 +117,7 @@ export default function FormularioUbicacion({ proyecto, onGuardado }: { proyecto
             <label className="flex flex-col gap-1 text-sm">
                 Dirección
                 <input value={direccion} onChange={(e) => setDireccion(e.target.value)} maxLength={200}
-                    placeholder="Ej.: 1 Sur 1234" className="w-full border border-borde-campo rounded-lg px-3 py-2" />
+                    placeholder="Ej.: 1 Sur 1234" className={`${CAMPO_PANEL} w-full`} />
             </label>
 
             <SelectorUbicacion latitud={latitud} longitud={longitud} onCambio={(lat, lng) => { setLatitud(lat); setLongitud(lng); }}
@@ -129,12 +129,12 @@ export default function FormularioUbicacion({ proyecto, onGuardado }: { proyecto
                 <label className="flex flex-col gap-1 text-sm">
                     Latitud
                     <input type="number" step="0.000001" value={latitud ?? ''} onChange={(e) => setLatitud(coordenada(e.target.value, -90, 90))}
-                        className="border border-borde-campo rounded-lg px-3 py-2" />
+                        className={CAMPO_PANEL} />
                 </label>
                 <label className="flex flex-col gap-1 text-sm">
                     Longitud
                     <input type="number" step="0.000001" value={longitud ?? ''} onChange={(e) => setLongitud(coordenada(e.target.value, -180, 180))}
-                        className="border border-borde-campo rounded-lg px-3 py-2" />
+                        className={CAMPO_PANEL} />
                 </label>
             </div>
 

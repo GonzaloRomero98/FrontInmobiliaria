@@ -9,7 +9,7 @@ import { type ReactNode, useEffect, useState } from "react"
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CargandoLista, Vacio } from "@/components/panel/Tablero";
-import { COMPACTO, NORMAL, PANEL_EXITO, PANEL_PAGINA, PANEL_PRIMARIO, PANEL_SECUNDARIO, PILDORA, SUPERFICIE, TONO } from "@/lib/estilos";
+import { COMPACTO, NORMAL, PANEL_EXITO, PANEL_PAGINA, PANEL_PRIMARIO, PANEL_SECUNDARIO, PILDORA, SUPERFICIE, TONO, CAMPO_PANEL } from "@/lib/estilos";
 
 const OPCION_MENU = "flex items-center w-full min-h-10 max-md:min-h-11 text-left text-sm px-4 py-2 hover:bg-gray-50";
 
@@ -123,12 +123,12 @@ export default function ListadoModelosCasa(){
                         Buscar modelo
                         <input type="search" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} maxLength={100}
                             placeholder="Nombre del modelo"
-                            className="border border-borde-campo rounded-lg px-3 py-2 text-base font-normal" />
+                            className={CAMPO_PANEL} />
                     </label>
                     <label className="flex flex-col gap-1 text-sm font-medium text-gray-800">
                         Proyecto
                         <select value={idProyecto} onChange={(e) => setIdProyecto(e.target.value)}
-                            className="border border-borde-campo rounded-lg px-3 py-2 bg-white text-base font-normal">
+                            className={CAMPO_PANEL}>
                             <option value="">Todos los proyectos</option>
                             {proyectos.map(([id, nombre]) => <option key={id} value={id}>{nombre}</option>)}
                         </select>

@@ -3,7 +3,7 @@
 import { FiltrosAuditoria, getAuditoria, MODULOS_AUDITORIA, ProblemaCadena, RegistroAuditoria, VerificacionAuditoria, verificarAuditoria } from "@/services/auditoria.service";
 import { FormEvent, useEffect, useState } from "react";
 import { CargandoLista } from "@/components/panel/Tablero";
-import { PANEL_PAGINA, SUPERFICIE, PANEL_PRIMARIO, PANEL_SECUNDARIO, COMPACTO } from "@/lib/estilos";
+import { PANEL_PAGINA, SUPERFICIE, PANEL_PRIMARIO, PANEL_SECUNDARIO, COMPACTO, CAMPO_PANEL } from "@/lib/estilos";
 
 const LIMITE = 50;
 
@@ -101,7 +101,7 @@ export default function Auditoria() {
         }
     }
 
-    const campo = "border border-borde-campo rounded-lg px-2 py-1.5 text-sm";
+    const campo = CAMPO_PANEL;
     const cambiar = <K extends keyof Borrador>(clave: K, valor: Borrador[K]) => setBorrador((b) => ({ ...b, [clave]: valor }));
 
     return (

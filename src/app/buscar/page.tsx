@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import FiltrosBusqueda from "@/components/FiltrosBusqueda";
+import { EsqueletoTarjeta, Linea } from "@/components/Esqueleto";
 import ModeloCasaCard from "@/components/ModeloCasaCard";
 import { buscarModelos } from "@/services/modeloCasa.service";
 import { obtenerValorUF } from "@/lib/uf";
@@ -27,7 +29,37 @@ function leerFiltros(params: Record<string, string | string[] | undefined>): Fil
 
 export default async function Buscar({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
     const filtros = leerFiltros(await searchParams);
+    const clave = JSON.stringify(filtros);
 
+    return (
+        <main className="max-w-6xl mx-auto px-4 py-10 flex flex-col gap-6">
+            <h1 className="text-3xl font-bold">Buscar propiedades</h1>
+
+            {/* La key reinicia el formulario cuando la URL cambia con atrás o adelante. */}
+            <FiltrosBusqueda key={clave} iniciales={filtros} />
+
+            {/* Los filtros quedan a la vista y solo los resultados pasan a esqueleto.
+                Con la key, cada búsqueda nueva muestra el esqueleto en vez de dejar los resultados anteriores. */}
+            <Suspense key={clave} fallback={<CargandoResultados />}>
+                <Resultados filtros={filtros} />
+            </Suspense>
+        </main>
+    );
+}
+
+function CargandoResultados() {
+    return (
+        <div role="status" className="flex flex-col gap-6">
+            <span className="sr-only">Buscando propiedades…</span>
+            <Linea className="h-4 my-1 w-52" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {Array.from({ length: 6 }, (_, i) => <EsqueletoTarjeta key={i} />)}
+            </div>
+        </div>
+    );
+}
+
+async function Resultados({ filtros }: { filtros: Filtros }) {
     let modelos: ModeloCasa[] = [];
     let error = false;
     // Si la UF falla, las tarjetas se muestran igual pero sin el precio en pesos.
@@ -39,30 +71,22 @@ export default async function Buscar({ searchParams }: { searchParams: Promise<R
     }
     const uf = await ufPromesa;
 
+    if (error) {
+        return <p role="alert" className="text-red-600">No pudimos aplicar esos filtros. Revisa los valores e intenta de nuevo.</p>;
+    }
     return (
-        <main className="max-w-6xl mx-auto px-4 py-10 flex flex-col gap-6">
-            <h1 className="text-3xl font-bold">Buscar propiedades</h1>
-
-            {/* La key reinicia el formulario cuando la URL cambia con atrás o adelante. */}
-            <FiltrosBusqueda key={JSON.stringify(filtros)} iniciales={filtros} />
-
-            {error ? (
-                <p role="alert" className="text-red-600">No pudimos aplicar esos filtros. Revisa los valores e intenta de nuevo.</p>
-            ) : (
-                <>
-                    <h2 className="sr-only">Resultados</h2>
-                    <p role="status" className="text-gray-600">
-                        {modelos.length === 0
-                            ? 'No hay propiedades con esos filtros. Prueba ampliando el rango de precio o la ubicación.'
-                            : `${modelos.length} ${modelos.length === 1 ? 'propiedad encontrada' : 'propiedades encontradas'}`}
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {modelos.map((modelo) => (
-                            <ModeloCasaCard key={modelo.id} modelo={modelo} valorUF={uf?.valor ?? null} />
-                        ))}
-                    </div>
-                </>
-            )}
-        </main>
+        <>
+            <h2 className="sr-only">Resultados</h2>
+            <p role="status" className="text-gray-600">
+                {modelos.length === 0
+                    ? 'No hay propiedades con esos filtros. Prueba ampliando el rango de precio o la ubicación.'
+                    : `${modelos.length} ${modelos.length === 1 ? 'propiedad encontrada' : 'propiedades encontradas'}`}
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {modelos.map((modelo) => (
+                    <ModeloCasaCard key={modelo.id} modelo={modelo} valorUF={uf?.valor ?? null} />
+                ))}
+            </div>
+        </>
     );
 }

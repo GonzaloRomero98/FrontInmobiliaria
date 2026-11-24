@@ -6,6 +6,7 @@ import { getCaracteristicas } from "@/services/caracteristica.service";
 import { actualizarModeloCasa, crearModeloCasa, nombreModeloDisponible } from "@/services/modeloCasa.service";
 import { getNormativa, getProyectos } from "@/services/proyecto.service";
 import { obtenerUrlSubida, subirArchivo } from "@/services/s3.service";
+import { confirmar } from "@/components/Dialogos";
 import { formatearNumero } from "@/lib/formato";
 import { revisarNormativa } from "@/lib/normativa";
 import { Caracteristica } from "@/types/caracteristicas";
@@ -19,7 +20,7 @@ import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
-import { SUPERFICIE, PANEL_PRIMARIO, NORMAL } from "@/lib/estilos";
+import { SUPERFICIE, PANEL_PRIMARIO, NORMAL, CAMPO_PANEL } from "@/lib/estilos";
 
 const esquemaModeloCasa = z.object({
     id_proyecto: z.string().min(1, 'Selecciona el proyecto'),
@@ -51,7 +52,7 @@ const esquemaModeloCasa = z.object({
 type FormValues = z.infer<typeof esquemaModeloCasa>;
 
 const ETIQUETA = "flex flex-col gap-1 text-sm";
-const CAMPO = "w-full border border-borde-campo rounded-lg px-3 py-2";
+const CAMPO = `${CAMPO_PANEL} w-full`;
 const SECCION = "flex flex-col gap-4";
 const TITULO_SECCION = "font-titulo font-semibold text-marca mb-3";
 
@@ -208,13 +209,30 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
             // Al crear sin 3D el campo no se envía. Al editar, null quita el modelo 3D.
             if(modelo3dUrl !== null || modelo) inputFormModelo.modelo3dUrl = modelo3dUrl;
 
-            if(modelo){
-                await actualizarModeloCasa(modelo.id, inputFormModelo);
-                router.push('/admin/modelosCasa');
-            }else{
-                const creado = await crearModeloCasa(inputFormModelo);
-                router.push(creado.activo ? `/modelosCasa/${creado.id}` : '/admin/modelosCasa');
+            const enviar = (confirmarExceso?:boolean) => {
+                const datos = confirmarExceso ? {...inputFormModelo, confirmarExceso} : inputFormModelo;
+                return modelo ? actualizarModeloCasa(modelo.id, datos) : crearModeloCasa(datos);
+            };
+            let guardado;
+            try{
+                guardado = await enviar();
+            }catch(e){
+                // Solo el 409 con "exceso" es el de la normativa; el otro 409 es el nombre repetido y sigue al catch de abajo.
+                if(!(isAxiosError(e) && e.response?.status === 409 && typeof e.response.data?.exceso === 'number')) throw e;
+                const acepto = await confirmar({
+                    titulo: '¿Guardar excediendo la normativa?',
+                    mensaje: e.response.data.message,
+                    boton: 'Guardar igual',
+                }) !== null;
+                if(!acepto){
+                    setSubiendoImagen(false);
+                    setSubiendoModelo3d(false);
+                    setSubiendoPlano(false);
+                    return;
+                }
+                guardado = await enviar(true);
             }
+            router.push(!modelo && guardado.activo ? `/modelosCasa/${guardado.id}` : '/admin/modelosCasa');
         }catch(e){
             const status = isAxiosError(e) ? e.response?.status : undefined;
             const mensaje = isAxiosError(e) ? e.response?.data?.message : undefined;
@@ -460,7 +478,7 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                     <label className="text-sm">
                         Unidades (casas de este modelo)
                         <input type="number" min={1} max={9999} step={1} {...register('unidades')}
-                            className="w-full border border-borde-campo rounded-lg px-3 py-2 mt-1" />
+                            className={`${CAMPO_PANEL} w-full mt-1`} />
                         {errors.unidades && <span role="alert" className="text-red-700 text-xs">{errors.unidades.message}</span>}
                     </label>
                     <label className="flex items-center gap-2 text-sm">

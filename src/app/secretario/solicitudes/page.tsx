@@ -11,7 +11,7 @@ import { Clock, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { COMPACTO, NORMAL, PANEL_EXITO, PANEL_PAGINA, PANEL_PRIMARIO, PANEL_SECUNDARIO, SUPERFICIE, TONO } from "@/lib/estilos";
+import { COMPACTO, NORMAL, PANEL_EXITO, PANEL_PAGINA, PANEL_PRIMARIO, PANEL_SECUNDARIO, SUPERFICIE, TONO, CAMPO_PANEL } from "@/lib/estilos";
 
 type Filtro = FiltroSolicitud;
 
@@ -205,7 +205,7 @@ function BandejaSolicitudes() {
                 Buscar solicitud
                 <input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} maxLength={100}
                     placeholder="Nombre, correo o celular"
-                    className="border border-borde-campo rounded-lg px-3 py-2 text-base font-normal" />
+                    className={CAMPO_PANEL} />
             </label>
 
             <div className="flex flex-wrap items-center justify-between gap-2 mb-4">

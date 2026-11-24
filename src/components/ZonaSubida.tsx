@@ -17,10 +17,12 @@ interface ZonaSubidaProps {
     error?: boolean;
     deshabilitado?: boolean;
     onElegir: () => void;
-    onSoltar: (archivo: File) => void;
+    onSoltar?: (archivo: File) => void;
+    // Para zonas que aceptan varios archivos (galería): recibe todos los soltados.
+    onSoltarVarios?: (archivos: File[]) => void;
 }
 
-export default function ZonaSubida({ icono: Icono, queSubir, ayuda, error = false, deshabilitado = false, onElegir, onSoltar }: ZonaSubidaProps) {
+export default function ZonaSubida({ icono: Icono, queSubir, ayuda, error = false, deshabilitado = false, onElegir, onSoltar, onSoltarVarios }: ZonaSubidaProps) {
     const [arrastrando, setArrastrando] = useState(false);
 
     const estilo = arrastrando
@@ -39,8 +41,9 @@ export default function ZonaSubida({ icono: Icono, queSubir, ayuda, error = fals
             onDrop={(e) => {
                 e.preventDefault();
                 setArrastrando(false);
-                const archivo = e.dataTransfer.files[0];
-                if (archivo && !deshabilitado) onSoltar(archivo);
+                if (deshabilitado) return;
+                if (onSoltarVarios) onSoltarVarios(Array.from(e.dataTransfer.files));
+                else if (e.dataTransfer.files[0]) onSoltar?.(e.dataTransfer.files[0]);
             }}
             // Los hijos no reciben eventos para que dragleave no salte al pasar sobre ellos.
             className={`w-full border-2 rounded-xl px-5 py-7 flex flex-col items-center gap-2.5 text-center transition-colors *:pointer-events-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marca disabled:opacity-50 disabled:cursor-not-allowed ${estilo}`}
@@ -50,7 +53,7 @@ export default function ZonaSubida({ icono: Icono, queSubir, ayuda, error = fals
             </span>
             {arrastrando
                 ? <span className="text-sm font-semibold text-marca">Suelta el archivo aquí</span>
-                : <span className="text-sm text-gray-800">Arrastra {queSubir} aquí o <span className="font-semibold text-marca underline">elige un archivo</span></span>}
+                : <span className="text-sm text-gray-800">Arrastra {queSubir} aquí o <span className="font-semibold text-marca underline">{onSoltarVarios ? 'elige archivos' : 'elige un archivo'}</span></span>}
             <span className="text-xs text-gray-500">{ayuda}</span>
         </button>
     );

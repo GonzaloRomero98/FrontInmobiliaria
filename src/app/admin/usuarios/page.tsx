@@ -5,10 +5,10 @@ import { FormEvent, useEffect, useState } from "react";
 import { mensajeError } from "@/lib/errores";
 import { confirmar } from "@/components/Dialogos";
 import { CargandoLista } from "@/components/panel/Tablero";
-import { COMPACTO, NORMAL, PANEL_EXITO, PANEL_PAGINA, PANEL_PELIGRO, PANEL_PRIMARIO, PANEL_SECUNDARIO, PILDORA, SUPERFICIE, TONO } from "@/lib/estilos";
+import { COMPACTO, NORMAL, PANEL_EXITO, PANEL_PAGINA, PANEL_PELIGRO, PANEL_PRIMARIO, PANEL_SECUNDARIO, PILDORA, SUPERFICIE, TONO, CAMPO_PANEL } from "@/lib/estilos";
 
 const ETIQUETA = "flex flex-col gap-1 text-sm font-medium text-gray-800";
-const ENTRADA = "border border-borde-campo rounded-lg px-3 py-2 text-base font-normal";
+const ENTRADA = CAMPO_PANEL;
 
 const NUEVO = { correo: '', nombre: '', contrasena: '', rol: 'SECRETARIO' as Rol };
 

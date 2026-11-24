@@ -26,6 +26,14 @@ export interface Normativa{
     actualizadoEn:string;
 }
 
+// Respuesta del PUT: la ficha guardada y los modelos de casa que ya exceden su nuevo máximo construido.
+export interface ModeloQueExcede{
+    id:string;
+    nombreModelo:string;
+    exceso:number;
+}
+export type NormativaGuardada = Normativa & { modelosQueExceden:ModeloQueExcede[] };
+
 export type NormativaInput = Omit<Normativa, 'id' | 'actualizadoEn' | 'alturaMaximaMetros' | 'alturaMaximaPisos'
     | 'densidadMaxima' | 'coefConstructibilidad' | 'coefOcupacionSuelo' | 'urlOrdenanza' | 'observaciones'> & {
     alturaMaximaMetros?:number;

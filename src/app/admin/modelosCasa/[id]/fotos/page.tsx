@@ -8,7 +8,7 @@ import SubidaGaleria from "@/components/SubidaGaleria";
 import { agregarFotoModelo, eliminarFotoModelo, getModeloAdminById, ordenarFotosModelo } from "@/services/modeloCasa.service";
 import { obtenerUrlSubida, subirArchivo } from "@/services/s3.service";
 import { ModeloCasa } from "@/types/modeloCasa";
-import { PANEL_PAGINA, SUPERFICIE, PANEL_PRIMARIO, PANEL_SECUNDARIO, NORMAL } from "@/lib/estilos";
+import { PANEL_PAGINA, SUPERFICIE, PANEL_PRIMARIO, PANEL_SECUNDARIO, PANEL_PELIGRO, NORMAL, COMPACTO } from "@/lib/estilos";
 
 export default function FotosModeloCasa(){
     const { id } = useParams<{ id: string }>();
@@ -90,7 +90,7 @@ export default function FotosModeloCasa(){
                     {modelo.fotos.map((foto, i) => (
                         <div key={foto.id} className="flex flex-col gap-1">
                             <img src={foto.urlImagen} alt={`Foto ${i + 1} de ${modelo.nombreModelo}`} className="w-full h-32 object-cover rounded-lg border" />
-                            <div className="flex items-center gap-1">
+                            <div className="flex flex-wrap items-center gap-1">
                                 <button type="button" onClick={() => mover(i, -1)} disabled={i === 0} aria-label={`Mover foto ${i + 1} hacia atrás`}
                                     className={`${PANEL_SECUNDARIO} px-2.5 py-1 text-sm`}>←</button>
                                 <button type="button" onClick={() => mover(i, 1)} disabled={i === modelo.fotos.length - 1} aria-label={`Mover foto ${i + 1} hacia adelante`}
@@ -100,12 +100,12 @@ export default function FotosModeloCasa(){
                                     <span className="ml-auto flex items-center gap-2 text-sm">
                                         ¿Eliminar?
                                         <button type="button" onClick={() => eliminar(foto.id)} aria-label={`Sí, eliminar la foto ${i + 1}`}
-                                            className="font-semibold text-red-600 hover:underline">Sí</button>
-                                        <button type="button" onClick={() => setPorEliminar(null)} autoFocus className="hover:underline">No</button>
+                                            className={`${PANEL_PELIGRO} ${COMPACTO}`}>Sí</button>
+                                        <button type="button" onClick={() => setPorEliminar(null)} autoFocus className={`${PANEL_SECUNDARIO} ${COMPACTO}`}>No</button>
                                     </span>
                                 ) : (
                                     <button type="button" onClick={() => setPorEliminar(foto.id)} aria-label={`Eliminar la foto ${i + 1}`}
-                                        className="text-sm text-red-600 hover:underline ml-auto">
+                                        className={`${PANEL_PELIGRO} ${COMPACTO} ml-auto`}>
                                         Eliminar
                                     </button>
                                 )}

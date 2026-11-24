@@ -7,7 +7,7 @@ import { Proyecto } from "@/types/proyecto";
 import { mensajeError } from "@/lib/errores";
 import { avisar, confirmar } from "@/components/Dialogos";
 import { CargandoLista, Vacio } from "@/components/panel/Tablero";
-import { COMPACTO, NORMAL, PANEL_EXITO, PANEL_PAGINA, PANEL_PELIGRO, PANEL_PRIMARIO, PANEL_SECUNDARIO, PILDORA, SUPERFICIE, TONO } from "@/lib/estilos";
+import { COMPACTO, NORMAL, PANEL_EXITO, PANEL_PAGINA, PANEL_PELIGRO, PANEL_PRIMARIO, PANEL_SECUNDARIO, PILDORA, SUPERFICIE, TONO, CAMPO_PANEL } from "@/lib/estilos";
 
 interface FilaProyecto {
     proyecto: Proyecto;
@@ -105,7 +105,7 @@ export default function ListadoProyectos() {
                     Buscar proyecto
                     <input type="search" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} maxLength={100}
                         placeholder="Nombre del proyecto"
-                        className="border border-borde-campo rounded-lg px-3 py-2 text-base font-normal" />
+                        className={CAMPO_PANEL} />
                 </label>
             )}
             {cargando ? (

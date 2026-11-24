@@ -16,7 +16,7 @@ import {
 } from "@/services/solicitud.service";
 import { CLAVE_ULTIMA_BANDEJA, COLOR_VISITA, ETIQUETA_ORIGEN, ETIQUETA_VISITA, folioCotizacion, visitaAbierta as estaAbierta } from "@/types/solicitud";
 import SelectorVisita, { visitaCompleta } from "@/components/SelectorVisita";
-import { PANEL_PAGINA, SUPERFICIE, PANEL_PRIMARIO, PANEL_SECUNDARIO, PANEL_PELIGRO, COMPACTO, PILDORA, TONO } from "@/lib/estilos";
+import { PANEL_PAGINA, SUPERFICIE, PANEL_PRIMARIO, PANEL_SECUNDARIO, PANEL_PELIGRO, COMPACTO, PILDORA, TONO, CAMPO_PANEL } from "@/lib/estilos";
 
 function Seccion({ titulo, accion, children }: { titulo: string; accion?: ReactNode; children: ReactNode }) {
     return (
@@ -180,7 +180,7 @@ export default function FichaCliente() {
                                 <label key={campo} className="flex flex-col gap-1 text-sm">
                                     {etiqueta}
                                     <input type={tipo} value={datos[campo]} onChange={(e) => setDatos({ ...datos, [campo]: e.target.value })}
-                                        required maxLength={200} autoFocus={i === 0} className="border border-borde-campo rounded-lg px-3 py-1.5" />
+                                        required maxLength={200} autoFocus={i === 0} className={CAMPO_PANEL} />
                                 </label>
                             ))}
                             <p className="text-xs text-gray-500">Queda una nota en el seguimiento con los campos corregidos, sin el valor anterior.</p>
@@ -256,7 +256,7 @@ export default function FichaCliente() {
                 <form onSubmit={guardarNota} className="flex flex-col gap-2">
                     <label htmlFor="nota" className="sr-only">Nueva nota</label>
                     <textarea id="nota" value={nota} onChange={(e) => setNota(e.target.value)} rows={2} maxLength={2000} required
-                        placeholder="Ej.: llamé y no contestó; pidió cotización con 20 % de pie" className="border border-borde-campo rounded-lg px-3 py-2 text-sm" />
+                        placeholder="Ej.: llamé y no contestó; pidió cotización con 20 % de pie" className={CAMPO_PANEL} />
                     <button type="submit" disabled={ocupado || !nota.trim()} className={`self-end ${PANEL_PRIMARIO} ${COMPACTO}`}>
                         Agregar nota
                     </button>
@@ -390,12 +390,12 @@ function SeccionReserva({ idSolicitud, reserva, alCambiar }: { idSolicitud: stri
                     <label className="flex flex-col gap-1 text-sm">
                         RUT del comprador
                         <input value={rut} onChange={(e) => { setRut(e.target.value); setErrorRut(null); }} required maxLength={12} autoFocus
-                            placeholder="12.345.678-5" aria-invalid={!!errorRut || undefined} className="border border-borde-campo rounded-lg px-3 py-1.5" />
+                            placeholder="12.345.678-5" aria-invalid={!!errorRut || undefined} className={CAMPO_PANEL} />
                         {errorRut && <span role="alert" className="text-red-700 text-xs">{errorRut}</span>}
                     </label>
                     <label className="flex flex-col gap-1 text-sm">
                         Lote (opcional)
-                        <input value={lote} onChange={(e) => setLote(e.target.value)} maxLength={50} className="border border-borde-campo rounded-lg px-3 py-1.5" />
+                        <input value={lote} onChange={(e) => setLote(e.target.value)} maxLength={50} className={CAMPO_PANEL} />
                     </label>
                     <div className="flex gap-2 self-end">
                         <button type="submit" disabled={guardando} className={`${PANEL_PRIMARIO} ${COMPACTO}`}>

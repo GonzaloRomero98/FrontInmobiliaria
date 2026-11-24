@@ -47,3 +47,6 @@ export const TONO = {
     peligro: "bg-red-50 text-red-700 border-red-200",
     neutro: "bg-gray-100 text-gray-700 border-gray-200",
 } as const;
+
+// Campo de texto, selector y área de texto de los formularios del panel. El ancho lo decide cada pantalla.
+export const CAMPO_PANEL = "border border-borde-campo rounded-lg bg-white px-3 py-2 text-base font-normal disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed";

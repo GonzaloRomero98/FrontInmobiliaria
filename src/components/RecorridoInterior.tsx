@@ -6,6 +6,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { CargandoVisor } from "./Esqueleto";
 
 // Medidas en metros, igual que el modelo GLB.
 const ALTURA_OJOS = 1.6;
@@ -43,6 +44,7 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
     const perilla = useRef<HTMLDivElement>(null);
     const joystick = useRef({ x: 0, y: 0 });
     const [estado, setEstado] = useState<'cargando' | 'listo' | 'error'>('cargando');
+    const [progreso, setProgreso] = useState(0);
     const [intento, setIntento] = useState(0);
     const [colocada, setColocada] = useState(false);
     const [hayPiso2, setHayPiso2] = useState(false);
@@ -136,7 +138,8 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
             }
             setHayPiso2(!!piso2);
             setEstado('listo');
-        }, undefined, () => { if (!cancelado) setEstado('error'); });
+        }, (e) => { if (!cancelado && e.total) setProgreso(e.loaded / e.total); },
+        () => { if (!cancelado) setEstado('error'); });
 
         // El teclado solo funciona con el visor enfocado, para no quitarle las flechas al resto de la página.
         const teclas = new Set<string>();
@@ -314,6 +317,7 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
 
     function reintentar() {
         setEstado('cargando');
+        setProgreso(0);
         setIntento((i) => i + 1);
     }
 
@@ -323,9 +327,7 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
             style={{ height: typeof altura === 'number' ? `${altura}px` : altura }}>
             <div ref={lienzo} className="absolute inset-0" />
 
-            {estado === 'cargando' && (
-                <p className="absolute inset-0 flex items-center justify-center text-gray-600">Cargando recorrido…</p>
-            )}
+            {estado === 'cargando' && <CargandoVisor texto="Cargando recorrido" progreso={progreso} />}
             {estado === 'error' && (
                 <div role="alert" className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gray-100 p-6 text-center">
                     <p className="font-medium text-gray-800">No se pudo cargar el modelo 3D.</p>

@@ -9,7 +9,7 @@ import { ModeloCasa } from "@/types/modeloCasa";
 import { CrearSolicitudPanelInput, ETIQUETA_ORIGEN } from "@/types/solicitud";
 import { mensajeError } from "@/lib/errores";
 import SelectorVisita from "@/components/SelectorVisita";
-import { PANEL_PAGINA, SUPERFICIE, PANEL_PRIMARIO, NORMAL } from "@/lib/estilos";
+import { PANEL_PAGINA, SUPERFICIE, PANEL_PRIMARIO, NORMAL, CAMPO_PANEL } from "@/lib/estilos";
 
 const ORIGENES = ['SALA_VENTAS', 'TELEFONO', 'WHATSAPP'] as const;
 // Mismo tope que el backend (CrearSolicitudDto).
@@ -59,7 +59,7 @@ export default function NuevaSolicitud() {
         }
     }
 
-    const entrada = "border border-borde-campo rounded-lg px-3 py-2 font-normal";
+    const entrada = CAMPO_PANEL;
     return (
         <main className={`${PANEL_PAGINA} flex flex-col gap-6`}>
             <div>

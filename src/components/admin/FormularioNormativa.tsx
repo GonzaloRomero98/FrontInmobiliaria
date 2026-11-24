@@ -6,7 +6,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
 import { guardarNormativa } from "@/services/proyecto.service";
 import { Normativa, NormativaInput, Riesgo, RIESGOS } from "@/types/normativa";
-import { SUPERFICIE, PANEL_PRIMARIO, NORMAL } from "@/lib/estilos";
+import { SUPERFICIE, PANEL_PRIMARIO, NORMAL, CAMPO_PANEL } from "@/lib/estilos";
+import { avisar } from "@/components/Dialogos";
+import { formatearNumero } from "@/lib/formato";
 
 const numeroOpcional = (min: number, max: number) => z.string().refine(
     (v) => v === '' || (!Number.isNaN(Number(v)) && Number(v) >= min && Number(v) <= max),
@@ -75,14 +77,18 @@ export default function FormularioNormativa({ idProyecto, normativa }: { idProye
             observaciones: v.observaciones.trim() || undefined,
         };
         try {
-            await guardarNormativa(idProyecto, datos);
+            const { modelosQueExceden } = await guardarNormativa(idProyecto, datos);
             setMensaje({ tipo: 'ok', texto: 'Normativa guardada. Ya se muestra en la ficha del proyecto.' });
+            if (modelosQueExceden.length > 0) {
+                const lista = modelosQueExceden.map((m) => `${m.nombreModelo} (+${formatearNumero(m.exceso)} m²)`).join(', ');
+                avisar(`Con esta normativa exceden el máximo construido: ${lista}. Revisa esos modelos.`, { error: true });
+            }
         } catch {
             setMensaje({ tipo: 'error', texto: 'No se pudo guardar. Revisa los datos.' });
         }
     }
 
-    const campo = "w-full border border-borde-campo rounded-lg px-3 py-2";
+    const campo = `${CAMPO_PANEL} w-full`;
     const error = (clave: keyof Valores) => errors[clave] && <p role="alert" className="text-red-700 text-sm mt-1">{errors[clave]?.message}</p>;
 
     return (
