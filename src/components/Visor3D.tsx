@@ -1,7 +1,9 @@
 'use client';
 
+import { BOTON_PRIMARIO } from "@/lib/estilos";
 import { useEffect, useRef, useState } from "react";
 import { registrarEventoModelo } from "@/services/metricas.service";
+import { useMovimientoReducido } from "@/lib/movimiento";
 import { CargandoVisor } from "./Esqueleto";
 
 interface Visor3DProps {
@@ -17,6 +19,7 @@ interface Visor3DProps {
 
 export default function Visor3D({idModelo, modeloUrl, titulo, altura = 500, rotarAutomatico = true, botonArGrande = false, alEntrarAr}:Visor3DProps){
     const visor = useRef<HTMLElement>(null);
+    const sinMovimiento = useMovimientoReducido();
     const [error, setError] = useState(false);
     const [cargado, setCargado] = useState(false);
     const [progreso, setProgreso] = useState(0);
@@ -60,7 +63,7 @@ export default function Visor3D({idModelo, modeloUrl, titulo, altura = 500, rota
         ar={!alEntrarAr}
         ar-modes="webxr scene-viewer quick-look"
         camera-controls
-        auto-rotate={rotarAutomatico || undefined}
+        auto-rotate={(rotarAutomatico && !sinMovimiento) || undefined}
         shadow-intensity="1"
         exposure="1"
         loading={typeof altura === 'number' && altura < 500 ? 'lazy' : 'eager'}
@@ -79,7 +82,7 @@ export default function Visor3D({idModelo, modeloUrl, titulo, altura = 500, rota
             onClick={() => { registrarEventoModelo(idModelo, 'AR_INICIADA'); alEntrarAr?.(); }}
             style={botonArGrande ? {
                 position: 'absolute', left: '50%', bottom: '20px', transform: 'translateX(-50%)',
-                backgroundColor: '#16304b', color: 'white', borderRadius: '9999px', border: 'none',
+                backgroundColor: 'var(--color-marca)', color: 'white', borderRadius: '9999px', border: 'none',
                 padding: '16px 28px', fontSize: '1.05rem', fontWeight: 700, boxShadow: '0 4px 12px rgba(0,0,0,0.3)', whiteSpace: 'nowrap',
             } : {
                 backgroundColor: 'white', borderRadius: '8px', border: 'none', position: 'absolute',
@@ -94,7 +97,7 @@ export default function Visor3D({idModelo, modeloUrl, titulo, altura = 500, rota
             <div role="alert" className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-xl bg-gray-100 p-6 text-center">
                 <p className="font-medium text-gray-800">No se pudo cargar el modelo 3D.</p>
                 <p className="text-sm text-gray-600">Revisa tu conexión e inténtalo de nuevo.</p>
-                <button type="button" onClick={reintentar} className="bg-marca text-white rounded-lg px-4 py-2 font-medium">
+                <button type="button" onClick={reintentar} className={`${BOTON_PRIMARIO} min-h-11 px-4`}>
                     Reintentar
                 </button>
             </div>

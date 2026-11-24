@@ -1,7 +1,7 @@
 'use client'
 
 import Link from "next/link";
-import { CargandoLista } from "@/components/panel/Tablero";
+import { CargandoLista, ErrorCarga } from "@/components/panel/Tablero";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import FormularioUbicacion from "@/components/admin/FormularioUbicacion";
@@ -30,7 +30,7 @@ export default function EditarProyecto() {
     }, [id]);
 
     if (cargando) return <main className={PANEL_PAGINA}><Link href="/admin/proyectos" className="text-sm text-gray-600 hover:underline">← Proyectos</Link><div className="max-w-3xl mt-4"><CargandoLista filas={4} alto="h-40" etiqueta="Cargando el proyecto" /></div></main>;
-    if (error || !proyecto) return <main className={`${PANEL_PAGINA} text-red-700`}>{error}</main>;
+    if (error || !proyecto) return <ErrorCarga volverHref="/admin/proyectos" volverTexto="Proyectos" mensaje={error ?? 'No se pudo cargar el proyecto'} />;
 
     return (
         <main className={PANEL_PAGINA}>

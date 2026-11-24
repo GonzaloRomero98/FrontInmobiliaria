@@ -31,9 +31,9 @@ const ESTILO_IMPRESION = `
 
 function Fila({ etiqueta, valor, detalle }: { etiqueta: string; valor: string; detalle?: string | null }) {
     return (
-        <div className="flex justify-between gap-4 py-2 border-b last:border-b-0">
+        <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-4 py-2 border-b last:border-b-0">
             <dt className="text-gray-600">{etiqueta}</dt>
-            <dd className="text-right font-medium">
+            <dd className="sm:text-right font-medium">
                 {valor}
                 {detalle && <span className="block text-xs font-normal text-gray-500">≈ {detalle}</span>}
             </dd>
@@ -169,11 +169,11 @@ export default function Cotizacion({ idSolicitud, idCotizacion, uf: ufDelDia }: 
                 </p>
             </section>
 
-            <article className="hoja flex flex-col gap-5 p-8 border rounded-xl bg-white text-gray-900" aria-label="Cotización">
-                <div className="flex justify-between items-start gap-4">
+            <article className="hoja flex flex-col gap-5 p-4 sm:p-8 border rounded-xl bg-white text-gray-900" aria-label="Cotización">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-4">
                     {/* eslint-disable-next-line @next/next/no-img-element -- se usa img porque la imagen tiene que estar cargada al imprimir */}
                     <img src="/logo-inmocap.png" alt="Inmocap" className="h-10 w-auto" />
-                    <div className="text-right text-sm">
+                    <div className="sm:text-right text-sm">
                         <p className="text-lg font-bold">Cotización{emitida && ` ${folioCotizacion(emitida.folio)}`}</p>
                         <p>Emitida el {fecha(hoy)}</p>
                         <p>Válida hasta el {fecha(vence)}</p>
@@ -201,9 +201,9 @@ export default function Cotizacion({ idSolicitud, idCotizacion, uf: ufDelDia }: 
                     )}
                 </div>
 
-                <div className="flex gap-4 border-t pt-4">
+                <div className="flex flex-col sm:flex-row gap-4 border-t pt-4">
                     {/* eslint-disable-next-line @next/next/no-img-element -- se usa img porque la imagen tiene que estar cargada al imprimir */}
-                    {modelo.imgPrincipal && <img src={modelo.imgPrincipal} alt={modelo.nombreModelo} className="w-40 h-28 object-cover rounded-lg" />}
+                    {modelo.imgPrincipal && <img src={modelo.imgPrincipal} alt={modelo.nombreModelo} className="w-full sm:w-40 h-44 sm:h-28 object-cover rounded-lg" />}
                     <div className="text-sm">
                         <p className="text-xl font-bold">{d?.nombreModelo ?? modelo.nombreModelo}</p>
                         <p>{ETIQUETA_TIPO_VIVIENDA[modelo.tipoVivienda] ?? 'Casa'} · {esVenta ? 'Venta' : 'Arriendo'}</p>

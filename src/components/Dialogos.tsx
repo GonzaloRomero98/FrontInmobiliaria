@@ -103,14 +103,14 @@ function VentanaDialogo({ dialogo }: { dialogo: Dialogo }) {
                     <label className="flex flex-col gap-1 text-sm font-medium">
                         {dialogo.campo.etiqueta}
                         <input value={valor} onChange={(e) => setValor(e.target.value)} required autoFocus
-                            className="border rounded-lg px-3 py-2 font-normal" />
+                            className="border border-borde-campo rounded-lg px-3 py-2 font-normal" />
                     </label>
                 )}
                 {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
                 {/* Cancelar va primero porque recibe el foco inicial, así un Enter no confirma por accidente. */}
                 <div className="flex justify-end gap-2">
                     <button type="button" onClick={() => cerrarDialogo(null)} disabled={ocupado}
-                        className="border rounded-lg px-4 py-2 font-medium hover:bg-gray-50 disabled:opacity-50">
+                        className="border border-borde-campo rounded-lg px-4 py-2 font-medium hover:bg-gray-50 disabled:opacity-50">
                         Cancelar
                     </button>
                     <button type="submit" disabled={ocupado}
@@ -140,11 +140,11 @@ function TarjetaAviso({ aviso }: { aviso: Aviso }) {
             <p className="flex-1">{aviso.texto}</p>
             {aviso.accion && (
                 <button type="button" onClick={() => { quitarAviso(aviso.id); aviso.accion!.alHacer(); }}
-                    className="font-semibold underline underline-offset-2 hover:no-underline">
+                    className="-my-3 flex min-h-11 items-center px-1 font-semibold underline underline-offset-2 hover:no-underline">
                     {aviso.accion.texto}
                 </button>
             )}
-            <button type="button" onClick={() => quitarAviso(aviso.id)} aria-label="Cerrar aviso" className="text-lg leading-none opacity-80 hover:opacity-100">
+            <button type="button" onClick={() => quitarAviso(aviso.id)} aria-label="Cerrar aviso" className="-my-3 -mr-3 flex min-h-11 min-w-11 items-center justify-center rounded-lg text-xl leading-none opacity-80 hover:opacity-100">
                 ×
             </button>
         </div>

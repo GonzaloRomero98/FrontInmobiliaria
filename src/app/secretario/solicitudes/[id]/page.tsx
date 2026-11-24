@@ -1,7 +1,7 @@
 'use client'
 
 import Link from "next/link";
-import { CargandoLista } from "@/components/panel/Tablero";
+import { CargandoLista, ErrorCarga } from "@/components/panel/Tablero";
 import { useParams, useRouter } from "next/navigation";
 import { FormEvent, ReactNode, useCallback, useEffect, useState } from "react";
 import { avisar, confirmar } from "@/components/Dialogos";
@@ -127,7 +127,7 @@ export default function FichaCliente() {
         });
     }
 
-    if (error) return <main className={`${PANEL_PAGINA} text-red-700`}>{error}</main>;
+    if (error) return <ErrorCarga volverHref={volver} volverTexto="Solicitudes" mensaje={error} />;
     if (!ficha) return <main className={PANEL_PAGINA}><Link href={volver} className="text-sm text-gray-600 hover:underline">← Solicitudes</Link><div className="mt-4"><CargandoLista filas={3} alto="h-40" etiqueta="Cargando la solicitud" /></div></main>;
 
     const { modeloCasa: modelo } = ficha;
@@ -242,7 +242,7 @@ export default function FichaCliente() {
                         <form onSubmit={guardarFecha} className="flex flex-col gap-3">
                             <p className="text-sm font-medium">Nueva fecha (queda confirmada)</p>
                             <SelectorVisita horarios={modelo.proyecto.salaHorarios} horario={modelo.proyecto.salaHorario} valor={nuevaFecha}
-                                onCambio={setNuevaFecha} otraHora claseEtiqueta="flex flex-col gap-1 text-sm" claseCampo="border rounded-lg px-3 py-1.5" />
+                                onCambio={setNuevaFecha} otraHora claseEtiqueta="flex flex-col gap-1 text-sm" claseCampo="border border-borde-campo rounded-lg px-3 py-1.5" />
                             <div className="flex gap-2">
                                 <button type="submit" disabled={ocupado} className={`${PANEL_PRIMARIO} ${COMPACTO}`}>Guardar</button>
                                 <button type="button" onClick={() => setNuevaFecha(null)} className={boton}>Cancelar</button>

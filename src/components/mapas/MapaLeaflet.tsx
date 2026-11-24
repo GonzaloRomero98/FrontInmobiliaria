@@ -7,6 +7,7 @@ import { useEffect, useMemo } from 'react';
 import { Circle, CircleMarker, MapContainer, Marker, Popup, ScaleControl, TileLayer, Tooltip, useMap, useMapEvents } from 'react-leaflet';
 import { CATEGORIAS_ENTORNO, LugarCercano } from '@/types/entorno';
 import { formatearDistancia } from '@/lib/formato';
+import { useMovimientoReducido } from '@/lib/movimiento';
 import { ColorPunto, htmlSimbolo, TipoPunto } from './simbolos';
 
 export interface PuntoProyecto {
@@ -67,12 +68,19 @@ function AjustarVista({ puntos }: { puntos: [number, number][] }) {
     return null;
 }
 
+// En el celular un dedo desplaza la página, no el mapa (si no, el mapa atrapa el scroll); para moverlo se usan dos dedos.
+// Las animaciones del mapa se apagan con "reducir movimiento"; Leaflet las lee solo al crear el mapa.
+function opcionesVisita(sinMovimiento: boolean) {
+    return { dragging: !L.Browser.mobile, zoomAnimation: !sinMovimiento, fadeAnimation: !sinMovimiento, markerZoomAnimation: !sinMovimiento };
+}
+
 const estiloMapa = (altura: number) => ({ height: altura, width: '100%', borderRadius: 12, zIndex: 0 });
 
 export function MapaProyectosLeaflet({ proyectos, salas = [], altura = 420 }: { proyectos: PuntoProyecto[]; salas?: PuntoSala[]; altura?: number }) {
     const puntos = useMemo(() => [...proyectos, ...salas].map((p) => [p.latitud, p.longitud] as [number, number]), [proyectos, salas]);
+    const sinMovimiento = useMovimientoReducido();
     return (
-        <MapContainer center={CENTRO_CHILE} zoom={5} scrollWheelZoom={false} style={estiloMapa(altura)}>
+        <MapContainer center={CENTRO_CHILE} zoom={5} scrollWheelZoom={false} {...opcionesVisita(sinMovimiento)} style={estiloMapa(altura)}>
             <TileLayer attribution={ATRIBUCION} url={TESELAS} />
             <AjustarVista puntos={puntos} />
             {proyectos.map((p) => (
@@ -122,8 +130,9 @@ export function MapaEntornoLeaflet({ latitud, longitud, nombre, lugares, radio }
     latitud: number; longitud: number; nombre: string; lugares: LugarCercano[]; radio: number;
 }) {
     const etiqueta = useMemo(() => etiquetaRadio(radio), [radio]);
+    const sinMovimiento = useMovimientoReducido();
     return (
-        <MapContainer center={[latitud, longitud]} zoom={15} zoomSnap={0.25} scrollWheelZoom={false} style={estiloMapa(420)}>
+        <MapContainer center={[latitud, longitud]} zoom={15} zoomSnap={0.25} scrollWheelZoom={false} {...opcionesVisita(sinMovimiento)} style={estiloMapa(420)}>
             <TileLayer attribution={ATRIBUCION} url={TESELAS} />
             <EncuadrarRadio latitud={latitud} longitud={longitud} radio={radio} />
             <ScaleControl imperial={false} position="bottomleft" />

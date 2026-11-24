@@ -1,3 +1,4 @@
+import { BOTON_PRIMARIO } from "@/lib/estilos";
 import type { Metadata } from "next";
 import { cache } from "react";
 import FormularioContacto from "@/components/FormularioContacto";
@@ -117,7 +118,7 @@ export default async function DetallePropiedadID({params}:{params:Promise<{id:st
                         </div>
                     )}
                     <div className="flex flex-col gap-2">
-                        <a href="#contacto" className="bg-marca text-white rounded-lg py-3 text-center font-medium hover:bg-marca/90 transition-colors">
+                        <a href="#contacto" className={`${BOTON_PRIMARIO} min-h-12 px-5`}>
                             Solicitar información
                         </a>
                         <BotonWhatsApp mensaje={`Hola, me interesa el modelo ${modelo.nombreModelo} del proyecto ${modelo.proyecto.nombre} (${urlActual}).`} />

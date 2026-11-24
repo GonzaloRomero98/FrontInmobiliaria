@@ -1,5 +1,6 @@
 'use client'
 
+import { BOTON_PRIMARIO } from "@/lib/estilos";
 import { login } from "@/services/auth.service";
 import { OPCIONES_COOKIE_SESION } from "@/lib/api";
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -63,7 +64,7 @@ export default function Login(){
                             Correo electrónico
                             <input {...register('correo')} type="email" autoComplete="username"
                                 aria-invalid={!!errors.correo || undefined} aria-describedby={errors.correo ? 'error-correo' : undefined}
-                                className="w-full border rounded-lg px-3 py-2 text-base font-normal text-gray-900" />
+                                className="w-full border border-borde-campo rounded-lg px-3 py-2 text-base font-normal text-gray-900" />
                         </label>
                         {errors.correo && (
                             <p id="error-correo" role="alert" className="text-red-700 text-sm mt-1">{errors.correo.message}</p>
@@ -75,7 +76,7 @@ export default function Login(){
                             Contraseña
                             <input {...register('contrasena')} type="password" autoComplete="current-password"
                                 aria-invalid={!!errors.contrasena || undefined} aria-describedby={errors.contrasena ? 'error-contrasena' : undefined}
-                                className="w-full border rounded-lg px-3 py-2 text-base font-normal text-gray-900" />
+                                className="w-full border border-borde-campo rounded-lg px-3 py-2 text-base font-normal text-gray-900" />
                         </label>
                         {errors.contrasena && (
                             <p id="error-contrasena" role="alert" className="text-red-700 text-sm mt-1">{errors.contrasena.message}</p>
@@ -83,7 +84,7 @@ export default function Login(){
                     </div>
 
                     {error && <p role="alert" className="text-red-700 text-sm">{error}</p>}
-                    <button type="submit" disabled={isSubmitting} className="bg-marca text-white rounded-lg py-3 font-medium disabled:opacity-50">{isSubmitting ? 'Entrando…' : 'Iniciar sesión'}</button>
+                    <button type="submit" disabled={isSubmitting} className={`${BOTON_PRIMARIO} min-h-12 px-5`}>{isSubmitting ? 'Entrando…' : 'Iniciar sesión'}</button>
                 </form>
             </main>
         )

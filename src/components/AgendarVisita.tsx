@@ -14,7 +14,7 @@ export interface OpcionProyecto {
 
 const ETIQUETA = "flex flex-col gap-1 text-sm font-medium text-gray-700";
 // text-base porque con letra menor a 16 px el iPhone hace zoom al tocar el campo.
-const CAMPO = "w-full min-h-11 border rounded-lg px-3 py-2 text-base font-normal text-gray-900 bg-white";
+const CAMPO = "w-full min-h-11 border border-borde-campo rounded-lg px-3 py-2 text-base font-normal text-gray-900 bg-white";
 
 export default function AgendarVisita({ proyectos }: { proyectos: OpcionProyecto[] }) {
     const [idProyecto, setIdProyecto] = useState('');

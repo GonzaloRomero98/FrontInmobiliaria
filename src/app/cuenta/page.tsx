@@ -1,18 +1,18 @@
 'use client'
 
 import AvatarUsuario from "@/components/AvatarUsuario";
+import { CAMPO_PANEL, NORMAL, PANEL_PAGINA, PANEL_PRIMARIO, PANEL_SECUNDARIO, SUPERFICIE } from "@/lib/estilos";
 import { CargandoLista } from "@/components/panel/Tablero";
 import { obtenerUrlSubida, subirArchivo } from "@/services/s3.service";
 import { actualizarMiPerfil, cambiarMiContrasena, getMiPerfil, Usuario } from "@/services/usuario.service";
 import { isAxiosError } from "axios";
-import Link from "next/link";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 
 const TIPOS_FOTO = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_FOTO_BYTES = 2 * 1024 * 1024;
 const NOMBRE_ROL = {ADMIN: 'Administrador', SECRETARIO: 'Secretario'} as const;
-const ESTILO_TARJETA = "border rounded-xl p-6 flex flex-col gap-4";
-const ESTILO_BOTON = "bg-marca text-white rounded-lg px-4 py-2 font-medium disabled:opacity-50";
+const ESTILO_TARJETA = `${SUPERFICIE} p-6 flex flex-col gap-4`;
+const ESTILO_BOTON = `${PANEL_PRIMARIO} ${NORMAL}`;
 
 type Aviso = {tipo:'ok' | 'error'; texto:string} | null;
 
@@ -37,22 +37,19 @@ export default function MiPerfil(){
     }, []);
 
     return (
-        <main className="max-w-2xl mx-auto px-4 py-10 flex flex-col gap-6">
-            <div>
-                {perfil && (
-                    <Link href={perfil.rol.nombre === 'ADMIN' ? '/admin' : '/secretario'} className="text-sm text-gray-500 hover:underline">← Mi panel</Link>
-                )}
+        <main className={PANEL_PAGINA}>
+            <div className="max-w-2xl flex flex-col gap-6">
                 <h1 className="text-2xl font-bold">Mi perfil</h1>
+                {errorCarga && <p className="text-red-700 text-sm" role="alert">No se pudo cargar tu perfil</p>}
+                {!perfil && !errorCarga && <CargandoLista filas={3} alto="h-40" etiqueta="Cargando tu perfil" />}
+                {perfil && (
+                    <>
+                        <SeccionFoto perfil={perfil} alCambiar={setPerfil} />
+                        <SeccionDatos perfil={perfil} alCambiar={setPerfil} />
+                        <SeccionContrasena />
+                    </>
+                )}
             </div>
-            {errorCarga && <p className="text-red-700 text-sm" role="alert">No se pudo cargar tu perfil</p>}
-            {!perfil && !errorCarga && <CargandoLista filas={3} alto="h-40" etiqueta="Cargando tu perfil" />}
-            {perfil && (
-                <>
-                    <SeccionFoto perfil={perfil} alCambiar={setPerfil} />
-                    <SeccionDatos perfil={perfil} alCambiar={setPerfil} />
-                    <SeccionContrasena />
-                </>
-            )}
         </main>
     );
 }
@@ -114,7 +111,7 @@ function SeccionFoto({perfil, alCambiar}:{perfil:Usuario; alCambiar:(u:Usuario) 
                     </label>
                     {perfil.fotoUrl && (
                         <button type="button" onClick={quitarFoto} disabled={subiendo}
-                            className="border rounded-lg px-4 py-2 font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+                            className={`${PANEL_SECUNDARIO} ${NORMAL}`}>
                             Quitar foto
                         </button>
                     )}
@@ -157,10 +154,10 @@ function SeccionDatos({perfil, alCambiar}:{perfil:Usuario; alCambiar:(u:Usuario)
         <section aria-labelledby="titulo-datos" className={ESTILO_TARJETA}>
             <h2 id="titulo-datos" className="font-semibold">Tus datos</h2>
             <form onSubmit={guardar} className="flex flex-col gap-4">
-                <label className="flex flex-col gap-1 text-sm">
+                <label className="flex flex-col gap-1 text-sm font-medium">
                     Nombre
                     <input required maxLength={100} autoComplete="name" value={nombre} onChange={(e) => setNombre(e.target.value)}
-                        className="border border-borde-campo rounded-lg px-3 py-2 text-base" />
+                        className={CAMPO_PANEL} />
                 </label>
                 <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
                     <dt className="text-gray-500">Correo</dt>
@@ -212,12 +209,18 @@ function SeccionContrasena(){
         <section aria-labelledby="titulo-contrasena" className={ESTILO_TARJETA}>
             <h2 id="titulo-contrasena" className="font-semibold">Cambiar contraseña</h2>
             <form onSubmit={guardar} className="flex flex-col gap-4">
-                <input required type="password" autoComplete="current-password" value={actual} onChange={(e) => setActual(e.target.value)}
-                    placeholder="Contraseña actual" aria-label="Contraseña actual" className="border border-borde-campo rounded-lg px-3 py-2" />
-                <input required type="password" autoComplete="new-password" value={nueva} onChange={(e) => setNueva(e.target.value)}
-                    placeholder="Contraseña nueva" aria-label="Contraseña nueva" className="border border-borde-campo rounded-lg px-3 py-2" />
-                <input required type="password" autoComplete="new-password" value={repetida} onChange={(e) => setRepetida(e.target.value)}
-                    placeholder="Repite la contraseña nueva" aria-label="Repite la contraseña nueva" className="border border-borde-campo rounded-lg px-3 py-2" />
+                <label className="flex flex-col gap-1 text-sm font-medium">
+                    Contraseña actual
+                    <input required type="password" autoComplete="current-password" value={actual} onChange={(e) => setActual(e.target.value)} className={CAMPO_PANEL} />
+                </label>
+                <label className="flex flex-col gap-1 text-sm font-medium">
+                    Contraseña nueva
+                    <input required type="password" autoComplete="new-password" value={nueva} onChange={(e) => setNueva(e.target.value)} className={CAMPO_PANEL} />
+                </label>
+                <label className="flex flex-col gap-1 text-sm font-medium">
+                    Repite la contraseña nueva
+                    <input required type="password" autoComplete="new-password" value={repetida} onChange={(e) => setRepetida(e.target.value)} className={CAMPO_PANEL} />
+                </label>
                 <p className="text-xs text-gray-500">Mínimo 10 caracteres, con mayúscula, minúscula y número.</p>
                 <TextoAviso aviso={aviso} />
                 <button type="submit" disabled={guardando} className={`${ESTILO_BOTON} self-start`}>

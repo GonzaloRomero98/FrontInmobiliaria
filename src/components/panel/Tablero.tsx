@@ -1,8 +1,8 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { ReactNode } from "react";
+import { ReactNode, useId } from "react";
 import { ETIQUETA_VISITA, EstadoVisita } from "@/types/solicitud";
-import { SUPERFICIE } from "@/lib/estilos";
+import { PANEL_PAGINA, SUPERFICIE } from "@/lib/estilos";
 import { Esqueleto } from "@/components/Esqueleto";
 
 // Las pantallas del panel lo importan desde aquí.
@@ -24,7 +24,8 @@ export function hace(iso: string): string {
 }
 
 export function Tarjeta({ titulo, enlace, extra, children, id }: { titulo: string; enlace?: { href: string; texto: string }; extra?: ReactNode; children: ReactNode; id?: string }) {
-    const idTitulo = `${id ?? titulo}-titulo`;
+    // useId, porque el título lleva espacios y un id con espacios no sirve para aria-labelledby.
+    const idTitulo = useId();
     return (
         <section id={id} aria-labelledby={idTitulo} className={`${SUPERFICIE} p-5 scroll-mt-20`}>
             <div className="flex items-center justify-between gap-3 mb-4">
@@ -113,5 +114,15 @@ export function Vacio({ texto, children }: { texto: string; children?: ReactNode
             <p className="text-gray-600">{texto}</p>
             {children}
         </div>
+    );
+}
+
+// Pantalla completa cuando una ficha no cargó: mantiene el enlace de vuelta y anuncia el error a lectores de pantalla.
+export function ErrorCarga({ volverHref, volverTexto, mensaje }: { volverHref: string; volverTexto: string; mensaje: string }) {
+    return (
+        <main className={PANEL_PAGINA}>
+            <Link href={volverHref} className="text-sm text-gray-600 hover:underline">← {volverTexto}</Link>
+            <p role="alert" className="mt-4 text-red-700">{mensaje}</p>
+        </main>
     );
 }

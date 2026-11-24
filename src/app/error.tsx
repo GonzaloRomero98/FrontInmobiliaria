@@ -1,5 +1,6 @@
 'use client';
 
+import { BOTON_PRIMARIO, BOTON_SECUNDARIO } from "@/lib/estilos";
 import { useEffect } from "react";
 import Link from "next/link";
 
@@ -16,10 +17,10 @@ export default function Error({ error, retry }: { error: unknown; retry: () => v
                 El servicio no está disponible en este momento. Intenta de nuevo en unos segundos.
             </p>
             <div className="flex flex-wrap justify-center gap-3">
-                <button type="button" onClick={() => retry()} className="bg-marca text-white rounded-lg px-5 py-2.5 font-medium">
+                <button type="button" onClick={() => retry()} className={`${BOTON_PRIMARIO} min-h-12 px-5`}>
                     Reintentar
                 </button>
-                <Link href="/" className="border rounded-lg px-5 py-2.5 font-medium">Ir al inicio</Link>
+                <Link href="/" className={`${BOTON_SECUNDARIO} min-h-12 px-5`}>Ir al inicio</Link>
             </div>
         </main>
     );

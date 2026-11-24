@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Visor3D from "./Visor3D";
+import { movimientoReducido } from "@/lib/movimiento";
 
 // Proporción 4:3 en el celular y 500 px como máximo en pantallas grandes.
 const ALTO = 'min(500px, 75vw)';
@@ -28,7 +29,7 @@ export default function GaleriaModelo({ idModelo, titulo, modelo3dUrl, imagenes 
     function ir(i: number) {
         const el = pista.current;
         if (!el) return;
-        const suave = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const suave = !movimientoReducido();
         el.scrollTo({ left: Math.max(0, Math.min(total - 1, i)) * el.clientWidth, behavior: suave ? 'smooth' : 'auto' });
     }
 

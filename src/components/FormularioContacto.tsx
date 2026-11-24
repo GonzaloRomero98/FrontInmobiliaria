@@ -1,5 +1,6 @@
 'use client'
 
+import { BOTON_PRIMARIO } from "@/lib/estilos";
 import { isAxiosError } from "axios";
 import Link from "next/link";
 import { crearSolicitud } from "@/services/solicitud.service";
@@ -27,7 +28,7 @@ type FormValues = z.input<typeof esquemFormulario>;
 const MAX_MENSAJE = 2000;
 const ETIQUETA ="flex flex-col gap-1 text-sm font-medium text-gray-700";
 // text-base porque con letra menor a 16 px el iPhone hace zoom al tocar el campo.
-const CAMPO = "w-full min-h-11 border rounded-lg px-3 py-2 text-base font-normal text-gray-900";
+const CAMPO = "w-full min-h-11 border border-borde-campo rounded-lg px-3 py-2 text-base font-normal text-gray-900";
 
 function MensajeError({ id, mensaje }: { id: string; mensaje?: string }) {
     return mensaje ? <p id={id} role="alert" className="text-red-700 text-sm mt-1">{mensaje}</p> : null;
@@ -42,7 +43,7 @@ interface FormularioContactoProps {
 }
 
 export default function FormularioContacto({ idModeloCasa, conVisita = false, sala, visitaInicial = false }: FormularioContactoProps) {
-    const [enviado, setEnviado] = useState<{ nombre: string; celular: string; correo: string } | null>(null);
+    const [enviado, setEnviado] = useState<{ nombre: string; celular: string; correo: string; conVisita: boolean } | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     const {
@@ -78,7 +79,7 @@ export default function FormularioContacto({ idModeloCasa, conVisita = false, sa
                 // "AAAA-MM-DDTHH:MM" sin zona se interpreta en la hora local del navegador.
                 ...(conVisita && visita && { visitaPreferida: new Date(visita).toISOString() }),
             });
-            setEnviado({ nombre: dataForm.nombre.trim(), celular: dataForm.celular, correo: dataForm.correo });
+            setEnviado({ nombre: dataForm.nombre.trim(), celular: dataForm.celular, correo: dataForm.correo, conVisita: conVisita && !!visita });
             reset();
             setVisita(null);
         } catch (e) {
@@ -97,14 +98,14 @@ export default function FormularioContacto({ idModeloCasa, conVisita = false, sa
     if (enviado) {
         return (
             <div role="status" className="p-4 bg-green-50 border border-green-200 rounded-xl text-green-900 flex flex-col gap-2">
-                <p className="font-semibold">Listo, {enviado.nombre}. Recibimos tu solicitud.</p>
+                <p className="font-semibold">Listo, {enviado.nombre}. {enviado.conVisita ? 'Recibimos tu solicitud de visita.' : 'Recibimos tu solicitud.'}</p>
                 <p>
-                    Te contactaremos dentro de 48 horas al {enviado.celular.replace(/^\+569(\d{4})(\d{4})$/, '+56 9 $1 $2')} o
+                    {enviado.conVisita ? 'Te confirmaremos el día y la hora de la visita dentro de 48 horas al' : 'Te contactaremos dentro de 48 horas al'} {enviado.celular.replace(/^\+569(\d{4})(\d{4})$/, '+56 9 $1 $2')} o
                     a {enviado.correo}.
                 </p>
                 {sala && (
                     <p className="text-sm">
-                        Si prefieres, visítanos en la sala de ventas: {sala.direccion}{sala.horario ? `, ${sala.horario}` : ''}.
+                        {enviado.conVisita ? 'La sala de ventas queda en' : 'Si prefieres, visítanos en la sala de ventas:'} {sala.direccion}{sala.horario ? `, ${sala.horario}` : ''}.
                     </p>
                 )}
             </div>
@@ -114,7 +115,7 @@ export default function FormularioContacto({ idModeloCasa, conVisita = false, sa
     return (
         // noValidate para que los mensajes sean los de zod y no los del navegador.
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
-            <h2 className="font-semibold text-lg">¿Tienes dudas? Escríbenos</h2>
+            <h2 className="font-semibold text-lg">{visitaInicial ? 'Agenda tu visita a la sala de ventas' : '¿Tienes dudas? Escríbenos'}</h2>
 
             <div>
                 <label className={ETIQUETA}>
@@ -188,9 +189,9 @@ export default function FormularioContacto({ idModeloCasa, conVisita = false, sa
             <button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-marca text-white rounded-lg py-3 font-medium disabled:opacity-50"
+                className={`${BOTON_PRIMARIO} min-h-12 px-5`}
             >
-                {isSubmitting ? 'Enviando…' : 'Enviar formulario'}
+                {isSubmitting ? 'Enviando…' : conVisita && visita !== null ? 'Agendar visita' : 'Enviar formulario'}
             </button>
         </form>
     );

@@ -48,14 +48,14 @@ export default function SimuladorDividendo({ precio, moneda, valorUF }: Simulado
                         <input
                             type="number" min={0} max={20} step={0.1} value={tasa}
                             onChange={(e) => setTasa(Math.min(20, Math.max(0, Number(e.target.value) || 0)))}
-                            className="border rounded-lg pl-3 pr-8 py-2 w-full"
+                            className="border border-borde-campo rounded-lg pl-3 pr-8 py-2 w-full"
                         />
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">%</span>
                     </span>
                 </label>
                 <label className="flex flex-col gap-1 text-sm">
                     Plazo
-                    <select value={plazo} onChange={(e) => setPlazo(Number(e.target.value))} className="border rounded-lg px-3 py-2">
+                    <select value={plazo} onChange={(e) => setPlazo(Number(e.target.value))} className="border border-borde-campo rounded-lg px-3 py-2">
                         {PLAZOS.map((p) => <option key={p} value={p}>{p} años</option>)}
                     </select>
                 </label>

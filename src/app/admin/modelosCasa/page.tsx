@@ -5,7 +5,7 @@ import { ETIQUETA_ESTADO, ModeloCasa } from "@/types/modeloCasa"
 import { unidadesDisponibles } from "@/lib/formato";
 import { mensajeError } from "@/lib/errores";
 import { avisar, confirmar } from "@/components/Dialogos";
-import { type ReactNode, useEffect, useState } from "react"
+import { type ReactNode, useEffect, useRef, useState } from "react"
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CargandoLista, Vacio } from "@/components/panel/Tablero";
@@ -13,10 +13,24 @@ import { COMPACTO, NORMAL, PANEL_EXITO, PANEL_PAGINA, PANEL_PRIMARIO, PANEL_SECU
 
 const OPCION_MENU = "flex items-center w-full min-h-10 max-md:min-h-11 text-left text-sm px-4 py-2 hover:bg-gray-50";
 
-// Se usa <details> porque ya funciona con clic, Enter y Espacio sin programar el teclado.
+// Se usa <details> porque ya funciona con clic, Enter y Espacio; solo se agrega el cierre con clic fuera y Escape.
 function MenuMas({ children }: { children: ReactNode }) {
+    const menu = useRef<HTMLDetailsElement>(null);
+    useEffect(() => {
+        const cerrar = (e: PointerEvent | KeyboardEvent) => {
+            if (!menu.current?.open) return;
+            if (e instanceof KeyboardEvent) {
+                if (e.key !== "Escape") return;
+                menu.current.querySelector("summary")?.focus();
+            } else if (menu.current.contains(e.target as Node)) return;
+            menu.current.open = false;
+        };
+        document.addEventListener("pointerdown", cerrar);
+        document.addEventListener("keydown", cerrar);
+        return () => { document.removeEventListener("pointerdown", cerrar); document.removeEventListener("keydown", cerrar); };
+    }, []);
     return (
-        <details className="relative">
+        <details ref={menu} className="relative">
             <summary className={`list-none cursor-pointer ${PANEL_SECUNDARIO} ${COMPACTO} [&::-webkit-details-marker]:hidden`}>
                 Más<span className="sr-only"> acciones</span>
             </summary>

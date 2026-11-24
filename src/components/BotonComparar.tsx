@@ -2,6 +2,7 @@
 
 import { MAXIMO_COMPARAR, useComparador } from "@/lib/comparador";
 import { avisar } from "@/components/Dialogos";
+import { BOTON_SECUNDARIO } from "@/lib/estilos";
 
 interface BotonCompararProps {
     idModelo: string;
@@ -16,7 +17,7 @@ export default function BotonComparar({ idModelo, variante = 'flotante' }: Boton
 
     const estilos = variante === 'flotante'
         ? `absolute top-3 right-3 z-10 text-sm min-h-11 px-3 rounded-full shadow ${seleccionado ? 'bg-marca text-white' : 'bg-white/95 text-gray-900'}`
-        : `w-full rounded-lg py-3 font-medium border ${seleccionado ? 'bg-marca text-white border-marca' : 'bg-white hover:bg-gray-50'}`;
+        : `w-full min-h-12 px-4 ${seleccionado ? 'inline-flex items-center justify-center gap-2 rounded-xl border border-marca bg-marca text-white font-medium' : BOTON_SECUNDARIO}`;
 
     return (
         <button

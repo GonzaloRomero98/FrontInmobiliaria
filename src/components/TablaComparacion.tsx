@@ -88,7 +88,7 @@ export default function TablaComparacion({ modelos }: { modelos: ModeloCasa[] })
 
                 {filas.map((fila) => (
                     <div key={fila.etiqueta} className="contents">
-                        <div className="py-3 border-t text-sm text-gray-500">{fila.etiqueta}</div>
+                        <div className="py-3 pr-2 border-t text-sm text-gray-500 sticky left-0 z-10 bg-white">{fila.etiqueta}</div>
                         {modelos.map((m) => {
                             const mejor = esMejor(fila, m);
                             return (
@@ -103,7 +103,7 @@ export default function TablaComparacion({ modelos }: { modelos: ModeloCasa[] })
 
                 {caracteristicas.map((c) => (
                     <div key={c.id} className="contents">
-                        <div className="py-3 border-t text-sm text-gray-500">{c.nombre}</div>
+                        <div className="py-3 pr-2 border-t text-sm text-gray-500 sticky left-0 z-10 bg-white">{c.nombre}</div>
                         {modelos.map((m) => (
                             <div key={m.id} className="py-3 border-t">
                                 {m.caracteristicas.some((x) => x.id === c.id) ? '✓' : <span className="text-gray-300">—</span>}

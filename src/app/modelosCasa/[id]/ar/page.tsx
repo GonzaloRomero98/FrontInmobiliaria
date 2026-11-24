@@ -1,3 +1,4 @@
+import { BOTON_SECUNDARIO } from "@/lib/estilos";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -48,7 +49,7 @@ export default async function VistaAR({ params, searchParams }: {
                 Si no ves el botón de RA, tu dispositivo no es compatible con realidad aumentada: igual puedes girar el modelo o recorrerlo por dentro.
             </p>
 
-            <Link href={`/modelosCasa/${modelo.id}`} className="text-center border rounded-lg py-2.5 font-medium hover:bg-gray-50">
+            <Link href={`/modelosCasa/${modelo.id}`} className={`${BOTON_SECUNDARIO} min-h-12 px-4 text-center`}>
                 Ver ficha completa, precio y contacto
             </Link>
         </main>

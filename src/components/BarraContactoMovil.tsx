@@ -1,5 +1,6 @@
 'use client'
 
+import { BOTON_PRIMARIO } from "@/lib/estilos";
 import { useEffect, useState } from "react";
 
 // Solo se ve en el celular, donde el formulario queda muy abajo en la ficha.
@@ -24,7 +25,7 @@ export default function BarraContactoMovil({ precio, detalle }: { precio: string
                     <p className="font-titulo text-lg font-bold text-acento leading-tight truncate">{precio}</p>
                     <p className="text-xs text-gray-600 truncate">{detalle}</p>
                 </div>
-                <a href="#contacto" className="shrink-0 bg-marca text-white rounded-lg px-4 py-3 font-medium hover:bg-marca/90">
+                <a href="#contacto" className={`${BOTON_PRIMARIO} shrink-0 min-h-12 px-4`}>
                     Solicitar información
                 </a>
             </div>

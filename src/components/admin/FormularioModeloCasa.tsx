@@ -17,7 +17,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { isAxiosError } from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
 import { SUPERFICIE, PANEL_PRIMARIO, NORMAL, CAMPO_PANEL } from "@/lib/estilos";
@@ -105,6 +105,10 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
         resolver: zodResolver(esquemaModeloCasa),
         defaultValues: valoresIniciales(modelo)
     });
+    const id = useId();
+    // Liga cada campo con su mensaje de error para los lectores de pantalla.
+    const conError = (campo: keyof typeof errors) =>
+        errors[campo] ? { "aria-invalid": true, "aria-describedby": `${id}-${campo}` } : {};
     const quitarModelo3d = watch('quitarModelo3d');
     const quitarPlano = watch('quitarPlano');
     const esCasa = watch('tipoVivienda') === 'CASA';
@@ -253,22 +257,22 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                     <div>
                         <label className={ETIQUETA}>
                             Proyecto
-                            <select {...register('id_proyecto')} className={CAMPO}>
+                            <select {...register('id_proyecto')} {...conError('id_proyecto')} className={CAMPO}>
                                 <option value="">Selecciona un proyecto</option>
                                 {proyectos.map((p) => (
                                     <option key={p.id} value={p.id}>{p.nombre}</option>
                                 ))}
                             </select>
                         </label>
-                        {errors.id_proyecto && <p role="alert" className="text-red-700 text-sm mt-1">{errors.id_proyecto.message}</p>}
+                        {errors.id_proyecto && <p id={`${id}-id_proyecto`} role="alert" className="text-red-700 text-sm mt-1">{errors.id_proyecto.message}</p>}
                     </div>
 
                     <div>
                         <label className={ETIQUETA}>
                             Nombre del modelo
-                            <input {...register('nombreModelo')} className={CAMPO} />
+                            <input {...register('nombreModelo')} {...conError('nombreModelo')} className={CAMPO} />
                         </label>
-                        {errors.nombreModelo && <p role="alert" className="text-red-700 text-sm mt-1">{errors.nombreModelo.message}</p>}
+                        {errors.nombreModelo && <p id={`${id}-nombreModelo`} role="alert" className="text-red-700 text-sm mt-1">{errors.nombreModelo.message}</p>}
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
@@ -292,44 +296,44 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
 
                 <fieldset className={SECCION}>
                     <legend className={TITULO_SECCION}>Programa</legend>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-1 min-[480px]:grid-cols-3 gap-2">
                         <div>
                             <label className={ETIQUETA}>
                                 Dormitorios
-                                <input {...register('dormitorios')} type="number" min="0" className={CAMPO} />
+                                <input {...register('dormitorios')} {...conError('dormitorios')} type="number" min="0" className={CAMPO} />
                             </label>
-                            {errors.dormitorios && <p role="alert" className="text-red-700 text-sm mt-1">{errors.dormitorios.message}</p>}
+                            {errors.dormitorios && <p id={`${id}-dormitorios`} role="alert" className="text-red-700 text-sm mt-1">{errors.dormitorios.message}</p>}
                         </div>
                         <div>
                             <label className={ETIQUETA}>
                                 Baños
-                                <input {...register('banos')} type="number" min="0" className={CAMPO} />
+                                <input {...register('banos')} {...conError('banos')} type="number" min="0" className={CAMPO} />
                             </label>
-                            {errors.banos && <p role="alert" className="text-red-700 text-sm mt-1">{errors.banos.message}</p>}
+                            {errors.banos && <p id={`${id}-banos`} role="alert" className="text-red-700 text-sm mt-1">{errors.banos.message}</p>}
                         </div>
                         <div>
                             <label className={ETIQUETA}>
                                 Estacionamientos
-                                <input {...register('estacionamiento')} type="number" min="0" className={CAMPO} />
+                                <input {...register('estacionamiento')} {...conError('estacionamiento')} type="number" min="0" className={CAMPO} />
                             </label>
-                            {errors.estacionamiento && <p role="alert" className="text-red-700 text-sm mt-1">{errors.estacionamiento.message}</p>}
+                            {errors.estacionamiento && <p id={`${id}-estacionamiento`} role="alert" className="text-red-700 text-sm mt-1">{errors.estacionamiento.message}</p>}
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 min-[480px]:grid-cols-2 gap-2">
                         <div>
                             <label className={ETIQUETA}>
                                 Superficie construida (m²)
-                                <input {...register('superficieConstruida')} type="number" step="0.01" className={CAMPO} />
+                                <input {...register('superficieConstruida')} {...conError('superficieConstruida')} type="number" step="0.01" className={CAMPO} />
                             </label>
-                            {errors.superficieConstruida && <p role="alert" className="text-red-700 text-sm mt-1">{errors.superficieConstruida.message}</p>}
+                            {errors.superficieConstruida && <p id={`${id}-superficieConstruida`} role="alert" className="text-red-700 text-sm mt-1">{errors.superficieConstruida.message}</p>}
                         </div>
                         <div>
                             <label className={ETIQUETA}>
                                 {esCasa ? 'Superficie terreno (m²)' : 'Superficie terreno (m², opcional)'}
-                                <input {...register('superficieTerreno')} type="number" step="0.01" className={CAMPO} />
+                                <input {...register('superficieTerreno')} {...conError('superficieTerreno')} type="number" step="0.01" className={CAMPO} />
                             </label>
-                            {errors.superficieTerreno && <p role="alert" className="text-red-700 text-sm mt-1">{errors.superficieTerreno.message}</p>}
+                            {errors.superficieTerreno && <p id={`${id}-superficieTerreno`} role="alert" className="text-red-700 text-sm mt-1">{errors.superficieTerreno.message}</p>}
                         </div>
                     </div>
 
@@ -369,7 +373,7 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
 
                     <div>
                         <p className="text-sm mb-2">Características</p>
-                        <div className="grid grid-cols-2 gap-1">
+                        <div className="grid grid-cols-1 min-[480px]:grid-cols-2 gap-1">
                             {caracteristica.map((c) => (
                                 <label key={c.id} className="flex items-center gap-2 text-sm">
                                     <input
@@ -390,9 +394,9 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                         <div>
                             <label className={ETIQUETA}>
                                 Precio
-                                <input {...register('precio')} type="number" step="0.0001" min="0" className={CAMPO} />
+                                <input {...register('precio')} {...conError('precio')} type="number" step="0.0001" min="0" className={CAMPO} />
                             </label>
-                            {errors.precio && <p role="alert" className="text-red-700 text-sm mt-1">{errors.precio.message}</p>}
+                            {errors.precio && <p id={`${id}-precio`} role="alert" className="text-red-700 text-sm mt-1">{errors.precio.message}</p>}
                         </div>
                         <label className={ETIQUETA}>
                             Moneda
@@ -406,9 +410,9 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                     <div>
                         <label className={ETIQUETA}>
                             {esCasa ? 'Gastos comunes mensuales en $ (si es condominio)' : 'Gastos comunes mensuales en $ (opcional)'}
-                            <input {...register('gastosComunes')} type="number" min="0" step="1" className={CAMPO} />
+                            <input {...register('gastosComunes')} {...conError('gastosComunes')} type="number" min="0" step="1" className={CAMPO} />
                         </label>
-                        {errors.gastosComunes && <p role="alert" className="text-red-700 text-sm mt-1">{errors.gastosComunes.message}</p>}
+                        {errors.gastosComunes && <p id={`${id}-gastosComunes`} role="alert" className="text-red-700 text-sm mt-1">{errors.gastosComunes.message}</p>}
                     </div>
 
                     <div className="flex flex-wrap gap-4 text-sm" role="group" aria-label="Apto para subsidio">
@@ -424,9 +428,9 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
                     <div>
                         <label className={ETIQUETA}>
                             Bono o promoción (opcional)
-                            <input {...register('bono')} maxLength={150} placeholder="Ej.: Bono pie 10%" className={CAMPO} />
+                            <input {...register('bono')} {...conError('bono')} maxLength={150} placeholder="Ej.: Bono pie 10%" className={CAMPO} />
                         </label>
-                        {errors.bono && <p role="alert" className="text-red-700 text-sm mt-1">{errors.bono.message}</p>}
+                        {errors.bono && <p id={`${id}-bono`} role="alert" className="text-red-700 text-sm mt-1">{errors.bono.message}</p>}
                     </div>
                 </fieldset>
 
@@ -474,12 +478,12 @@ export default function FormularioModeloCasa({ modelo }: { modelo?: ModeloCasa }
 
                 <fieldset className={SECCION}>
                 <legend className={TITULO_SECCION}>Publicación</legend>
-                <div className="grid grid-cols-2 gap-2 items-center">
+                <div className="grid grid-cols-1 min-[480px]:grid-cols-2 gap-2 items-center">
                     <label className="text-sm">
                         Unidades (casas de este modelo)
-                        <input type="number" min={1} max={9999} step={1} {...register('unidades')}
+                        <input type="number" min={1} max={9999} step={1} {...register('unidades')} {...conError('unidades')}
                             className={`${CAMPO_PANEL} w-full mt-1`} />
-                        {errors.unidades && <span role="alert" className="text-red-700 text-xs">{errors.unidades.message}</span>}
+                        {errors.unidades && <span id={`${id}-unidades`} role="alert" className="text-red-700 text-xs">{errors.unidades.message}</span>}
                     </label>
                     <label className="flex items-center gap-2 text-sm">
                         <input type="checkbox" {...register('publicado')} />

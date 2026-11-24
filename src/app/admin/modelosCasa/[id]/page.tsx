@@ -1,7 +1,7 @@
 'use client'
 
 import Link from "next/link";
-import { CargandoLista } from "@/components/panel/Tablero";
+import { CargandoLista, ErrorCarga } from "@/components/panel/Tablero";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import FormularioModeloCasa from "@/components/admin/FormularioModeloCasa";
@@ -18,7 +18,7 @@ export default function EditarModeloCasa(){
         getModeloAdminById(id).then(setModelo).catch(()=> setError('No se pudo cargar el modelo'));
     },[id]);
 
-    if (error) return <main className={`${PANEL_PAGINA} text-red-700`}>{error}</main>;
+    if (error) return <ErrorCarga volverHref="/admin/modelosCasa" volverTexto="Modelos de casa" mensaje={error} />;
     if (!modelo) return <main className={PANEL_PAGINA}><Link href="/admin/modelosCasa" className="text-sm text-gray-600 hover:underline">← Modelos de casa</Link><div className="max-w-2xl mt-4"><CargandoLista filas={3} alto="h-40" etiqueta="Cargando el modelo" /></div></main>;
 
     return(

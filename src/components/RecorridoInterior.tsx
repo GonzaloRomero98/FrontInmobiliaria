@@ -1,5 +1,6 @@
 'use client';
 
+import { BOTON_PRIMARIO } from "@/lib/estilos";
 import { useEffect, useRef, useState, type PointerEvent as EventoPuntero } from "react";
 import { createPortal } from "react-dom";
 import * as THREE from "three";
@@ -332,7 +333,7 @@ export default function RecorridoInterior({ modeloUrl, titulo, altura = 500, ses
                 <div role="alert" className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gray-100 p-6 text-center">
                     <p className="font-medium text-gray-800">No se pudo cargar el modelo 3D.</p>
                     <p className="text-sm text-gray-600">Revisa tu conexión e inténtalo de nuevo.</p>
-                    <button type="button" onClick={reintentar} className="bg-marca text-white rounded-lg px-4 py-2 font-medium">
+                    <button type="button" onClick={reintentar} className={`${BOTON_PRIMARIO} min-h-11 px-4`}>
                         Reintentar
                     </button>
                 </div>

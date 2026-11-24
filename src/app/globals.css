@@ -16,6 +16,9 @@
   --color-acento-oscuro: #175a63;
   /* Borde de los campos de formulario: 3,4:1 sobre blanco, el mínimo para controles (WCAG 1.4.11). */
   --color-borde-campo: #848b96;
+  /* Verde de marca de WhatsApp: el texto sobre él es oscuro (con blanco no llega a 4,5:1). */
+  --color-whatsapp: #25d366;
+  --color-whatsapp-oscuro: #1ebe5b;
   /* Montserrat se parece a la letra del logo y se usa en títulos y precios (clase font-titulo). */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -47,4 +50,14 @@
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+/* Quien pidió reducir el movimiento no ve transiciones ni animaciones: se anulan aquí las que no tengan su propio motion-reduce. */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
