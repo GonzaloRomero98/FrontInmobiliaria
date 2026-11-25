@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { isAxiosError } from "axios";
 import { SelectorUbicacion } from "@/components/mapas";
 import AvisoCercania, { confirmarSiDuplicado, DISTANCIA_DUPLICADO_M, guardarConfirmandoCercania, proyectosCercanos, RADIO_ENTORNO_M, useProyectosEnMapa } from "@/components/admin/AvisoCercania";
+import { useDireccionDelMapa } from "@/components/admin/useDireccionDelMapa";
 import { actualizarEntorno, actualizarProyecto, getEntorno } from "@/services/proyecto.service";
 import { Proyecto } from "@/types/proyecto";
 import { CATEGORIAS_ENTORNO, CategoriaEntorno, EntornoProyecto } from "@/types/entorno";
@@ -34,6 +35,8 @@ export default function FormularioUbicacion({ proyecto, onGuardado }: { proyecto
 
     const [entorno, setEntorno] = useState<EntornoProyecto | null>(null);
     const [calculando, setCalculando] = useState(false);
+
+    const { buscando: buscandoDireccion, aviso: avisoDireccion, buscar: buscarDireccion } = useDireccionDelMapa(setDireccion);
 
     const otrosProyectos = useProyectosEnMapa(proyecto.id);
     const cercanos = useMemo(() => proyectosCercanos(latitud, longitud, otrosProyectos), [latitud, longitud, otrosProyectos]);
@@ -111,16 +114,24 @@ export default function FormularioUbicacion({ proyecto, onGuardado }: { proyecto
         <section className={`${SUPERFICIE} flex flex-col gap-4 p-5`}>
             <div>
                 <h2 className="text-xl font-semibold">Ubicación</h2>
-                <p className="text-sm text-gray-500">Haz clic en el mapa en la ubicación del proyecto. Con ella se calculan los servicios cercanos.</p>
+                <p className="text-sm text-gray-500">Haz clic en el mapa en la ubicación del proyecto. Con ella se completa la dirección y se calculan los servicios cercanos.</p>
             </div>
 
-            <label className="flex flex-col gap-1 text-sm">
-                Dirección
-                <input value={direccion} onChange={(e) => setDireccion(e.target.value)} maxLength={200}
-                    placeholder="Ej.: 1 Sur 1234" className={`${CAMPO_PANEL} w-full`} />
-            </label>
+            <div className="flex flex-col gap-1">
+                <label className="flex flex-col gap-1 text-sm">
+                    Dirección
+                    <input value={direccion} onChange={(e) => setDireccion(e.target.value)} maxLength={200}
+                        placeholder="Se completa al hacer clic en el mapa" className={`${CAMPO_PANEL} w-full`} />
+                </label>
+                {(buscandoDireccion || avisoDireccion) && (
+                    <p role="status" className={`text-xs ${avisoDireccion ? 'text-amber-700' : 'text-gray-500'}`}>
+                        {buscandoDireccion ? 'Buscando la dirección…' : avisoDireccion}
+                    </p>
+                )}
+            </div>
 
-            <SelectorUbicacion latitud={latitud} longitud={longitud} onCambio={(lat, lng) => { setLatitud(lat); setLongitud(lng); }}
+            <SelectorUbicacion latitud={latitud} longitud={longitud}
+                onCambio={(lat, lng) => { setLatitud(lat); setLongitud(lng); void buscarDireccion(lat, lng); }}
                 otros={otrosProyectos} radioOtros={RADIO_ENTORNO_M} />
             {otrosProyectos.length > 0 && <p className="text-xs text-gray-500">En gris, los demás proyectos y su radio de {RADIO_ENTORNO_M / 1000} km.</p>}
             <AvisoCercania cercanos={cercanos} />

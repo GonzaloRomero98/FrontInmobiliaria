@@ -12,6 +12,7 @@ import { crearPoryecto } from "@/services/proyecto.service";
 import { obtenerUrlSubida, subirArchivo } from "@/services/s3.service";
 import SubidaImagen from "@/components/SubidaImagen";
 import { SelectorUbicacion } from "@/components/mapas";
+import { useDireccionDelMapa } from "@/components/admin/useDireccionDelMapa";
 import AvisoCercania, { confirmarSiDuplicado, DISTANCIA_DUPLICADO_M, guardarConfirmandoCercania, proyectosCercanos, RADIO_ENTORNO_M, useProyectosEnMapa } from "@/components/admin/AvisoCercania";
 import { ETIQUETA_ETAPA, EtapaProyecto } from "@/types/proyecto";
 import { PANEL_PAGINA, SUPERFICIE, PANEL_PRIMARIO, NORMAL, CAMPO_PANEL } from "@/lib/estilos";
@@ -53,6 +54,7 @@ export default function NuevoProyecto() {
     } = useForm<FormValues>({ resolver: zodResolver(esquemaProyecto) });
 
     const idRegionSeleccionada = watch('id_region');
+    const { buscando: buscandoDireccion, aviso: avisoDireccion, buscar: buscarDireccion } = useDireccionDelMapa((direccion) => setValue('direccion', direccion));
 
     useEffect(() => {
         gerRegiones().then(setRegiones).catch(() => setError('No se pudieron cargar las regiones'));
@@ -181,11 +183,17 @@ export default function NuevoProyecto() {
                         Dirección (opcional)
                         <input {...register('direccion')} placeholder="Ej.: 1 Sur 1234" className={`${CAMPO_PANEL} w-full`} />
                     </label>
+                    {(buscandoDireccion || avisoDireccion) && (
+                        <p role="status" className={`text-xs ${avisoDireccion ? 'text-amber-700' : 'text-gray-500'}`}>
+                            {buscandoDireccion ? 'Buscando la dirección…' : avisoDireccion}
+                        </p>
+                    )}
                     <p className="text-sm text-gray-500">
-                        Ubicación en el mapa (opcional): haz clic donde está el proyecto.
+                        Ubicación en el mapa (opcional): haz clic donde está el proyecto y la dirección se completa sola; puedes corregirla.
                         {latitud !== null && longitud !== null && <> Seleccionado: {latitud}, {longitud}</>}
                     </p>
-                    <SelectorUbicacion latitud={latitud} longitud={longitud} onCambio={(lat, lng) => { setLatitud(lat); setLongitud(lng); }}
+                    <SelectorUbicacion latitud={latitud} longitud={longitud}
+                        onCambio={(lat, lng) => { setLatitud(lat); setLongitud(lng); void buscarDireccion(lat, lng); }}
                         otros={otrosProyectos} radioOtros={RADIO_ENTORNO_M} />
                     {otrosProyectos.length > 0 && <p className="text-xs text-gray-500">En gris, los proyectos ya registrados y su radio de {RADIO_ENTORNO_M / 1000} km.</p>}
                     <AvisoCercania cercanos={cercanos} />
